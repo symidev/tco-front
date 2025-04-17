@@ -3,6 +3,6 @@
 
 <template>
   <main>
-   default
+    <slot></slot>
   </main>
 </template>
