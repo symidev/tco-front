@@ -2,7 +2,7 @@
 </script>
 
 <template>
-  <main>
+  <main class="dark">
     <slot></slot>
   </main>
 </template>

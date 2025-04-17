@@ -33,6 +33,16 @@ const router = createRouter({
             meta: { layout: 'NoAuthLayout', requiresAuth: false }
         },
         {
+            path: '/logout',
+            name: 'logout',
+            redirect: to => {
+                localStorage.removeItem('token')
+                localStorage.removeItem('refreshToken')
+                return { name: 'login' }
+            },
+            meta: { requiresAuth: false }
+        },
+        {
             path: '/:pathMatch(.*)*',
             name: 'not-found',
             component: NotFoundView,
