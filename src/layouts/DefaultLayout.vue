@@ -1,9 +1,9 @@
 <!-- DefaultLayout.vue -->
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import Sidebar from '@/layouts/default/Sidebar.vue'
-import Navbar from '@/layouts/default/Navbar.vue'
-import SidebarToggleButton from '@/layouts/default/SidebarToggleButton.vue'
+import Sidebar from '@/layouts/components/default/Sidebar.vue'
+import Navbar from '@/layouts/components/default/Navbar.vue'
+import SidebarToggleButton from '@/layouts/components/default/SidebarToggleButton.vue'
 
 const isOpen = ref(true) // Sidebar ouverte par défaut
 const isMobile = ref(false)
@@ -60,7 +60,7 @@ onUnmounted(() => {
     <!-- Contenu principal -->
     <div
         class="flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out px-0 md:px-8"
-        :class="{'ml-0': isMobile || !isOpen, 'ml-64': !isMobile && isOpen}"
+        :class="{'ml-0': isMobile || !isOpen, 'ml-56': !isMobile && isOpen}"
     >
       <!-- Navigation Bar -->
       <Navbar

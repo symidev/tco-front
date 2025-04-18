@@ -15,6 +15,30 @@ const router = createRouter({
             meta: { layout: 'DefaultLayout', requiresAuth: true }
         },
         {
+            path: '/vehicules',
+            name: 'vehicules',
+            component: () => import('../views/VehiculesView.vue'),
+            meta: { layout: 'DefaultLayout', requiresAuth: true }
+        },
+        {
+            path: '/catalogues',
+            name: 'catalogues',
+            component: () => import('../views/CataloguesView.vue'),
+            meta: { layout: 'DefaultLayout', requiresAuth: true }
+        },
+        {
+            path: '/comparos',
+            name: 'comparos',
+            component: () => import('../views/ComparosView.vue'),
+            meta: { layout: 'DefaultLayout', requiresAuth: true }
+        },
+        {
+            path: '/calc-aen',
+            name: 'calc-aen',
+            component: () => import('../views/CalcAenView.vue'),
+            meta: { layout: 'DefaultLayout', requiresAuth: true }
+        },
+        {
             path: '/login',
             name: 'login',
             component: LoginView,
@@ -53,12 +77,12 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
     const token = localStorage.getItem('token')
-    
+
     // Définir le layout pour la page 404 en fonction de l'authentification
     if (to.name === 'not-found') {
         to.meta.layout = token ? 'DefaultLayout' : 'NoAuthLayout'
     }
-    
+
     // Si la route nécessite une authentification et que l'utilisateur n'est pas connecté
     if (to.meta.requiresAuth && !token) {
         next({ name: 'login' })
