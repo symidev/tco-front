@@ -174,10 +174,10 @@ const nextStep = () => {
           type="email"
           placeholder="Email *"
           class="input"
-          :class="{'border-red-500': errors.email}"
+          :class="{'border-error': errors.email}"
           @blur="validateField('email')"
       />
-      <p v-if="errors.email" class="text-red-500 text-xs mt-1">{{ errors.email }}</p>
+      <p v-if="errors.email" class="text-error text-xs mt-1">{{ errors.email }}</p>
     </div>
 
     <div class="grid gap-1">
@@ -187,10 +187,10 @@ const nextStep = () => {
           type="password"
           placeholder="Mot de passe *"
           class="input"
-          :class="{'border-red-500': errors.password}"
+          :class="{'border-error': errors.password}"
           @blur="validateField('password')"
       />
-      <p v-if="errors.password" class="text-red-500 text-xs mt-1">{{ errors.password }}</p>
+      <p v-if="errors.password" class="text-error text-xs mt-1">{{ errors.password }}</p>
     </div>
 
     <div class="grid gap-1">
@@ -200,9 +200,9 @@ const nextStep = () => {
           type="text"
           placeholder="Raison sociale"
           class="input"
-          :class="{'border-red-500': errors.user_raison_sociale}"
+          :class="{'border-error': errors.user_raison_sociale}"
       />
-      <p v-if="errors.user_raison_sociale" class="text-red-500 text-xs mt-1">{{ errors.user_raison_sociale }}</p>
+      <p v-if="errors.user_raison_sociale" class="text-error text-xs mt-1">{{ errors.user_raison_sociale }}</p>
     </div>
 
     <div class="grid gap-1">
@@ -212,9 +212,9 @@ const nextStep = () => {
           type="text"
           placeholder="Siret"
           class="input"
-          :class="{'border-red-500': errors.user_siret}"
+          :class="{'border-error': errors.user_siret}"
       />
-      <p v-if="errors.user_siret" class="text-red-500 text-xs mt-1">{{ errors.user_siret }}</p>
+      <p v-if="errors.user_siret" class="text-error text-xs mt-1">{{ errors.user_siret }}</p>
     </div>
 
     <div class="grid gap-1">
@@ -267,7 +267,7 @@ const nextStep = () => {
               @blur="validateField('user_connaissance')"
           />
         </div>
-        <p v-if="errors.user_connaissance" class="text-red-500 text-xs mt-1 col-span-1 sm:col-span-2">
+        <p v-if="errors.user_connaissance" class="text-error text-xs mt-1 col-span-1 sm:col-span-2">
           {{ errors.user_connaissance }}
         </p>
       </div>
@@ -287,7 +287,7 @@ const nextStep = () => {
           />
           <label :for="`interet-${option.value}`" class="text-sm">{{ option.label }}</Label>
         </div>
-        <p v-if="errors.user_offre" class="text-red-500 text-xs mt-1 col-span-1 sm:col-span-2">
+        <p v-if="errors.user_offre" class="text-error text-xs mt-1 col-span-1 sm:col-span-2">
           {{ errors.user_offre }}
         </p>
       </div>

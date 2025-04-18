@@ -143,9 +143,9 @@ const updateDifferentAccountingInfo = () => {
           type="text"
           placeholder="Nom"
           class="input"
-          :class="{'border-red-500': errors.commercial_nom}"
+          :class="{'border-error': errors.commercial_nom}"
       />
-      <p v-if="errors.commercial_nom" class="text-red-500 text-xs mt-1">{{ errors.commercial_nom }}</p>
+      <p v-if="errors.commercial_nom" class="text-error text-xs mt-1">{{ errors.commercial_nom }}</p>
     </div>
 
     <div class="grid gap-1">
@@ -155,9 +155,9 @@ const updateDifferentAccountingInfo = () => {
           type="text"
           placeholder="Prénom"
           class="input"
-          :class="{'border-red-500': errors.commercial_prenom}"
+          :class="{'border-error': errors.commercial_prenom}"
       />
-      <p v-if="errors.commercial_prenom" class="text-red-500 text-xs mt-1">{{ errors.commercial_prenom }}</p>
+      <p v-if="errors.commercial_prenom" class="text-error text-xs mt-1">{{ errors.commercial_prenom }}</p>
     </div>
 
     <div class="grid gap-1">
@@ -177,9 +177,9 @@ const updateDifferentAccountingInfo = () => {
           type="tel"
           placeholder="Téléphone"
           class="input"
-          :class="{'border-red-500': errors.commercial_tel}"
+          :class="{'border-error': errors.commercial_tel}"
       />
-      <p v-if="errors.commercial_tel" class="text-red-500 text-xs mt-1">{{ errors.commercial_tel }}</p>
+      <p v-if="errors.commercial_tel" class="text-error text-xs mt-1">{{ errors.commercial_tel }}</p>
     </div>
 
     <div class="grid gap-1">
@@ -199,9 +199,9 @@ const updateDifferentAccountingInfo = () => {
           type="text"
           placeholder="Code postal"
           class="input"
-          :class="{'border-red-500': errors.commercial_cp}"
+          :class="{'border-error': errors.commercial_cp}"
       />
-      <p v-if="errors.commercial_cp" class="text-red-500 text-xs mt-1">{{ errors.commercial_cp }}</p>
+      <p v-if="errors.commercial_cp" class="text-error text-xs mt-1">{{ errors.commercial_cp }}</p>
     </div>
 
     <div class="grid gap-1">

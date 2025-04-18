@@ -118,8 +118,6 @@ const submitForm = async (isValid) => {
     // Afficher un message de succès avec sonner
     toast('Compte créé avec succès', {
       description: 'Votre compte doit maintenant être validé par un administrateur. Vous recevrez un email lorsque votre compte sera activé.',
-      duration: 6000,
-      position: 'top-center'
     })
 
   } catch (error) {
@@ -137,18 +135,15 @@ const submitForm = async (isValid) => {
             // Afficher la liste des erreurs de validation
             toast.error('Erreur lors de l\'inscription', {
               description: errorData.error.join(', '),
-              duration: 5000
             })
           } else if (errorData.error && typeof errorData.error === 'string') {
             // Message d'erreur simple
             toast.error('Erreur lors de l\'inscription', {
               description: errorData.error,
-              duration: 5000
             })
           } else {
             toast.error('Erreur lors de l\'inscription', {
               description: 'Veuillez vérifier les informations saisies',
-              duration: 5000
             })
           }
           break
@@ -157,7 +152,6 @@ const submitForm = async (isValid) => {
           // Conflit - email déjà utilisé
           toast.error('Inscription impossible', {
             description: 'Cette adresse email est déjà utilisée',
-            duration: 5000
           })
           break
 
@@ -166,14 +160,12 @@ const submitForm = async (isValid) => {
           // Erreur serveur ou autre erreur
           toast.error('Erreur lors de l\'inscription', {
             description: 'Une erreur est survenue lors de l\'inscription. Veuillez réessayer plus tard.',
-            duration: 5000
           })
       }
     } else {
       // Erreur réseau ou autre
       toast.error('Erreur de connexion', {
         description: 'Impossible de se connecter au serveur. Veuillez vérifier votre connexion internet.',
-        duration: 5000
       })
     }
   } finally {

@@ -16,7 +16,6 @@ const errors = reactive({
   login: '',
   password: ''
 })
-
 const isSubmitting = ref(false)
 const loginError = ref('')
 
@@ -104,14 +103,14 @@ const handleSubmit = async () => {
       </p>
     </div>
 
-    <div v-if="loginError" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+    <div role="alert" v-if="loginError" class="alert alert-error alert-soft">
       {{ loginError }}
     </div>
 
     <div class="grid gap-6">
       <div class="grid gap-2">
         <label for="login" class="text-primary">Email</Label>
-        <label :class="errors.login ? 'border-red-500 input' : 'input'">
+        <label :class="errors.login ? 'border-error input' : 'input'">
           <svg class="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
             <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" fill="none" stroke="currentColor">
               <rect width="20" height="16" x="2" y="4" rx="2"></rect>
@@ -127,7 +126,7 @@ const handleSubmit = async () => {
               required
           />
         </label>
-        <p v-if="errors.login" class="text-red-500 text-xs mt-1">{{ errors.login }}</p>
+        <p v-if="errors.login" class="text-error text-xs mt-1">{{ errors.login }}</p>
       </div>
 
       <div class="grid gap-2">
@@ -139,7 +138,7 @@ const handleSubmit = async () => {
             </RouterLink>
           </div>
         </div>
-        <label class="input" :class="errors.password ? 'border-red-500' : ''">
+        <label class="input" :class="errors.password ? 'border-error' : ''">
           <svg class="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
             <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" fill="none" stroke="currentColor">
               <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
@@ -154,7 +153,7 @@ const handleSubmit = async () => {
               required
           />
         </label>
-        <p v-if="errors.password" class="text-red-500 text-xs mt-1">{{ errors.password }}</p>
+        <p role="alert" v-if="errors.password" class="alert alert-error alert-soft">{{ errors.password }}</p>
       </div>
 
       <button

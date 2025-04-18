@@ -125,9 +125,9 @@ const updateFormData = () => {
           v-model="formData.comptable_nom"
           type="text"
           placeholder="Nom"
-          class="input" :class="{'border-red-500': errors.comptable_nom}"
+          class="input" :class="{'border-error': errors.comptable_nom}"
       />
-      <p v-if="errors.comptable_nom" class="text-red-500 text-xs mt-1">{{ errors.comptable_nom }}</p>
+      <p v-if="errors.comptable_nom" class="text-error text-xs mt-1">{{ errors.comptable_nom }}</p>
     </div>
 
     <div class="grid gap-1">
@@ -137,9 +137,9 @@ const updateFormData = () => {
           type="text"
           placeholder="Prénom"
           class="input"
-          :class="{'border-red-500': errors.comptable_prenom}"
+          :class="{'border-error': errors.comptable_prenom}"
       />
-      <p v-if="errors.comptable_prenom" class="text-red-500 text-xs mt-1">{{ errors.comptable_prenom }}</p>
+      <p v-if="errors.comptable_prenom" class="text-error text-xs mt-1">{{ errors.comptable_prenom }}</p>
     </div>
 
     <div class="grid gap-1">
@@ -159,9 +159,9 @@ const updateFormData = () => {
           type="email"
           placeholder="Email"
           class="input"
-          :class="{'border-red-500': errors.comptable_email}"
+          :class="{'border-error': errors.comptable_email}"
       />
-      <p v-if="errors.comptable_email" class="text-red-500 text-xs mt-1">{{ errors.comptable_email }}</p>
+      <p v-if="errors.comptable_email" class="text-error text-xs mt-1">{{ errors.comptable_email }}</p>
     </div>
 
     <div class="grid gap-1">
@@ -171,9 +171,9 @@ const updateFormData = () => {
           type="tel"
           placeholder="Téléphone"
           class="input"
-          :class="{'border-red-500': errors.comptable_tel}"
+          :class="{'border-error': errors.comptable_tel}"
       />
-      <p v-if="errors.comptable_tel" class="text-red-500 text-xs mt-1">{{ errors.comptable_tel }}</p>
+      <p v-if="errors.comptable_tel" class="text-error text-xs mt-1">{{ errors.comptable_tel }}</p>
     </div>
 
     <div class="grid gap-1">
@@ -193,9 +193,9 @@ const updateFormData = () => {
           type="text"
           placeholder="Code postal"
           class="input"
-          :class="{'border-red-500': errors.comptable_cp}"
+          :class="{'border-error': errors.comptable_cp}"
       />
-      <p v-if="errors.comptable_cp" class="text-red-500 text-xs mt-1">{{ errors.comptable_cp }}</p>
+      <p v-if="errors.comptable_cp" class="text-error text-xs mt-1">{{ errors.comptable_cp }}</p>
     </div>
 
     <div class="grid gap-1">
