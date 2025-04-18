@@ -18,7 +18,7 @@ defineProps({
       <div
           :class="[
           'w-8 h-8 rounded-full flex items-center justify-center',
-          currentStep >= 1 ? 'bg-bleu text-white' : 'bg-gray-200 text-gray-700'
+          currentStep >= 1 ? 'bg-primary text-white' : 'bg-gray-200 text-gray-700'
         ]"
       >
         1
@@ -28,7 +28,7 @@ defineProps({
       <div
           :class="[
           'h-1 w-12',
-          currentStep >= 2 ? 'bg-bleu' : 'bg-gray-200'
+          currentStep >= 2 ? 'bg-primary' : 'bg-neutral text-white'
         ]"
       ></div>
 
@@ -36,7 +36,7 @@ defineProps({
       <div
           :class="[
           'w-8 h-8 rounded-full flex items-center justify-center',
-          currentStep >= 2 ? 'bg-bleu text-white' : 'bg-gray-200 text-gray-700'
+          currentStep >= 2 ? 'bg-primary text-white' : 'bg-neutral text-white'
         ]"
       >
         2
@@ -47,7 +47,7 @@ defineProps({
           v-if="hasAccountingStep"
           :class="[
           'h-1 w-12',
-          currentStep >= 3 ? 'bg-bleu' : 'bg-gray-200'
+          currentStep >= 3 ? 'bg-primary' : 'bg-neutral'
         ]"
       ></div>
 
@@ -56,7 +56,7 @@ defineProps({
           v-if="hasAccountingStep"
           :class="[
           'w-8 h-8 rounded-full flex items-center justify-center',
-          currentStep >= 3 ? 'bg-bleu text-white' : 'bg-gray-200 text-gray-700'
+          currentStep >= 3 ? 'bg-primary text-white' : 'bg-neutral text-white'
         ]"
       >
         3

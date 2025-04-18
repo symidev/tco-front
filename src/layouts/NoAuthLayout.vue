@@ -3,7 +3,7 @@ import { Toaster } from 'vue-sonner'
 </script>
 
 <template>
-  <main>
+  <main data-theme="light">
     <div class="grid min-h-svh lg:grid-cols-2">
       <div class="flex flex-col gap-4 p-6 md:p-10">
         <div class="flex justify-center gap-2 md:justify-start">

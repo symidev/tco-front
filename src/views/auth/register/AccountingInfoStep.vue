@@ -1,8 +1,5 @@
 <script setup>
 import { ref } from 'vue'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 
 const props = defineProps({
   initialData: {
@@ -120,101 +117,109 @@ const updateFormData = () => {
 </script>
 
 <template>
-  <div class="grid gap-6">
-    <div class="grid gap-2 text-bleu">
-      <Label for="comptable_nom" class="text-bleu">Nom (contact comptable) </Label>
-      <Input
+  <div class="grid gap-1">
+    <h2 class="text-xl font-bold mb-4">Informations comptable</h2>
+    <div class="grid gap-1">
+      <input
           id="comptable_nom"
           v-model="formData.comptable_nom"
           type="text"
-          :class="{'border-red-500': errors.comptable_nom}"
+          placeholder="Nom"
+          class="input" :class="{'border-red-500': errors.comptable_nom}"
       />
       <p v-if="errors.comptable_nom" class="text-red-500 text-xs mt-1">{{ errors.comptable_nom }}</p>
     </div>
 
-    <div class="grid gap-2 text-bleu">
-      <Label for="comptable_prenom" class="text-bleu">Prénom (contact comptable) </Label>
-      <Input
+    <div class="grid gap-1">
+      <input
           id="comptable_prenom"
           v-model="formData.comptable_prenom"
           type="text"
+          placeholder="Prénom"
+          class="input"
           :class="{'border-red-500': errors.comptable_prenom}"
       />
       <p v-if="errors.comptable_prenom" class="text-red-500 text-xs mt-1">{{ errors.comptable_prenom }}</p>
     </div>
 
-    <div class="grid gap-2 text-bleu">
-      <Label for="comptable_fonction" class="text-bleu">Fonction (contact comptable)</Label>
-      <Input
+    <div class="grid gap-1">
+      <input
           id="comptable_fonction"
           v-model="formData.comptable_fonction"
           type="text"
+          placeholder="Fonction"
+          class="input"
       />
     </div>
 
-    <div class="grid gap-2 text-bleu">
-      <Label for="comptable_email" class="text-bleu">Email (contact comptable) </Label>
-      <Input
+    <div class="grid gap-1">
+      <input
           id="comptable_email"
           v-model="formData.comptable_email"
           type="email"
+          placeholder="Email"
+          class="input"
           :class="{'border-red-500': errors.comptable_email}"
       />
       <p v-if="errors.comptable_email" class="text-red-500 text-xs mt-1">{{ errors.comptable_email }}</p>
     </div>
 
-    <div class="grid gap-2 text-bleu">
-      <Label for="comptable_tel" class="text-bleu">Téléphone (contact comptable) </Label>
-      <Input
+    <div class="grid gap-1">
+      <input
           id="comptable_tel"
           v-model="formData.comptable_tel"
           type="tel"
+          placeholder="Téléphone"
+          class="input"
           :class="{'border-red-500': errors.comptable_tel}"
       />
       <p v-if="errors.comptable_tel" class="text-red-500 text-xs mt-1">{{ errors.comptable_tel }}</p>
     </div>
 
-    <div class="grid gap-2 text-bleu">
-      <Label for="comptable_rue" class="text-bleu">Rue (contact comptable)</Label>
-      <Input
+    <div class="grid gap-1">
+      <input
           id="comptable_rue"
           v-model="formData.comptable_rue"
           type="text"
+          placeholder="Rue"
+          class="input"
       />
     </div>
 
-    <div class="grid gap-2 text-bleu">
-      <Label for="comptable_cp" class="text-bleu">Code postal (contact comptable)</Label>
-      <Input
+    <div class="grid gap-1">
+      <input
           id="comptable_cp"
           v-model="formData.comptable_cp"
           type="text"
+          placeholder="Code postal"
+          class="input"
           :class="{'border-red-500': errors.comptable_cp}"
       />
       <p v-if="errors.comptable_cp" class="text-red-500 text-xs mt-1">{{ errors.comptable_cp }}</p>
     </div>
 
-    <div class="grid gap-2 text-bleu">
-      <Label for="comptable_ville" class="text-bleu">Ville (contact comptable)</Label>
-      <Input
+    <div class="grid gap-1">
+      <input
           id="comptable_ville"
           v-model="formData.comptable_ville"
           type="text"
+          placeholder="Ville"
+          class="input"
       />
     </div>
 
-    <div class="flex gap-4">
-      <Button
+    <div class="flex gap-4 mt-4">
+      <button
           type="button"
           @click="prevStep"
-          class="w-1/2 text-bleu border border-bleu bg-white hover:text-bleu hover:bg-white cursor-pointer"
+          class="w-1/2 btn btn-neutral"
       >
         Précédent
       </Button>
-      <Button
+      <button
           type="button"
           @click="submitForm"
-          class="w-1/2 text-white bg-bleu cursor-pointer"
+          class="w-1/2 btn btn-primary"
           :disabled="isSubmitting"
       >
         {{ isSubmitting ? 'Création en cours...' : 'Enregistrer' }}

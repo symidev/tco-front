@@ -186,16 +186,16 @@ const submitForm = async (isValid) => {
   <form class="flex flex-col gap-6">
     <!-- En-tête du formulaire -->
     <div class="flex flex-col items-center gap-2 text-center">
-      <h1 class="text-2xl font-bold text-bleu">
+      <h1 class="text-2xl font-bold">
         Créer votre compte
       </h1>
-      <p class="text-balance text-sm text-bleu" v-if="currentStep === 1">
+      <p class="text-balance text-sm" v-if="currentStep === 1">
         Renseignez vos informations générales
       </p>
-      <p class="text-balance text-sm text-bleu" v-if="currentStep === 2">
+      <p class="text-balance text-sm" v-if="currentStep === 2">
         Renseignez vos informations commerciales
       </p>
-      <p class="text-balance text-sm text-bleu" v-if="currentStep === 3">
+      <p class="text-balance text-sm" v-if="currentStep === 3">
         Renseignez vos informations comptables
       </p>
     </div>
@@ -238,9 +238,9 @@ const submitForm = async (isValid) => {
     />
 
     <!-- Lien vers la page de connexion -->
-    <div class="text-center text-sm text-bleu">
+    <div class="text-center text-sm">
       Vous avez déjà un compte ?
-      <div class="underline underline-offset-4 text-bleu">
+      <div class="underline underline-offset-4">
         <RouterLink to="/login">
           Connectez-vous
         </RouterLink>

@@ -1,11 +1,8 @@
 <script setup>
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
-import { useStore } from 'vuex'
-import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import {ref, reactive} from 'vue'
+import {useRouter} from 'vue-router'
+import {useStore} from 'vuex'
+import {cn} from '@/lib/utils'
 
 const store = useStore()
 const router = useRouter()
@@ -29,27 +26,27 @@ const validatePassword = (password) => {
   const hasLowerCase = /[a-z]/.test(password)
   const hasNumber = /[0-9]/.test(password)
   const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':",.<>?]/.test(password)
-  
+
   if (password.length < minLength) {
     return 'Le mot de passe doit contenir au moins 8 caractères'
   }
-  
+
   if (!hasUpperCase) {
     return 'Le mot de passe doit contenir au moins une majuscule'
   }
-  
+
   if (!hasLowerCase) {
     return 'Le mot de passe doit contenir au moins une minuscule'
   }
-  
+
   if (!hasNumber) {
     return 'Le mot de passe doit contenir au moins un chiffre'
   }
-  
+
   if (!hasSpecialChar) {
     return 'Le mot de passe doit contenir au moins un caractère spécial'
   }
-  
+
   return ''
 }
 
@@ -58,31 +55,31 @@ const handleSubmit = async () => {
   errors.login = ''
   errors.password = ''
   loginError.value = ''
-  
+
   // Validate form
   let isValid = true
-  
+
   if (!formData.login) {
     errors.login = 'Le login est requis'
     isValid = false
   }
-  
+
   const passwordError = validatePassword(formData.password)
   if (passwordError) {
     errors.password = passwordError
     isValid = false
   }
-  
+
   if (!isValid) return
-  
+
   isSubmitting.value = true
-  
+
   try {
     const result = await store.dispatch('auth/login', {
       login: formData.login,
       password: formData.password
     })
-    
+
     if (result.success) {
       router.push('/')
     } else {
@@ -99,65 +96,80 @@ const handleSubmit = async () => {
 <template>
   <form @submit.prevent="handleSubmit" :class="cn('flex flex-col gap-6')">
     <div class="flex flex-col items-center gap-2 text-center">
-      <h1 class="text-2xl font-bold text-bleu">
+      <h1 class="text-2xl font-bold">
         Connectez-vous à votre compte
       </h1>
-      <p class="text-balance text-sm text-bleu">
+      <p class="text-balance text-sm">
         Entrez vos identifiants pour vous connecter
       </p>
     </div>
-    
+
     <div v-if="loginError" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
       {{ loginError }}
     </div>
-    
+
     <div class="grid gap-6">
-      <div class="grid gap-2 text-bleu">
-        <Label for="login" class="text-bleu">Login</Label>
-        <Input 
-          id="login" 
-          v-model="formData.login" 
-          placeholder="username" 
-          required
-          :class="errors.login ? 'border-red-500' : ''"
-        />
+      <div class="grid gap-2">
+        <label for="login" class="text-primary">Email</Label>
+        <label :class="errors.login ? 'border-red-500 input' : 'input'">
+          <svg class="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" fill="none" stroke="currentColor">
+              <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+            </g>
+          </svg>
+
+          <input
+              type="email"
+              id="login"
+              v-model="formData.login"
+              placeholder="Votre email"
+              required
+          />
+        </label>
         <p v-if="errors.login" class="text-red-500 text-xs mt-1">{{ errors.login }}</p>
       </div>
-      
+
       <div class="grid gap-2">
         <div class="flex items-center">
-          <Label for="password" class="text-bleu">Mot de passe</Label>
-          <div
-            class="ml-auto text-sm underline-offset-4 hover:underline text-bleu text-right"
-          >
-            <RouterLink to="forget-password">
+          <label for="password" class="text-primary">Mot de passe</Label>
+          <div class="ml-auto text-sm text-right">
+            <RouterLink to="forget-password" class="link">
               Mot de passe oublié ?
             </RouterLink>
           </div>
         </div>
-        <Input 
-          id="password" 
-          type="password" 
-          v-model="formData.password" 
-          required
-          :class="errors.password ? 'border-red-500' : ''"
-        />
+        <label class="input" :class="errors.password ? 'border-red-500' : ''">
+          <svg class="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" fill="none" stroke="currentColor">
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </g>
+          </svg>
+          <input
+              id="password"
+              type="password"
+              placeholder="Votre mot de passe"
+              v-model="formData.password"
+              required
+          />
+        </label>
         <p v-if="errors.password" class="text-red-500 text-xs mt-1">{{ errors.password }}</p>
       </div>
-      
-      <Button 
-        type="submit" 
-        class="w-full text-white bg-bleu cursor-pointer"
-        :disabled="isSubmitting"
+
+      <button
+          type="submit"
+          class="w-full btn btn-primary"
+          :disabled="isSubmitting"
       >
         {{ isSubmitting ? 'Connexion en cours...' : 'Connexion' }}
       </Button>
     </div>
-    
-    <div class="text-center text-sm text-bleu">
+
+    <div class="text-center text-sm">
       Vous n'avez pas encore de compte ?
-      <div class="underline underline-offset-4 text-bleu">
-        <RouterLink to="register">
+      <div>
+        <RouterLink to="register" class="link">
           Inscrivez-vous
         </RouterLink>
       </div>

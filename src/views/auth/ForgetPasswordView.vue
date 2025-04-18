@@ -1,10 +1,7 @@
 <script setup>
-import { ref } from 'vue'
-import { useStore } from 'vuex'
-import { cn } from '@//lib/utils'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import {ref} from 'vue'
+import {useStore} from 'vuex'
+import {cn} from '@//lib/utils'
 
 const store = useStore()
 const email = ref('')
@@ -16,9 +13,9 @@ const handleSubmit = async (e) => {
   e.preventDefault()
   loading.value = true
   error.value = null
-  
+
   try {
-    const result = await store.dispatch('auth/forgotPassword', { email: email.value })
+    const result = await store.dispatch('auth/forgotPassword', {email: email.value})
     if (result.success) {
       success.value = true
     } else {
@@ -35,10 +32,10 @@ const handleSubmit = async (e) => {
 <template>
   <form :class="cn('flex flex-col gap-6')" @submit="handleSubmit">
     <div class="flex flex-col items-center gap-2 text-center">
-      <h1 class="text-2xl font-bold text-bleu">
+      <h1 class="text-2xl font-bold">
         Mot de passe oublié ?
       </h1>
-      <p class="text-balance text-sm text-bleu">
+      <p class="text-balance text-sm">
         Entrez votre email pour réinitialiser votre mot de passe
       </p>
     </div>
@@ -52,31 +49,36 @@ const handleSubmit = async (e) => {
     </div>
 
     <div v-if="!success" class="grid gap-6">
-      <div class="grid gap-2 text-bleu">
-        <Label for="email" class="text-bleu">Email</Label>
-        <Input 
-          id="email" 
-          v-model="email" 
-          type="email" 
-          placeholder="m@exemple.com" 
-          required
-        />
+      <div class="grid gap-2">
+        <label class="input">
+          <svg class="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" fill="none" stroke="currentColor">
+              <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+            </g>
+          </svg>
+          <input
+              type="email"
+              id="email"
+              v-model="email"
+              placeholder="Votre email"
+              required
+          />
+        </label>
       </div>
-      <Button 
-        type="submit" 
-        class="w-full text-white bg-bleu"
-        :disabled="loading"
+      <button
+          type="submit"
+          class="w-full btn btn-primary"
+          :disabled="loading"
       >
         {{ loading ? 'Chargement...' : 'Réinitialiser le mot de passe' }}
       </Button>
     </div>
-    <div class="text-center text-sm text-bleu">
+    <div class="text-center text-sm">
       Vous n'avez pas encore de compte ?
       <div>
-        <RouterLink to="register">
-          <div class="underline underline-offset-4 text-bleu">
-            Inscrivez-vous
-          </div>
+        <RouterLink to="register" class="link">
+          Inscrivez-vous
         </RouterLink>
       </div>
     </div>

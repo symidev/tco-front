@@ -1,8 +1,5 @@
 <script setup>
-import { ref } from 'vue'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import {ref} from 'vue'
 
 const props = defineProps({
   initialData: {
@@ -137,111 +134,119 @@ const updateDifferentAccountingInfo = () => {
 </script>
 
 <template>
-  <div class="grid gap-6">
-    <div class="grid gap-2 text-bleu">
-      <Label for="commercial_nom" class="text-bleu">Nom (contact commercial)</Label>
-      <Input
+  <div class="grid gap-1">
+    <h2 class="text-xl font-bold mb-4">Informations commerciales</h2>
+    <div class="grid gap-1">
+      <input
           id="commercial_nom"
           v-model="formData.commercial_nom"
           type="text"
+          placeholder="Nom"
+          class="input"
           :class="{'border-red-500': errors.commercial_nom}"
       />
       <p v-if="errors.commercial_nom" class="text-red-500 text-xs mt-1">{{ errors.commercial_nom }}</p>
     </div>
 
-    <div class="grid gap-2 text-bleu">
-      <Label for="commercial_prenom" class="text-bleu">Prénom (contact commercial)</Label>
-      <Input
+    <div class="grid gap-1">
+      <input
           id="commercial_prenom"
           v-model="formData.commercial_prenom"
           type="text"
+          placeholder="Prénom"
+          class="input"
           :class="{'border-red-500': errors.commercial_prenom}"
       />
       <p v-if="errors.commercial_prenom" class="text-red-500 text-xs mt-1">{{ errors.commercial_prenom }}</p>
     </div>
 
-    <div class="grid gap-2 text-bleu">
-      <Label for="commercial_fonction" class="text-bleu">Fonction (contact commercial)</Label>
-      <Input
+    <div class="grid gap-1">
+      <input
           id="commercial_fonction"
           v-model="formData.commercial_fonction"
           type="text"
+          placeholder="Fonction"
+          class="input"
       />
     </div>
 
-    <div class="grid gap-2 text-bleu">
-      <Label for="commercial_tel" class="text-bleu">Téléphone (contact commercial)</Label>
-      <Input
+    <div class="grid gap-1">
+      <input
           id="commercial_tel"
           v-model="formData.commercial_tel"
           type="tel"
+          placeholder="Téléphone"
+          class="input"
           :class="{'border-red-500': errors.commercial_tel}"
       />
       <p v-if="errors.commercial_tel" class="text-red-500 text-xs mt-1">{{ errors.commercial_tel }}</p>
     </div>
 
-    <div class="grid gap-2 text-bleu">
-      <Label for="commercial_rue" class="text-bleu">Rue (contact commercial)</Label>
-      <Input
+    <div class="grid gap-1">
+      <input
           id="commercial_rue"
           v-model="formData.commercial_rue"
           type="text"
+          placeholder="Rue"
+          class="input"
       />
     </div>
 
-    <div class="grid gap-2 text-bleu">
-      <Label for="commercial_cp" class="text-bleu">Code postal (contact commercial)</Label>
-      <Input
+    <div class="grid gap-1">
+      <input
           id="commercial_cp"
           v-model="formData.commercial_cp"
           type="text"
+          placeholder="Code postal"
+          class="input"
           :class="{'border-red-500': errors.commercial_cp}"
       />
       <p v-if="errors.commercial_cp" class="text-red-500 text-xs mt-1">{{ errors.commercial_cp }}</p>
     </div>
 
-    <div class="grid gap-2 text-bleu">
-      <Label for="commercial_ville" class="text-bleu">Ville (contact commercial)</Label>
-      <Input
+    <div class="grid gap-1">
+      <input
           id="commercial_ville"
           v-model="formData.commercial_ville"
           type="text"
+          placeholder="Ville"
+          class="input"
       />
     </div>
 
     <!-- Option pour les informations comptables différentes -->
-    <div class="flex items-center gap-2 mt-4">
+    <div class="flex items-center gap-1 mt-4">
       <input
           type="checkbox"
           id="different_accounting"
+          class="toggle toggle-primary"
           v-model="differentAccountingInfo"
-          class="w-4 h-4"
           @change="updateDifferentAccountingInfo"
       />
-      <Label for="different_accounting" class="text-bleu">Informations comptables différentes</Label>
+      <label for="different_accounting" class="text-primary">Informations comptables différentes</Label>
     </div>
 
-    <div class="flex gap-4">
-      <Button
+    <div class="flex gap-4 mt-4">
+      <button
           type="button"
           @click="prevStep"
-          class="w-1/2 text-bleu border border-bleu bg-white hover:text-bleu hover:bg-white cursor-pointer"
+          class="w-1/2 btn btn-neutral"
       >
         Précédent
       </Button>
-      <Button
+      <button
           v-if="differentAccountingInfo"
           type="button"
           @click="nextStep"
-          class="w-1/2 text-white bg-bleu cursor-pointer"
+          class="w-1/2 btn btn-primary"
       >
         Suivant
       </Button>
-      <Button
+      <button
           v-else
           type="button"
           @click="submitForm"
-          class="w-1/2 text-white bg-bleu cursor-pointer"
+          class="w-1/2 btn btn-primary"
           :disabled="isSubmitting"
       >
         {{ isSubmitting ? 'Création en cours...' : 'Enregistrer' }}

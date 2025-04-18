@@ -1,9 +1,6 @@
 <script setup>
 import { ref, computed, watchEffect } from 'vue'
 import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 
 const props = defineProps({
   initialData: {
@@ -169,57 +166,60 @@ const nextStep = () => {
 </script>
 
 <template>
-  <div class="grid gap-6">
-    <div class="grid gap-2 text-bleu">
-      <Label for="email" class="text-bleu">Email *</Label>
-      <Input
+  <div class="grid gap-3">
+    <div class="grid gap-1">
+      <input
           id="email"
           v-model="formData.email"
           type="email"
-          placeholder="m@exemple.com"
+          placeholder="Email *"
+          class="input"
           :class="{'border-red-500': errors.email}"
           @blur="validateField('email')"
       />
       <p v-if="errors.email" class="text-red-500 text-xs mt-1">{{ errors.email }}</p>
     </div>
 
-    <div class="grid gap-2">
-      <Label for="password" class="text-bleu">Mot de passe *</Label>
-      <Input
+    <div class="grid gap-1">
+      <input
           id="password"
           v-model="formData.password"
           type="password"
+          placeholder="Mot de passe *"
+          class="input"
           :class="{'border-red-500': errors.password}"
           @blur="validateField('password')"
       />
       <p v-if="errors.password" class="text-red-500 text-xs mt-1">{{ errors.password }}</p>
     </div>
 
-    <div class="grid gap-2 text-bleu">
-      <Label for="raison_sociale" class="text-bleu">Raison sociale</Label>
-      <Input
+    <div class="grid gap-1">
+      <input
           id="raison_sociale"
           v-model="formData.user_raison_sociale"
           type="text"
+          placeholder="Raison sociale"
+          class="input"
           :class="{'border-red-500': errors.user_raison_sociale}"
       />
       <p v-if="errors.user_raison_sociale" class="text-red-500 text-xs mt-1">{{ errors.user_raison_sociale }}</p>
     </div>
 
-    <div class="grid gap-2 text-bleu">
-      <Label for="siret" class="text-bleu">Siret</Label>
-      <Input
+    <div class="grid gap-1">
+      <input
           id="siret"
           v-model="formData.user_siret"
           type="text"
+          placeholder="Siret"
+          class="input"
           :class="{'border-red-500': errors.user_siret}"
       />
       <p v-if="errors.user_siret" class="text-red-500 text-xs mt-1">{{ errors.user_siret }}</p>
     </div>
 
-    <div class="grid gap-2 text-bleu">
-      <Label class="text-bleu">Canal de connaissance</Label>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6">
+    <div class="grid gap-1">
+      <label class="text-primary">Canal de connaissance</Label>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-1 gap-x-6">
         <!-- Options normales (sauf "autre") -->
         <div
             v-for="option in connaissanceOptions.filter(opt => opt.value !== 'autre')"
@@ -235,7 +235,7 @@ const nextStep = () => {
                 @change="toggleConnaissance(option.value)"
                 class="w-4 h-4 flex-shrink-0"
             />
-            <Label :for="`connaissance-${option.value}`" class="text-sm text-bleu">{{ option.label }}</Label>
+            <label :for="`connaissance-${option.value}`" class="text-sm">{{ option.label }}</Label>
           </div>
         </div>
 
@@ -244,7 +244,7 @@ const nextStep = () => {
             v-if="connaissanceOptions.some(opt => opt.value === 'autre')"
             class="flex items-center col-span-1 sm:col-span-2"
         >
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-1">
             <input
                 type="checkbox"
                 id="connaissance-autre"
@@ -253,16 +253,16 @@ const nextStep = () => {
                 @change="toggleConnaissance('autre')"
                 class="w-4 h-6 flex-shrink-0"
             />
-            <Label for="connaissance-autre" class="text-sm text-bleu">
+            <label for="connaissance-autre" class="text-sm">
               {{ connaissanceOptions.find(opt => opt.value === 'autre')?.label || 'Autre' }}
             </Label>
           </div>
 
-          <Input
+          <input
               v-if="isOtherKnowledgeSelected"
               v-model="formData.user_connaissance_autre"
               type="text"
-              class="h-6 ml-2 flex-grow"
+              class="h-6 ml-2 flex-grow input"
               placeholder="Précisez..."
               @blur="validateField('user_connaissance')"
           />
@@ -273,9 +273,9 @@ const nextStep = () => {
       </div>
     </div>
 
-    <div class="grid gap-2 text-bleu">
-      <Label class="text-bleu">Intérêt offre</Label>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6">
+    <div class="grid gap-1">
+      <label class="text-primary">Intérêt offre</Label>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-1 gap-x-6">
         <div v-for="option in interetOptions" :key="option.value" class="flex items-center gap-2">
           <input
               type="checkbox"
@@ -285,7 +285,7 @@ const nextStep = () => {
               @change="toggleInteret(option.value)"
               class="w-4 h-4 flex-shrink-0"
           />
-          <Label :for="`interet-${option.value}`" class="text-sm text-bleu">{{ option.label }}</Label>
+          <label :for="`interet-${option.value}`" class="text-sm">{{ option.label }}</Label>
         </div>
         <p v-if="errors.user_offre" class="text-red-500 text-xs mt-1 col-span-1 sm:col-span-2">
           {{ errors.user_offre }}
@@ -294,7 +294,7 @@ const nextStep = () => {
     </div>
 
     <div class="text-right">
-      <Button type="button" @click="nextStep" class="w-1/2 text-white bg-bleu cursor-pointer">
+      <button type="button" @click="nextStep" class="w-1/2 btn btn-primary">
         Suivant
       </Button>
     </div>
