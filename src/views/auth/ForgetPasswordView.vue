@@ -75,10 +75,10 @@ const handleSubmit = async (e) => {
       </Button>
     </div>
     <div class="text-center text-sm">
-      Vous n'avez pas encore de compte ?
-      <div>
-        <RouterLink to="register" class="link">
-          Inscrivez-vous
+      Vous avez déjà un compte ?
+      <div class="underline underline-offset-4">
+        <RouterLink to="/login">
+          Connectez-vous
         </RouterLink>
       </div>
     </div>
