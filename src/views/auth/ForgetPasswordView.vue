@@ -40,8 +40,8 @@ const handleSubmit = async (e) => {
       </p>
     </div>
 
-    <div v-if="success" class="p-4 bg-green-100 border border-green-400 text-green-700 rounded">
-      Un email avec un lien pour réinitialiser votre mot de passe a été envoyé à votre adresse email.
+    <div v-if="success" class="p-4 bg-white border border-success text-success rounded">
+      Vous allez recevoir un email avec un lien pour réinitialiser votre mot de passe si cet email est associé à un compte.
     </div>
 
     <div role="alert" v-if="error" class="alert alert-error alert-soft">

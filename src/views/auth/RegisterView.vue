@@ -1,7 +1,7 @@
 <script setup>
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { toast } from 'vue-sonner'
+import {ref, computed} from 'vue'
+import {useRouter} from 'vue-router'
+import {toast} from 'vue-sonner'
 import axios from 'axios'
 
 import StepIndicator from '@/views/auth/register/StepIndicator.vue'
@@ -63,7 +63,7 @@ const updateDifferentAccountingInfo = (value) => {
 
 // Mettre à jour les données du formulaire depuis les étapes enfants
 const updateFormData = (stepData, step) => {
-  formData.value = { ...formData.value, ...stepData }
+  formData.value = {...formData.value, ...stepData}
 }
 
 // Préparer les données API
@@ -110,13 +110,12 @@ const submitForm = async (isValid) => {
       data: JSON.stringify(apiData)
     })
 
-    console.log('User registered successfully:', response.data)
-
     // Rediriger vers la page de connexion avec un message de succès
     router.push('/login')
 
     // Afficher un message de succès avec sonner
-    toast('Compte créé avec succès', {
+    toast.success('Compte créé avec succès', {
+      duration: 10000,
       description: 'Votre compte doit maintenant être validé par un administrateur. Vous recevrez un email lorsque votre compte sera activé.',
     })
 
@@ -128,7 +127,7 @@ const submitForm = async (isValid) => {
       const status = error.response.status
       const errorData = error.response.data
 
-      switch(status) {
+      switch (status) {
         case 400:
           // Erreur de validation ou données manquantes
           if (errorData.error && Array.isArray(errorData.error)) {
