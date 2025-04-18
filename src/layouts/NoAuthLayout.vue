@@ -1,4 +1,5 @@
 <script setup>
+import { Toaster } from 'vue-sonner'
 </script>
 
 <template>
@@ -24,5 +25,6 @@
         >
       </div>
     </div>
+    <Toaster />
   </main>
 </template>
