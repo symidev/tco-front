@@ -1,6 +1,7 @@
 <!-- Sidebar.vue -->
 <script setup>
 import { Car, FileText, Book, Calculator, ChevronsLeft, Home } from 'lucide-vue-next'
+import { useRoute } from 'vue-router'
 
 const props = defineProps({
   isOpen: Boolean,
@@ -8,6 +9,9 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['toggleSidebar', 'closeSidebar'])
+
+// Récupérer la route active
+const route = useRoute()
 
 // Fermer la sidebar lorsqu'un lien est cliqué (uniquement en mode mobile)
 const closeSidebarOnMobile = () => {
@@ -20,6 +24,20 @@ const closeSidebarOnMobile = () => {
 const toggleSidebar = () => {
   emit('toggleSidebar')
 }
+
+// Vérifier si un lien est actif
+const isActive = (path) => {
+  return route.path === path
+}
+
+// Liste des éléments du menu
+const menuItems = [
+  { path: '/', icon: Home, label: 'Tableau de bord' },
+  { path: '/vehicules', icon: Car, label: 'Véhicules' },
+  { path: '/comparos', icon: FileText, label: 'Comparatifs' },
+  { path: '/catalogues', icon: Book, label: 'Catalogues' },
+  { path: '/calc-aen', icon: Calculator, label: 'Calculateur AEN' }
+]
 </script>
 
 <template>
@@ -38,34 +56,14 @@ const toggleSidebar = () => {
 
     <!-- Éléments du menu -->
     <ul class="menu p-4 gap-2 flex-1">
-      <li>
-        <RouterLink to="/" @click="closeSidebarOnMobile" class="flex items-center">
-          <Home class="w-5 h-5 mr-2" />
-          <span>Tableau de bord</span>
-        </RouterLink>
-      </li><li>
-
-        <RouterLink to="/vehicules" @click="closeSidebarOnMobile" class="flex items-center">
-          <Car class="w-5 h-5 mr-2" />
-          <span>Véhicules</span>
-        </RouterLink>
-      </li>
-      <li>
-        <RouterLink to="/comparos" @click="closeSidebarOnMobile" class="flex items-center">
-          <FileText class="w-5 h-5 mr-2" />
-          <span>Comparatifs</span>
-        </RouterLink>
-      </li>
-      <li>
-        <RouterLink to="/catalogues" @click="closeSidebarOnMobile" class="flex items-center">
-          <Book class="w-5 h-5 mr-2" />
-          <span>Catalogues</span>
-        </RouterLink>
-      </li>
-      <li>
-        <RouterLink to="/calc-aen" @click="closeSidebarOnMobile" class="flex items-center">
-          <Calculator class="w-5 h-5 mr-2" />
-          <span>Calculateur AEN</span>
+      <li v-for="item in menuItems" :key="item.path">
+        <RouterLink
+            :to="item.path"
+            @click="closeSidebarOnMobile"
+            :class="['flex items-center', isActive(item.path) ? 'text-primary font-medium rounded-lg hover:bg-base-200 cursor-default' : '']"
+        >
+          <component :is="item.icon" class="w-5 h-5 mr-2" />
+          <span>{{ item.label }}</span>
         </RouterLink>
       </li>
     </ul>

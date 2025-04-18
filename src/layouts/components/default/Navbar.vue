@@ -30,13 +30,15 @@ const toggleSidebar = () => {
       </RouterLink>
 
       <!-- Barre de recherche à gauche (uniquement en mode non-mobile) -->
-      <div v-if="!props.isMobile" class="input input-bordered rounded-4xl input-sm bg-base-200 relative">
-        <Search class="absolute left-2 top-1/2 transform -translate-y-1/2"/>
-        <input
-            type="text"
-            placeholder="Rechercher"
-            class="ml-6 w-40 focus:w-60 transition-all duration-300 ease-in-out"
-        />
+      <div v-if="!props.isMobile" class="relative flex items-center w-auto min-w-[10rem]">
+        <div class="input input-bordered rounded-4xl input-sm bg-base-200 flex items-center w-full overflow-hidden">
+          <Search class="flex-shrink-0 ml-2"/>
+          <input
+              type="text"
+              placeholder="Rechercher"
+              class="ml-2 w-40 focus:w-60 transition-all duration-300 ease-in-out bg-transparent border-none focus:outline-none"
+          />
+        </div>
       </div>
     </div>
 
