@@ -1,8 +1,16 @@
 import { createStore } from 'vuex'
 import auth from './auth'
+import user from './user'
+import { setupApiInterceptors } from '@/lib/utils'
 
-export default createStore({
+const store = createStore({
   modules: {
-    auth
+    auth,
+    user
   }
 })
+
+// Initialiser les intercepteurs avec le store
+setupApiInterceptors(store)
+
+export default store

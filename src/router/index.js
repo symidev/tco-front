@@ -4,6 +4,9 @@ import Registerview from '../views/auth/RegisterView.vue'
 import ForgetPasswordView from '../views/auth/ForgetPasswordView.vue'
 import HomeView from '../views/HomeView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
+import AccountLayout from '../views/account/AccountLayout.vue'
+import UserProfile from '../components/user/UserProfile.vue'
+import PasswordView from '../views/account/PasswordView.vue'
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -37,6 +40,25 @@ const router = createRouter({
             name: 'calc-aen',
             component: () => import('../views/CalcAenView.vue'),
             meta: { layout: 'DefaultLayout', requiresAuth: true }
+        },
+        {
+            path: '/account',
+            component: AccountLayout,
+            meta: { layout: 'DefaultLayout', requiresAuth: true },
+            children: [
+                {
+                    path: '',
+                    name: 'profile',
+                    component: UserProfile,
+                    meta: { requiresAuth: true }
+                },
+                {
+                    path: 'password',
+                    name: 'password',
+                    component: PasswordView,
+                    meta: { requiresAuth: true }
+                }
+            ]
         },
         {
             path: '/login',

@@ -1,11 +1,12 @@
 <script setup>
-import {ref, reactive} from 'vue'
-import {useRouter} from 'vue-router'
+import {ref, reactive, onMounted} from 'vue'
+import {useRouter, useRoute} from 'vue-router'
 import {useStore} from 'vuex'
 import {cn} from '@/lib/utils'
 
 const store = useStore()
 const router = useRouter()
+const route = useRoute() // Pour accéder aux paramètres de route
 
 const formData = reactive({
   login: '',
@@ -18,6 +19,16 @@ const errors = reactive({
 })
 const isSubmitting = ref(false)
 const loginError = ref('')
+const sessionExpired = ref(false) // État pour suivre si la session a expiré
+
+// Vérifier si l'utilisateur a été redirigé en raison d'une session expirée
+onMounted(() => {
+  // Vérifier le paramètre 'reason' dans l'URL
+  if (route.query.reason === 'se') {
+    sessionExpired.value = true
+    loginError.value = 'Votre session a expiré. Veuillez vous reconnecter pour continuer.'
+  }
+})
 
 const validatePassword = (password) => {
   const minLength = 8
@@ -54,6 +65,7 @@ const handleSubmit = async () => {
   errors.login = ''
   errors.password = ''
   loginError.value = ''
+  sessionExpired.value = false // Réinitialiser le message de session expirée
 
   // Validate form
   let isValid = true
@@ -80,7 +92,8 @@ const handleSubmit = async () => {
     })
 
     if (result.success) {
-      router.push('/')
+      // Si la connexion réussit, effacer les paramètres de l'URL
+      router.replace('/')
     } else {
       loginError.value = result.error || 'Échec de connexion'
     }
@@ -103,13 +116,15 @@ const handleSubmit = async () => {
       </p>
     </div>
 
-    <div role="alert" v-if="loginError" class="alert alert-error alert-soft">
+    <!-- Alerte pour session expirée ou erreur de connexion -->
+    <div role="alert" v-if="sessionExpired || loginError"
+         class="alert alert-error alert-soft">
       {{ loginError }}
     </div>
 
     <div class="grid gap-6">
       <div class="grid gap-2">
-        <label for="login" class="text-primary">Email</Label>
+        <label for="login" class="text-primary">Email</label>
         <label :class="errors.login ? 'border-error input' : 'input'">
           <svg class="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
             <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" fill="none" stroke="currentColor">
@@ -131,7 +146,7 @@ const handleSubmit = async () => {
 
       <div class="grid gap-2">
         <div class="flex items-center">
-          <label for="password" class="text-primary">Mot de passe</Label>
+          <label for="password" class="text-primary">Mot de passe</label>
           <div class="ml-auto text-sm text-right">
             <RouterLink to="forget-password" class="link">
               Mot de passe oublié ?
@@ -162,7 +177,7 @@ const handleSubmit = async () => {
           :disabled="isSubmitting"
       >
         {{ isSubmitting ? 'Connexion en cours...' : 'Connexion' }}
-      </Button>
+      </button>
     </div>
 
     <div class="text-center text-sm">

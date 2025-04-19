@@ -41,7 +41,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen flex" data-theme="dark">
+  <div class="min-h-screen flex overflow-hidden" data-theme="dark">
     <!-- Sidebar component -->
     <Sidebar
         :isOpen="isOpen"
@@ -59,8 +59,11 @@ onUnmounted(() => {
 
     <!-- Contenu principal -->
     <div
-        class="flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out px-0 md:px-8"
-        :class="{'ml-0': isMobile || !isOpen, 'ml-56': !isMobile && isOpen}"
+        class="flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out overflow-x-hidden"
+        :class="{
+          'ml-0 w-full': isMobile || !isOpen,
+          'ml-56 w-[calc(100%-14rem)]': !isMobile && isOpen
+        }"
     >
       <!-- Navigation Bar -->
       <Navbar
@@ -70,7 +73,7 @@ onUnmounted(() => {
       />
 
       <!-- Main Content -->
-      <main class="container max-w-7xl mx-auto px-4 py-8 flex-1">
+      <main class="w-full px-2 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 flex-1">
         <slot></slot>
       </main>
     </div>
