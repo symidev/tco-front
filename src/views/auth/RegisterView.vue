@@ -100,10 +100,11 @@ const submitForm = async (isValid) => {
   isSubmitting.value = true
 
   try {
+    const API_URL = import.meta.env.VITE_API_BASE_URL;
     const apiData = prepareApiData()
     const response = await axios({
       method: 'post',
-      url: 'https://api.tco/api/user',
+      url: API_URL + '/api/user',
       headers: {
         'Content-Type': 'application/vnd.api+json'
       },
