@@ -17,10 +17,8 @@ const isOtherKnowledgeSelected = computed(() => {
 
 // Options for interests
 const interetOptions = [
-  {value: 'comparo', label: 'Comparo'},
-  {value: 'comparo_multi', label: 'Comparo multi'},
-  {value: 'premium', label: 'Premium'},
-  {value: 'nsp', label: 'Je ne sais pas'}
+  {value: 'comparo', label: 'TCO Comparator'},
+  {value: 'catalogue', label: 'TCO creator'},
 ]
 
 // Options for knowledge channels
