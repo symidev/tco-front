@@ -16,11 +16,17 @@ export default {
   setLoading(state, loading) {
     state.loading = loading
   },
+  setIsAutoConnect(state, isAutoConnect) {
+    state.isAutoConnect = isAutoConnect
+    localStorage.setItem('isAutoConnect', isAutoConnect)
+  },
   clearAuth(state) {
     state.token = null
     state.refreshToken = null
     state.user = null
+    state.isAutoConnect = false
     localStorage.removeItem('token')
     localStorage.removeItem('refreshToken')
+    localStorage.removeItem('isAutoConnect')
   }
 }

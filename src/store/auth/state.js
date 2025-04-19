@@ -3,5 +3,6 @@ export default {
   refreshToken: localStorage.getItem('refreshToken') || null,
   user: null,
   error: null,
-  loading: false
+  loading: false,
+  isAutoConnect: localStorage.getItem('isAutoConnect') === 'true'
 }

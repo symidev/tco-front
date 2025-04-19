@@ -28,6 +28,32 @@ export default {
     }
   },
 
+  async autoConnect({ commit }, { token }) {
+    try {
+      commit('setLoading', true)
+      commit('setError', null)
+
+      const response = await apiClient.get(`/jwt/refreshByJwt`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+
+      const { token: accessToken, refresh_token } = response.data
+
+      commit('setToken', accessToken)
+      commit('setRefreshToken', refresh_token)
+      commit('setIsAutoConnect', true)
+
+      return { success: true }
+    } catch (error) {
+      commit('setError', error.response?.data?.message || 'Échec de connexion automatique')
+      return { success: false, error: error.response?.data?.message || 'Échec de connexion automatique' }
+    } finally {
+      commit('setLoading', false)
+    }
+  },
+
   async refreshToken({ commit, state }) {
     try {
       const response = await apiClient.post(`/jwt/refresh`, {

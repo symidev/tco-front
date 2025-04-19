@@ -61,6 +61,12 @@ const router = createRouter({
             ]
         },
         {
+            path: '/autoconnect/:token?',
+            name: 'autoconnect',
+            component: () => import('../views/auth/AutoConnectView.vue'),
+            meta: { layout: 'EmptyLayout', requiresAuth: false }
+        },
+        {
             path: '/login',
             name: 'login',
             component: LoginView,
@@ -92,7 +98,7 @@ const router = createRouter({
             path: '/:pathMatch(.*)*',
             name: 'not-found',
             component: NotFoundView,
-            meta: { requiresAuth: false }
+            meta: { layout: 'DefaultLayout', requiresAuth: false }
         }
     ],
 })

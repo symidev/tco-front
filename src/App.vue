@@ -5,16 +5,18 @@ import { useRoute } from 'vue-router'
 import { useStore } from 'vuex'
 import NoAuthLayout from '@/layouts/NoAuthLayout.vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
+import EmptyLayout from '@/layouts/EmptyLayout.vue'
 
 const layouts = {
-  NoAuthLayout
+  NoAuthLayout,
+  DefaultLayout
 }
 
 const route = useRoute()
 const store = useStore()
 
 // Computed layout based on route meta
-const layout = computed(() => layouts[route.meta.layout] || DefaultLayout)
+const layout = computed(() => layouts[route.meta.layout] || EmptyLayout)
 
 // Check if user is authenticated
 const isAuthenticated = computed(() => !!store.state.auth.token)

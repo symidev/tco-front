@@ -74,5 +74,31 @@ export default {
     } finally {
       commit('setLoading', false)
     }
+  },
+  
+  async changePasswordAfterAutoConnect({ commit }, { newPassword }) {
+    try {
+      commit('setLoading', true)
+      commit('setError', null)
+
+      await apiClient({
+        method: 'patch',
+        url: '/api/change-password/reset',
+        headers: {
+          'Content-Type': 'application/vnd.api+json'
+        },
+        data: JSON.stringify({
+          newpassword: newPassword
+        })
+      })
+
+      return { success: true }
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || 'Échec du changement de mot de passe'
+      commit('setError', errorMessage)
+      return { success: false, error: errorMessage }
+    } finally {
+      commit('setLoading', false)
+    }
   }
 }

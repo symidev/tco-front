@@ -1,10 +1,13 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useStore } from 'vuex'
 import { toast } from 'vue-sonner'
 import { Lock, CheckCircle } from 'lucide-vue-next'
 
 const store = useStore()
+
+// Check if this is coming from auto-connect
+const isAutoConnect = computed(() => store.state.auth.isAutoConnect)
 
 // Form data
 const formData = ref({
@@ -30,6 +33,12 @@ const errors = ref({
 const validateField = (field) => {
   switch (field) {
     case 'currentPassword':
+      // Skip validation for currentPassword if coming from auto-connect
+      if (isAutoConnect.value) {
+        errors.value.currentPassword = ''
+        break
+      }
+      
       if (!formData.value.currentPassword) {
         errors.value.currentPassword = "Le mot de passe actuel est requis"
       } else {
@@ -69,7 +78,11 @@ const validateField = (field) => {
 
 // Validate all form fields
 const validateForm = () => {
-  validateField('currentPassword')
+  // For auto-connect, skip currentPassword validation
+  if (!isAutoConnect.value) {
+    validateField('currentPassword')
+  }
+  
   validateField('newPassword')
   validateField('confirmPassword')
 
@@ -89,10 +102,23 @@ const changePassword = async () => {
   isLoading.value = true
 
   try {
-    const result = await store.dispatch('user/changePassword', {
-      currentPassword: formData.value.currentPassword,
-      newPassword: formData.value.newPassword
-    })
+    // Different API call depending on isAutoConnect
+    let result
+    if (isAutoConnect.value) {
+      result = await store.dispatch('user/changePasswordAfterAutoConnect', {
+        newPassword: formData.value.newPassword
+      })
+      
+      // Reset auto-connect flag if successful
+      if (result.success) {
+        store.commit('auth/setIsAutoConnect', false)
+      }
+    } else {
+      result = await store.dispatch('user/changePassword', {
+        currentPassword: formData.value.currentPassword,
+        newPassword: formData.value.newPassword
+      })
+    }
 
     if (result.success) {
       // Reset form
@@ -140,7 +166,7 @@ const changePassword = async () => {
         </div>
 
         <form @submit.prevent="changePassword" class="mt-6 space-y-4">
-          <div class="form-control w-full">
+          <div v-if="!isAutoConnect" class="form-control w-full">
             <label class="label">
               <span class="label-text">Mot de passe actuel</span>
             </label>
