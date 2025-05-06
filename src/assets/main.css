@@ -79,3 +79,33 @@
   --depth: 1;
   --noise: 0;
 }
+
+@layer components {
+  /* bouton du trigger */
+  .cb-button {
+    @apply w-full justify-between
+    border border-[var(--color-base-content)]
+    bg-[var(--color-base-100)]
+    text-[var(--color-base-content)];
+  }
+
+  /* pop‑up du combobox */
+  .cb-content {
+    @apply mt-1 w-[200px]
+    rounded-md border
+    bg-[var(--color-base-100)]
+    text-[var(--color-base-content)]
+    shadow-lg;
+  }
+
+  /* item standard */
+  .cb-item {
+    @apply px-2 py-1 text-sm rounded-md cursor-pointer;
+  }
+
+  /* item actif */
+  .cb-item[data-state="active"] {
+    @apply bg-[var(--color-base-200)]
+    text-[var(--color-base-content)];
+  }
+}
