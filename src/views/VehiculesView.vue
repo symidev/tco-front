@@ -17,7 +17,7 @@ const value = ref<typeof frameworks[0]>()
 </script>
 
 <template>
-  <Combobox v-model="value" by="label">
+  <!--<Combobox v-model="value" by="label">
     <ComboboxAnchor as-child>
       <ComboboxTrigger as-child>
         <Button
@@ -76,5 +76,5 @@ const value = ref<typeof frameworks[0]>()
         </ComboboxItem>
       </ComboboxGroup>
     </ComboboxList>
-  </Combobox>
+  </Combobox>-->
 </template>
