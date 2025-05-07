@@ -24,9 +24,9 @@ const isAuthenticated = computed(() => !!store.state.auth.token)
 // On charge le profil de l'utilisateur uniquement si on est sur la page de profil
 // Cela évite de faire l'appel sur toutes les pages
 onMounted(() => {
-  if (isAuthenticated.value) {
+  /*if (isAuthenticated.value) {
     store.dispatch('user/fetchUserProfile')
-  }
+  }*/
 })
 </script>
 <template>

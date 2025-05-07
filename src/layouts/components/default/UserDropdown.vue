@@ -65,7 +65,6 @@ const logout = () => {
       'group': !isMobile,
       'is-open': isMenuOpen
     }"
-      @mouseenter="!isMobile && loadUserProfile()"
       @click="toggleMenu"
   >
 

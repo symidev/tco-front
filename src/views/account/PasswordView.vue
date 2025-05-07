@@ -38,7 +38,7 @@ const validateField = (field) => {
         errors.value.currentPassword = ''
         break
       }
-      
+
       if (!formData.value.currentPassword) {
         errors.value.currentPassword = "Le mot de passe actuel est requis"
       } else {
@@ -82,7 +82,7 @@ const validateForm = () => {
   if (!isAutoConnect.value) {
     validateField('currentPassword')
   }
-  
+
   validateField('newPassword')
   validateField('confirmPassword')
 
@@ -108,7 +108,7 @@ const changePassword = async () => {
       result = await store.dispatch('user/changePasswordAfterAutoConnect', {
         newPassword: formData.value.newPassword
       })
-      
+
       // Reset auto-connect flag if successful
       if (result.success) {
         store.commit('auth/setIsAutoConnect', false)
@@ -168,7 +168,7 @@ const changePassword = async () => {
         <form @submit.prevent="changePassword" class="mt-6 space-y-4">
           <div v-if="!isAutoConnect" class="form-control w-full">
             <label class="label">
-              <span class="label-text">Mot de passe actuel</span>
+              <span class="label-text mb-1">Mot de passe actuel</span>
             </label>
             <input
                 v-model="formData.currentPassword"
@@ -185,7 +185,7 @@ const changePassword = async () => {
 
           <div class="form-control w-full">
             <label class="label">
-              <span class="label-text">Nouveau mot de passe</span>
+              <span class="label-text mb-1">Nouveau mot de passe</span>
             </label>
             <input
                 v-model="formData.newPassword"
@@ -199,16 +199,15 @@ const changePassword = async () => {
               <span class="label-text-alt text-error">{{ errors.newPassword }}</span>
             </label>
             <label v-else class="label">
-              <span class="label-text-alt text-primary whitespace-normal break-words">
-                Le mot de passe doit contenir au moins 8 caractères, une majuscule,
-                une minuscule, un chiffre et un caractère spécial.
+              <span class="label-text-alt text-primary whitespace-normal break-words text-justify text-xs mx-2">
+                Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.
               </span>
             </label>
           </div>
 
           <div class="form-control w-full">
             <label class="label">
-              <span class="label-text">Confirmez le nouveau mot de passe</span>
+              <span class="label-text mb-1">Confirmez le nouveau mot de passe</span>
             </label>
             <input
                 v-model="formData.confirmPassword"
