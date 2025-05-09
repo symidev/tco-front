@@ -1,9 +1,10 @@
 <!-- DefaultLayout.vue -->
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import {ref, onMounted, onUnmounted} from 'vue'
 import Sidebar from '@/layouts/components/default/Sidebar.vue'
 import Navbar from '@/layouts/components/default/Navbar.vue'
 import SidebarToggleButton from '@/layouts/components/default/SidebarToggleButton.vue'
+import {Toaster} from 'vue-sonner'
 
 const isOpen = ref(true) // Sidebar ouverte par défaut
 const isMobile = ref(false)
@@ -82,6 +83,18 @@ onUnmounted(() => {
     <SidebarToggleButton
         v-if="!isOpen && !isMobile"
         @click="toggleSidebar"
+    />
+    <Toaster
+        :duration="5000"
+        :toastOptions="{
+    unstyled: true,
+    classes: {
+      error: 'bg-error-content text-error w-[300px] border border-error rounded-lg py-2 px-5 flex flex-row gap-2 items-center text-sm',
+      success: 'bg-white text-success w-[300px] border border-success rounded-lg py-2 px-5 flex flex-row gap-2 items-center text-sm',
+      warning: 'bg-warning-content text-warning w-[300px] border border-warning rounded-lg py-2 px-5 flex flex-row gap-2 items-center text-sm',
+      info: 'bg-info-content text-info w-[300px] border border-info rounded-lg py-2 px-5 flex flex-row gap-2 items-center text-sm'
+    }
+  }"
     />
   </div>
 </template>
