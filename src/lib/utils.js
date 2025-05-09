@@ -26,7 +26,6 @@ export function setupApiInterceptors(store) {
         config => {
             // Ne pas ajouter le token pour les routes d'authentification
             const isAuthRoute = config.url.includes('/jwt/token') || config.url.includes('/jwt/refresh');
-
             if (!isAuthRoute && store.state.auth.token) {
                 config.headers.Authorization = `Bearer ${store.state.auth.token}`;
             }
