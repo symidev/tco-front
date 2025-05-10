@@ -3,7 +3,7 @@ import {Toaster} from 'vue-sonner'
 </script>
 
 <template>
-  <main data-theme="light">
+  <main>
     <div class="grid min-h-svh lg:grid-cols-2">
       <div class="flex flex-col gap-4 p-6 md:p-10">
         <div class="flex justify-center gap-2 md:justify-start">
@@ -12,7 +12,7 @@ import {Toaster} from 'vue-sonner'
           </RouterLink>
         </div>
         <div class="flex flex-1 items-center justify-center">
-          <div class="w-full max-w-xs">
+          <div class="w-full max-w-md">
             <slot></slot>
           </div>
         </div>
@@ -21,7 +21,7 @@ import {Toaster} from 'vue-sonner'
         <img
             src="../assets/images/bg-login.jpg"
             alt="Image"
-            class="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+            class="absolute inset-0 h-full w-full object-cover"
         >
       </div>
     </div>

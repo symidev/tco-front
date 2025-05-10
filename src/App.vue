@@ -6,7 +6,7 @@ import {useStore} from 'vuex'
 import NoAuthLayout from '@/layouts/NoAuthLayout.vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import EmptyLayout from '@/layouts/EmptyLayout.vue'
-import {toast} from 'vue-sonner'
+import Toast from 'primevue/toast';
 
 const layouts = {
   NoAuthLayout,
@@ -25,7 +25,7 @@ const checkRfeParameter = query => {
   if (urlParams.has('rfe')) {
     // Utiliser setTimeout pour s'assurer que l'application est complètement montée
     setTimeout(() => {
-      toast.error("Une erreur est survenue lors du téléchargement du fichier. Veuillez réessayer.");
+      toast.add({ severity: 'error', summary: 'Une erreur est survenue lors du téléchargement du fichier', detail: 'Veuillez réessayer.', life: 3000 });
     }, 500);
   }
 };
@@ -38,4 +38,5 @@ checkRfeParameter();
   <component :is="layout">
     <RouterView/>
   </component>
+  <Toast position="bottom-right"/>
 </template>

@@ -1,87 +1,107 @@
 <script setup>
-import {ref, reactive, onMounted} from 'vue'
+import {ref, reactive, computed, onMounted} from 'vue'
 import {useRouter, useRoute} from 'vue-router'
 import {useStore} from 'vuex'
+import {useToast} from 'primevue/usetoast'
 import {cn} from '@/lib/utils'
+import InputText from 'primevue/inputtext'
+import IconField from 'primevue/iconfield';
+import InputIcon from 'primevue/inputicon';
+import FloatLabel from 'primevue/floatlabel';
+import Password from 'primevue/password'
+import Button from 'primevue/button'
+import Card from 'primevue/card'
+import Divider from 'primevue/divider'
+import { Key, Mail, LogIn } from 'lucide-vue-next';
 
 const store = useStore()
 const router = useRouter()
-const route = useRoute() // Pour accéder aux paramètres de route
+const route = useRoute()
+const toast = useToast()
 
+// États réactifs
 const formData = reactive({
   login: '',
   password: ''
 })
-
 const errors = reactive({
   login: '',
   password: ''
 })
 const isSubmitting = ref(false)
-const loginError = ref('')
-const sessionExpired = ref(false) // État pour suivre si la session a expiré
+const isFormSubmitted = ref(false)
 
-// Vérifier si l'utilisateur a été redirigé en raison d'une session expirée
+// Computed properties pour l'invalidation des champs
+const showLoginError = computed(() => isFormSubmitted.value && errors.login)
+const showPasswordError = computed(() => isFormSubmitted.value && errors.password)
+
+// Vérifier la redirection pour session expirée
 onMounted(() => {
-  // Vérifier le paramètre 'reason' dans l'URL
   if (route.query.reason === 'se') {
-    sessionExpired.value = true
-    loginError.value = 'Votre session a expiré. Veuillez vous reconnecter pour continuer.'
+    toast.add({
+      severity: 'error',
+      summary: 'Session expirée',
+      detail: 'Votre session a expiré. Veuillez vous reconnecter pour continuer.',
+      life: 5000
+    })
   }
 })
 
+// Validation du mot de passe
 const validatePassword = (password) => {
-  const minLength = 8
-  const hasUpperCase = /[A-Z]/.test(password)
-  const hasLowerCase = /[a-z]/.test(password)
-  const hasNumber = /[0-9]/.test(password)
-  const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':",.<>?]/.test(password)
+  if (!password) return 'Le mot de passe est requis'
 
-  if (password.length < minLength) {
-    return 'Le mot de passe doit contenir au moins 8 caractères'
-  }
+  const validations = [
+    {test: password.length >= 8, message: 'Le mot de passe doit contenir au moins 8 caractères'},
+    {test: /[A-Z]/.test(password), message: 'Le mot de passe doit contenir au moins une majuscule'},
+    {test: /[a-z]/.test(password), message: 'Le mot de passe doit contenir au moins une minuscule'},
+    {test: /[0-9]/.test(password), message: 'Le mot de passe doit contenir au moins un chiffre'},
+    {
+      test: /[!@#$%^&*()_+\-=\[\]{};':",.<>?]/.test(password),
+      message: 'Le mot de passe doit contenir au moins un caractère spécial'
+    }
+  ]
 
-  if (!hasUpperCase) {
-    return 'Le mot de passe doit contenir au moins une majuscule'
-  }
-
-  if (!hasLowerCase) {
-    return 'Le mot de passe doit contenir au moins une minuscule'
-  }
-
-  if (!hasNumber) {
-    return 'Le mot de passe doit contenir au moins un chiffre'
-  }
-
-  if (!hasSpecialChar) {
-    return 'Le mot de passe doit contenir au moins un caractère spécial'
+  for (const validation of validations) {
+    if (!validation.test) return validation.message
   }
 
   return ''
 }
 
+// Validation du formulaire
+const validateForm = () => {
+  isFormSubmitted.value = true
+  errors.login = !formData.login ? 'L\'email est requis' : ''
+  errors.password = validatePassword(formData.password)
+
+  if (errors.login) {
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur de validation',
+      detail: errors.login,
+      life: 5000
+    })
+    return false
+  }
+
+  if (errors.password) {
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur de validation',
+      detail: errors.password,
+      life: 5000
+    })
+    return false
+  }
+
+  return true
+}
+
+// Soumission du formulaire
 const handleSubmit = async () => {
-  // Reset errors
-  errors.login = ''
-  errors.password = ''
-  loginError.value = ''
-  sessionExpired.value = false // Réinitialiser le message de session expirée
-
-  // Validate form
-  let isValid = true
-
-  if (!formData.login) {
-    errors.login = 'Le login est requis'
-    isValid = false
-  }
-
-  const passwordError = validatePassword(formData.password)
-  if (passwordError) {
-    errors.password = passwordError
-    isValid = false
-  }
-
-  if (!isValid) return
+  // Valider le formulaire
+  if (!validateForm()) return
 
   isSubmitting.value = true
 
@@ -92,13 +112,29 @@ const handleSubmit = async () => {
     })
 
     if (result.success) {
-      // Si la connexion réussit, effacer les paramètres de l'URL
+      // Afficher un toast de succès
+      toast.add({
+        severity: 'success',
+        summary: 'Connexion réussie',
+        detail: 'Vous êtes maintenant connecté',
+        life: 3000
+      })
       router.replace('/')
     } else {
-      loginError.value = result.error || 'Échec de connexion'
+      toast.add({
+        severity: 'error',
+        summary: 'Échec de connexion',
+        detail: result.error || 'Identifiants incorrects',
+        life: 5000
+      })
     }
   } catch (error) {
-    loginError.value = 'Une erreur est survenue lors de la connexion'
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur de connexion',
+      detail: 'Une erreur est survenue lors de la connexion',
+      life: 5000
+    })
   } finally {
     isSubmitting.value = false
   }
@@ -106,87 +142,100 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <form @submit.prevent="handleSubmit" :class="cn('flex flex-col gap-6')">
-    <div class="flex flex-col items-center gap-2 text-center">
-      <h1 class="text-2xl font-bold">
-        Connectez-vous à votre compte
-      </h1>
-      <p class="text-balance text-sm">
-        Entrez vos identifiants pour vous connecter
-      </p>
-    </div>
+  <Card class="login-card">
+    <template #content>
+      <form @submit.prevent="handleSubmit" :class="cn('flex flex-col gap-4')">
+        <div class="flex flex-col items-center gap-2 text-center">
+          <h1 class="text-xl font-bold">
+            Connectez-vous à votre compte
+          </h1>
+          <p class="text-balance text-sm">
+            Entrez vos identifiants pour vous connecter
+          </p>
+        </div>
 
-    <!-- Alerte pour session expirée ou erreur de connexion -->
-    <div role="alert" v-if="sessionExpired || loginError"
-         class="alert alert-error alert-soft">
-      {{ loginError }}
-    </div>
+        <div class="grid gap-6">
+          <!-- Champ Email -->
+          <div class="grid gap-2">
+            <div class="p-input-icon-left w-full">
+              <FloatLabel variant="on">
+                <IconField>
+                  <InputIcon><Mail class="h-4 w-4"/></InputIcon>
+                  <InputText
+                      type="email"
+                      id="login"
+                      v-model="formData.login"
+                      :invalid="showLoginError"
+                      aria-describedby="login-error"
+                      fluid
+                      required
+                  />
+                </IconField>
+                <label for="login" class="text-primary">Email</label>
+              </FloatLabel>
+            </div>
+            <small v-if="errors.login && showLoginError" id="login-error" class="p-error">{{ errors.login }}</small>
+          </div>
 
-    <div class="grid gap-6">
-      <div class="grid gap-2">
-        <label for="login" class="text-primary">Email</label>
-        <label :class="errors.login ? 'border-error input' : 'input'">
-          <svg class="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" fill="none" stroke="currentColor">
-              <rect width="20" height="16" x="2" y="4" rx="2"></rect>
-              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
-            </g>
-          </svg>
+          <!-- Champ Mot de passe -->
+          <div class="grid gap-2">
+            <div class="flex items-center justify-end">
+              <RouterLink to="forget-password">
+                Mot de passe oublié ?
+              </RouterLink>
+            </div>
+            <FloatLabel variant="on">
+              <IconField>
+                <InputIcon><Key class="h-4 w-4"/></InputIcon>
+                <Password
+                    id="pwd"
+                    v-model="formData.password"
+                    :invalid="showPasswordError"
+                    :feedback="false"
+                    aria-describedby="pwd-error"
+                    required
+                    toggleMask
+                    fluid
+                />
+              </IconField>
+              <label for="pwd" class="text-primary">Mot de passe</label>
+            </FloatLabel>
+            <small v-if="errors.password && showPasswordError" id="pwd-error" class="p-error">{{ errors.password }}</small>
+          </div>
 
-          <input
-              type="email"
-              id="login"
-              v-model="formData.login"
-              placeholder="Votre email"
-              required
-          />
-        </label>
-        <p v-if="errors.login" class="text-error text-xs mt-1">{{ errors.login }}</p>
-      </div>
+          <!-- Bouton de connexion -->
+          <Button
+              type="submit"
+              label="Connexion"
+              :loading="isSubmitting"
+              :disabled="isSubmitting"
+              fluid
+          >
+            <template #icon>
+              <LogIn class="h-4 w-4" />
+            </template>
+          </Button>
+        </div>
 
-      <div class="grid gap-2">
-        <div class="flex items-center">
-          <label for="password" class="text-primary">Mot de passe</label>
-          <div class="ml-auto text-sm text-right">
-            <RouterLink to="forget-password" class="link">
-              Mot de passe oublié ?
+        <Divider/>
+
+        <!-- Lien d'inscription -->
+        <div class="text-center">
+          Vous n'avez pas encore de compte ?
+          <div>
+            <RouterLink to="register">
+              Inscrivez-vous
             </RouterLink>
           </div>
         </div>
-        <label class="input" :class="errors.password ? 'border-error' : ''">
-          <svg class="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" fill="none" stroke="currentColor">
-              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </g>
-          </svg>
-          <input
-              id="password"
-              type="password"
-              placeholder="Votre mot de passe"
-              v-model="formData.password"
-              required
-          />
-        </label>
-        <p role="alert" v-if="errors.password" class="alert alert-error alert-soft">{{ errors.password }}</p>
-      </div>
-
-      <button
-          type="submit"
-          class="w-full btn btn-primary"
-          :disabled="isSubmitting"
-      >
-        {{ isSubmitting ? 'Connexion en cours...' : 'Connexion' }}
-      </button>
-    </div>
-
-    <div class="text-center text-sm">
-      Vous n'avez pas encore de compte ?
-      <div>
-        <RouterLink to="register" class="link">
-          Inscrivez-vous
-        </RouterLink>
-      </div>
-    </div>
-  </form>
+      </form>
+    </template>
+  </Card>
 </template>
+
+<style scoped>
+:deep([invalid="true"]),
+:deep(.p-invalid) {
+  border-color: var(--red-500) !important;
+}
+</style>

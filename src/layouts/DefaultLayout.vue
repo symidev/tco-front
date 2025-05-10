@@ -42,7 +42,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen flex overflow-hidden" data-theme="dark">
+  <div class="min-h-screen flex overflow-hidden dark-mode">
     <!-- Sidebar component -->
     <Sidebar
         :isOpen="isOpen"

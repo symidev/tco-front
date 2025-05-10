@@ -1,5 +1,12 @@
 <script setup>
-import { ref } from 'vue'
+import {computed, ref} from 'vue'
+import {useToast} from 'primevue/usetoast'
+import InputText from 'primevue/inputtext'
+import Button from 'primevue/button'
+import IconField from 'primevue/iconfield'
+import InputIcon from 'primevue/inputicon'
+import FloatLabel from 'primevue/floatlabel'
+import {ArrowLeft, ArrowRight, Building, Mail, Map, Phone, User} from 'lucide-vue-next'
 
 const props = defineProps({
   initialData: {
@@ -9,10 +16,18 @@ const props = defineProps({
   isSubmitting: {
     type: Boolean,
     default: false
+  },
+  activateCallback: {
+    type: Function,
+    required: true
   }
 })
 
-const emit = defineEmits(['prev-step', 'update:formData', 'submit'])
+const emit = defineEmits(['update:formData', 'submit'])
+const toast = useToast()
+
+// Variable pour suivre si le formulaire a été soumis
+const isSubmitted = ref(false)
 
 // Copie locale des données pour cette étape
 const formData = ref({
@@ -26,69 +41,77 @@ const formData = ref({
   comptable_ville: props.initialData.comptable_ville || ''
 })
 
-// État des erreurs
-const errors = ref({
-  comptable_nom: '',
-  comptable_prenom: '',
-  comptable_email: '',
-  comptable_tel: '',
-  comptable_cp: ''
+// Validation des champs
+const isNomValid = computed(() => {
+  return formData.value.comptable_nom !== ''
 })
 
-// Fonction de validation de champ individuel
-const validateField = (field) => {
-  switch (field) {
-    case 'comptable_nom':
-      if (!formData.value.comptable_nom) {
-        errors.value.comptable_nom = "Le nom est requis"
-      } else {
-        errors.value.comptable_nom = ''
-      }
-      break
-    case 'comptable_prenom':
-      if (!formData.value.comptable_prenom) {
-        errors.value.comptable_prenom = "Le prénom est requis"
-      } else {
-        errors.value.comptable_prenom = ''
-      }
-      break
-    case 'comptable_email':
-      if (!formData.value.comptable_email) {
-        errors.value.comptable_email = "L'email est requis"
-      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.value.comptable_email)) {
-        errors.value.comptable_email = "L'email n'est pas valide"
-      } else {
-        errors.value.comptable_email = ''
-      }
-      break
-    case 'comptable_tel':
-      if (!formData.value.comptable_tel) {
-        errors.value.comptable_tel = "Le téléphone est requis"
-      } else if (!/^(\+33|0)[1-9](\d{2}){4}$/.test(formData.value.comptable_tel.replace(/\s/g, ''))) {
-        errors.value.comptable_tel = "Le format du téléphone n'est pas valide"
-      } else {
-        errors.value.comptable_tel = ''
-      }
-      break
-    case 'comptable_cp':
-      if (formData.value.comptable_cp && !/^\d{5}$/.test(formData.value.comptable_cp.replace(/\s/g, ''))) {
-        errors.value.comptable_cp = "Le code postal doit contenir 5 chiffres"
-      } else {
-        errors.value.comptable_cp = ''
-      }
-      break
-  }
-}
+const isPrenomValid = computed(() => {
+  return formData.value.comptable_prenom !== ''
+})
+
+const isEmailValid = computed(() => {
+  return formData.value.comptable_email !== '' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.value.comptable_email)
+})
+
+const isTelValid = computed(() => {
+  // Simplifier la validation puisque nous garantissons déjà que seuls les chiffres sont saisis
+  return formData.value.comptable_tel !== '' && formData.value.comptable_tel.length === 10
+})
+
+const isCodePostalValid = computed(() => {
+  if (!formData.value.comptable_cp) return true // Optionnel s'il est vide
+  const cpWithoutSpaces = formData.value.comptable_cp.replace(/\s/g, '')
+  return /^\d{5}$/.test(cpWithoutSpaces)
+})
+
+// Computed properties pour l'affichage conditionnel des erreurs
+const showNomError = computed(() => isSubmitted.value && !isNomValid.value)
+const showPrenomError = computed(() => isSubmitted.value && !isPrenomValid.value)
+const showEmailError = computed(() => isSubmitted.value && !isEmailValid.value)
+const showTelError = computed(() => isSubmitted.value && !isTelValid.value)
+const showCpError = computed(() => isSubmitted.value && !isCodePostalValid.value)
 
 // Valider tous les champs
 const validateForm = () => {
-  //validateField('comptable_nom')
- // validateField('comptable_prenom')
-  //validateField('comptable_email')
-  //validateField('comptable_tel')
-  //validateField('comptable_cp')
+  isSubmitted.value = true
+  let isValid = true
+  let errorMessage = ''
 
-  const isValid = Object.values(errors.value).every(error => error === '')
+  if (!isNomValid.value) {
+    isValid = false
+    errorMessage = "Le nom est requis"
+  } else if (!isPrenomValid.value) {
+    isValid = false
+    errorMessage = "Le prénom est requis"
+  } else if (!isEmailValid.value) {
+    isValid = false
+    if (!formData.value.comptable_email) {
+      errorMessage = "L'email est requis"
+    } else {
+      errorMessage = "L'email n'est pas valide"
+    }
+  } else if (!isTelValid.value) {
+    isValid = false
+    if (!formData.value.comptable_tel) {
+      errorMessage = "Le téléphone est requis"
+    } else {
+      errorMessage = "Le format du téléphone n'est pas valide (ex: 0123456789)"
+    }
+  } else if (!isCodePostalValid.value) {
+    isValid = false
+    errorMessage = "Le code postal doit contenir exactement 5 chiffres"
+  }
+
+  if (!isValid && errorMessage) {
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur de validation',
+      detail: errorMessage,
+      life: 5000
+    })
+  }
+
   return isValid
 }
 
@@ -96,7 +119,7 @@ const validateForm = () => {
 const prevStep = () => {
   // Mettre à jour les données du formulaire parent avant de revenir
   updateFormData()
-  emit('prev-step')
+  props.activateCallback('2')
 }
 
 // Fonction pour soumettre le formulaire
@@ -107,7 +130,9 @@ const submitForm = () => {
   updateFormData()
 
   // Soumettre si le formulaire est valide
-  emit('submit', isValid)
+  if (isValid) {
+    emit('submit', isValid)
+  }
 }
 
 // Mettre à jour les données du formulaire parent
@@ -117,113 +142,182 @@ const updateFormData = () => {
 </script>
 
 <template>
-  <div class="grid gap-1">
-    <h2 class="text-xl font-bold mb-4">Informations comptable</h2>
-    <div class="grid gap-1">
-      <input
-          id="comptable_nom"
-          v-model="formData.comptable_nom"
-          type="text"
-          placeholder="Nom"
-          class="input" :class="{'border-error': errors.comptable_nom}"
-      />
-      <p v-if="errors.comptable_nom" class="text-error text-xs mt-1">{{ errors.comptable_nom }}</p>
+  <div class="grid gap-3">
+    <!-- Champ Nom -->
+    <div class="grid gap-2">
+      <FloatLabel variant="on">
+        <IconField>
+          <InputIcon><User class="h-4 w-4"/></InputIcon>
+          <InputText
+            id="comptable_nom"
+            v-model="formData.comptable_nom"
+            :invalid="showNomError"
+            required
+            fluid
+          />
+        </IconField>
+        <label for="comptable_nom" class="text-primary">Nom</label>
+      </FloatLabel>
     </div>
 
-    <div class="grid gap-1">
-      <input
-          id="comptable_prenom"
-          v-model="formData.comptable_prenom"
-          type="text"
-          placeholder="Prénom"
-          class="input"
-          :class="{'border-error': errors.comptable_prenom}"
-      />
-      <p v-if="errors.comptable_prenom" class="text-error text-xs mt-1">{{ errors.comptable_prenom }}</p>
+    <!-- Champ Prénom -->
+    <div class="grid gap-2">
+      <FloatLabel variant="on">
+        <IconField>
+          <InputIcon><User class="h-4 w-4"/></InputIcon>
+          <InputText
+            id="comptable_prenom"
+            v-model="formData.comptable_prenom"
+            :invalid="showPrenomError"
+            required
+            fluid
+          />
+        </IconField>
+        <label for="comptable_prenom" class="text-primary">Prénom</label>
+      </FloatLabel>
     </div>
 
-    <div class="grid gap-1">
-      <input
-          id="comptable_fonction"
-          v-model="formData.comptable_fonction"
-          type="text"
-          placeholder="Fonction"
-          class="input"
-      />
+    <!-- Champ Fonction -->
+    <div class="grid gap-2">
+      <FloatLabel variant="on">
+        <IconField>
+          <InputIcon><Building class="h-4 w-4"/></InputIcon>
+          <InputText
+            id="comptable_fonction"
+            v-model="formData.comptable_fonction"
+            fluid
+          />
+        </IconField>
+        <label for="comptable_fonction" class="text-primary">Fonction</label>
+      </FloatLabel>
     </div>
 
-    <div class="grid gap-1">
-      <input
-          id="comptable_email"
-          v-model="formData.comptable_email"
-          type="email"
-          placeholder="Email"
-          class="input"
-          :class="{'border-error': errors.comptable_email}"
-      />
-      <p v-if="errors.comptable_email" class="text-error text-xs mt-1">{{ errors.comptable_email }}</p>
+    <!-- Champ Email -->
+    <div class="grid gap-2">
+      <FloatLabel variant="on">
+        <IconField>
+          <InputIcon><Mail class="h-4 w-4"/></InputIcon>
+          <InputText
+            id="comptable_email"
+            v-model="formData.comptable_email"
+            type="email"
+            :invalid="showEmailError"
+            required
+            fluid
+          />
+        </IconField>
+        <label for="comptable_email" class="text-primary">Email</label>
+      </FloatLabel>
     </div>
 
-    <div class="grid gap-1">
-      <input
-          id="comptable_tel"
-          v-model="formData.comptable_tel"
-          type="tel"
-          placeholder="Téléphone"
-          class="input"
-          :class="{'border-error': errors.comptable_tel}"
-      />
-      <p v-if="errors.comptable_tel" class="text-error text-xs mt-1">{{ errors.comptable_tel }}</p>
+    <!-- Champ Téléphone -->
+    <div class="grid gap-2">
+      <FloatLabel variant="on">
+        <IconField>
+          <InputIcon><Phone class="h-4 w-4"/></InputIcon>
+          <InputText
+            id="comptable_tel"
+            v-model="formData.comptable_tel"
+            :invalid="showTelError"
+            maxlength="10"
+            required
+            fluid
+          />
+        </IconField>
+        <label for="comptable_tel" class="text-primary">Téléphone</label>
+      </FloatLabel>
     </div>
 
-    <div class="grid gap-1">
-      <input
-          id="comptable_rue"
-          v-model="formData.comptable_rue"
-          type="text"
-          placeholder="Rue"
-          class="input"
-      />
+    <!-- Champ Rue -->
+    <div class="grid gap-2">
+      <FloatLabel variant="on">
+        <IconField>
+          <InputIcon><Map class="h-4 w-4"/></InputIcon>
+          <InputText
+            id="comptable_rue"
+            v-model="formData.comptable_rue"
+            fluid
+          />
+        </IconField>
+        <label for="comptable_rue" class="text-primary">Rue</label>
+      </FloatLabel>
     </div>
 
-    <div class="grid gap-1">
-      <input
-          id="comptable_cp"
-          v-model="formData.comptable_cp"
-          type="text"
-          placeholder="Code postal"
-          class="input"
-          :class="{'border-error': errors.comptable_cp}"
-      />
-      <p v-if="errors.comptable_cp" class="text-error text-xs mt-1">{{ errors.comptable_cp }}</p>
+    <!-- Champ Code postal -->
+    <div class="grid gap-2">
+      <FloatLabel variant="on">
+        <IconField>
+          <InputIcon><Map class="h-4 w-4"/></InputIcon>
+          <InputText
+            id="comptable_cp"
+            v-model="formData.comptable_cp"
+            :invalid="showCpError"
+            fluid
+          />
+        </IconField>
+        <label for="comptable_cp" class="text-primary">Code postal</label>
+      </FloatLabel>
     </div>
 
-    <div class="grid gap-1">
-      <input
-          id="comptable_ville"
-          v-model="formData.comptable_ville"
-          type="text"
-          placeholder="Ville"
-          class="input"
-      />
+    <!-- Champ Ville -->
+    <div class="grid gap-2">
+      <FloatLabel variant="on">
+        <IconField>
+          <InputIcon><Building class="h-4 w-4"/></InputIcon>
+          <InputText
+            id="comptable_ville"
+            v-model="formData.comptable_ville"
+            fluid
+          />
+        </IconField>
+        <label for="comptable_ville" class="text-primary">Ville</label>
+      </FloatLabel>
     </div>
 
-    <div class="flex gap-4 mt-4">
-      <button
-          type="button"
-          @click="prevStep"
-          class="w-1/2 btn btn-neutral"
+    <!-- Boutons d'action -->
+    <div class="flex gap-4 mt-3">
+      <Button
+        type="button"
+        @click="prevStep"
+        label="Précédent"
+        class="w-1/2"
+        outlined
+        fluid
       >
-        Précédent
+        <template #icon>
+          <ArrowLeft class="h-4 w-4" />
+        </template>
       </Button>
-      <button
-          type="button"
-          @click="submitForm"
-          class="w-1/2 btn btn-primary"
-          :disabled="isSubmitting"
+      <Button
+        type="button"
+        @click="submitForm"
+        :label="isSubmitting ? 'Création en cours...' : 'Enregistrer'"
+        class="w-1/2"
+        :loading="isSubmitting"
+        :disabled="isSubmitting"
+        fluid
       >
-        {{ isSubmitting ? 'Création en cours...' : 'Enregistrer' }}
+        <template #icon>
+          <ArrowRight class="h-4 w-4" />
+        </template>
       </Button>
     </div>
   </div>
 </template>
+
+<style scoped>
+:deep(.p-inputtext),
+:deep(.p-password),
+:deep(.p-password-input) {
+  width: 100%;
+}
+
+:deep([invalid="true"]),
+:deep(.p-invalid) {
+  border-color: var(--red-500) !important;
+}
+
+:deep(.p-checkbox[invalid="true"]) .p-checkbox-box {
+  border-color: var(--red-500) !important;
+}
+</style>

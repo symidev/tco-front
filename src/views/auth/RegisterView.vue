@@ -1,15 +1,24 @@
 <script setup>
 import {ref, computed} from 'vue'
 import {useRouter} from 'vue-router'
-import {toast} from 'vue-sonner'
+import {useToast} from 'primevue/usetoast'
 import axios from 'axios'
+import Card from 'primevue/card'
+import Button from 'primevue/button'
+import Divider from 'primevue/divider'
+import Stepper from 'primevue/stepper';
+import StepList from 'primevue/steplist';
+import StepPanels from 'primevue/steppanels';
+import StepItem from 'primevue/stepitem';
+import Step from 'primevue/step';
+import StepPanel from 'primevue/steppanel';
 
-import StepIndicator from '@/views/auth/register/StepIndicator.vue'
 import GeneralInfoStep from '@/views/auth/register/GeneralInfoStep.vue'
 import CommercialInfoStep from '@/views/auth/register/CommercialInfoStep.vue'
 import AccountingInfoStep from '@/views/auth/register/AccountingInfoStep.vue'
 
 const router = useRouter()
+const toast = useToast()
 
 // État pour suivre l'étape actuelle du formulaire
 const currentStep = ref(1)
@@ -44,8 +53,14 @@ const formData = ref({
 
 // Fonction pour passer à l'étape suivante avec validation
 const nextStep = (isValid) => {
-  if (isValid && currentStep.value < 3) {
-    currentStep.value++
+  if (isValid) {
+    if (currentStep.value === 2 && !differentAccountingInfo.value) {
+      return
+    }
+
+    if (currentStep.value < 3) {
+      currentStep.value++
+    }
   }
 }
 
@@ -58,7 +73,8 @@ const prevStep = () => {
 
 // Mettre à jour le statut des informations comptables différentes
 const updateDifferentAccountingInfo = (value) => {
-  differentAccountingInfo.value = value
+  // Assurez-vous que la valeur est un booléen
+  differentAccountingInfo.value = Boolean(value)
 }
 
 // Mettre à jour les données du formulaire depuis les étapes enfants
@@ -114,10 +130,12 @@ const submitForm = async (isValid) => {
     // Rediriger vers la page de connexion avec un message de succès
     router.push('/login')
 
-    // Afficher un message de succès avec sonner
-    toast.success('Compte créé avec succès', {
-      duration: 10000,
-      description: 'Votre compte doit maintenant être validé par un administrateur. Vous recevrez un email lorsque votre compte sera activé.',
+    // Afficher un message de succès avec PrimeVue
+    toast.add({
+      severity: 'success',
+      summary: 'Compte créé avec succès',
+      detail: 'Votre compte doit maintenant être validé par un administrateur. Vous recevrez un email lorsque votre compte sera activé.',
+      life: 10000
     })
 
   } catch (error) {
@@ -133,39 +151,57 @@ const submitForm = async (isValid) => {
           // Erreur de validation ou données manquantes
           if (errorData.error && Array.isArray(errorData.error)) {
             // Afficher la liste des erreurs de validation
-            toast.error('Erreur lors de l\'inscription', {
-              description: errorData.error.join(', '),
+            toast.add({
+              severity: 'error',
+              summary: 'Erreur lors de l\'inscription',
+              detail: errorData.error.join(', '),
+              life: 5000
             })
           } else if (errorData.error && typeof errorData.error === 'string') {
             // Message d'erreur simple
-            toast.error('Erreur lors de l\'inscription', {
-              description: errorData.error,
+            toast.add({
+              severity: 'error',
+              summary: 'Erreur lors de l\'inscription',
+              detail: errorData.error,
+              life: 5000
             })
           } else {
-            toast.error('Erreur lors de l\'inscription', {
-              description: 'Veuillez vérifier les informations saisies',
+            toast.add({
+              severity: 'error',
+              summary: 'Erreur lors de l\'inscription',
+              detail: 'Veuillez vérifier les informations saisies',
+              life: 5000
             })
           }
           break
 
         case 409:
           // Conflit - email déjà utilisé
-          toast.error('Inscription impossible', {
-            description: 'Cette adresse email est déjà utilisée',
+          toast.add({
+            severity: 'error',
+            summary: 'Inscription impossible',
+            detail: 'Cette adresse email est déjà utilisée',
+            life: 5000
           })
           break
 
         case 500:
         default:
           // Erreur serveur ou autre erreur
-          toast.error('Erreur lors de l\'inscription', {
-            description: 'Une erreur est survenue lors de l\'inscription. Veuillez réessayer plus tard.',
+          toast.add({
+            severity: 'error',
+            summary: 'Erreur lors de l\'inscription',
+            detail: 'Une erreur est survenue lors de l\'inscription. Veuillez réessayer plus tard.',
+            life: 5000
           })
       }
     } else {
       // Erreur réseau ou autre
-      toast.error('Erreur de connexion', {
-        description: 'Impossible de se connecter au serveur. Veuillez vérifier votre connexion internet.',
+      toast.add({
+        severity: 'error',
+        summary: 'Erreur de connexion',
+        detail: 'Impossible de se connecter au serveur. Veuillez vérifier votre connexion internet.',
+        life: 5000
       })
     }
   } finally {
@@ -175,68 +211,84 @@ const submitForm = async (isValid) => {
 </script>
 
 <template>
-  <form class="flex flex-col gap-6">
-    <!-- En-tête du formulaire -->
-    <div class="flex flex-col items-center gap-2 text-center">
-      <h1 class="text-2xl font-bold">
-        Créer votre compte
-      </h1>
-      <p class="text-balance text-sm" v-if="currentStep === 1">
-        Renseignez vos informations générales
-      </p>
-      <p class="text-balance text-sm" v-if="currentStep === 2">
-        Renseignez vos informations commerciales
-      </p>
-      <p class="text-balance text-sm" v-if="currentStep === 3">
-        Renseignez vos informations comptables
-      </p>
-    </div>
+  <Card class="register-card">
+    <template #content>
+      <form class="flex flex-col">
+        <!-- En-tête du formulaire -->
+        <div class="flex flex-col items-center gap-2 text-center">
+          <h1 class="text-xl font-bold">
+            Créer votre compte
+          </h1>
+          <p class="text-balance text-sm" v-if="currentStep === 1">
+            Renseignez vos informations générales
+          </p>
+          <p class="text-balance text-sm" v-if="currentStep === 2">
+            Renseignez vos informations commerciales
+          </p>
+          <p class="text-balance text-sm" v-if="currentStep === 3">
+            Renseignez vos informations comptables
+          </p>
+        </div>
 
-    <!-- Indicateur d'étape -->
-    <StepIndicator
-        :current-step="currentStep"
-        :has-accounting-step="differentAccountingInfo"
-    />
+        <!-- Indicateur d'étape -->
+        <Stepper value="1" linear>
+          <StepList>
+            <Step value="1">Général</Step>
+            <Step value="2">Commercial</Step>
+            <Step value="3" v-if="differentAccountingInfo">Comptable</Step>
+          </StepList>
+          <StepPanels>
+            <StepPanel v-slot="{ activateCallback }" value="1">
+              <GeneralInfoStep
+                  :initial-data="formData"
+                  @update:form-data="updateFormData"
+                  :activateCallback="activateCallback"
+              />
+            </StepPanel>
+            <StepPanel v-slot="{ activateCallback }" value="2">
+              <CommercialInfoStep
+                  :initial-data="formData"
+                  :is-submitting="isSubmitting"
+                  :different-accounting-info="differentAccountingInfo"
+                  @update:form-data="updateFormData"
+                  @update:different-accounting="updateDifferentAccountingInfo"
+                  @submit="submitForm"
+                  :activateCallback="activateCallback"
 
-    <!-- Étape 1: Informations générales -->
-    <GeneralInfoStep
-        v-if="currentStep === 1"
-        :initial-data="formData"
-        @next-step="nextStep"
-        @update:form-data="updateFormData"
-    />
+              />
+            </StepPanel>
+            <StepPanel v-slot="{ activateCallback }" value="3" v-if="differentAccountingInfo">
+              <AccountingInfoStep
+                  :initial-data="formData"
+                  :is-submitting="isSubmitting"
+                  @update:form-data="updateFormData"
+                  @submit="submitForm"
+                  :activateCallback="activateCallback"
 
-    <!-- Étape 2: Informations commerciales -->
-    <CommercialInfoStep
-        v-if="currentStep === 2"
-        :initial-data="formData"
-        :is-submitting="isSubmitting"
-        :different-accounting-info="differentAccountingInfo"
-        @prev-step="prevStep"
-        @next-step="nextStep"
-        @update:form-data="updateFormData"
-        @update:different-accounting="updateDifferentAccountingInfo"
-        @submit="submitForm"
-    />
+              />
+            </StepPanel>
+          </StepPanels>
+        </Stepper>
+        <Divider />
 
-    <!-- Étape 3: Informations comptables -->
-    <AccountingInfoStep
-        v-if="currentStep === 3 && differentAccountingInfo"
-        :initial-data="formData"
-        :is-submitting="isSubmitting"
-        @prev-step="prevStep"
-        @update:form-data="updateFormData"
-        @submit="submitForm"
-    />
-
-    <!-- Lien vers la page de connexion -->
-    <div class="text-center text-sm">
-      Vous avez déjà un compte ?
-      <div class="underline underline-offset-4">
-        <RouterLink to="/login">
-          Connectez-vous
-        </RouterLink>
-      </div>
-    </div>
-  </form>
+        <!-- Lien vers la page de connexion -->
+        <div class="text-center text-sm">
+          Vous avez déjà un compte ?
+          <div>
+            <RouterLink to="/login" class="text-primary hover:underline">
+              Connectez-vous
+            </RouterLink>
+          </div>
+        </div>
+      </form>
+    </template>
+  </Card>
 </template>
+
+<style scoped>
+:deep([invalid="true"]),
+:deep(.p-invalid) {
+  border-color: var(--red-500) !important;
+}
+</style>
+

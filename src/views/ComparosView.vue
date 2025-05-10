@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { comparoService } from '@/services/api/comparoService';
 import { cn } from '@/lib/utils';
+import Button from "primevue/button"
 
 // États réactifs
 const comparos = ref([]);
@@ -34,7 +35,9 @@ onMounted(() => {
 <template>
   <div :class="cn('comparos-container', 'p-6')">
     <h1 class="text-2xl font-bold mb-6">Mes Comparos</h1>
-
+    <div class="flex justify-center items-center py-8">
+      <Button label="Verify" />
+    </div>
     <div v-if="loading" class="flex justify-center items-center py-8">
       <div class="loading">Chargement en cours...</div>
     </div>
