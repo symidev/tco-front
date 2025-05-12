@@ -11,44 +11,58 @@
     --text-xl: 1.3rem;
 }
 
-@layer base {
-    html,
-    body {
-        font-size: var(--text-base);
-    }
+html,
+body {
+    font-size: var(--text-base);
+}
 
-    body {
-        font-family: "Baskerville", "Baskerville Old Face", "Garamond", "Times New Roman", "serif";
-    }
+body {
+    font-family: "Baskrville", "Baskerville Old Face", "Garamond", "Times New Roman", "serif";
+    background-color: var(--p-content-background);
+    color: var(--p-text-color);
+}
 
-    a {
-        position: relative;
-        color: var(--p-primary-color);
-        text-decoration: none;
-        transition: color 0.3s ease;
-    }
+#app .p-menubar {
+    border-bottom: 1px solid var(--p-surface-800);
+}
+a.animate{
+    position: relative;
+    color: var(--p-primary-color);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
 
-    a::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 50%;
-        width: 0;
-        height: 1px;
-        background-color: var(--p-primary-color);
-        transition: width 0.3s ease, left 0.3s ease;
-    }
+a.animate::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 1px;
+    background-color: var(--p-primary-color);
+    transition: width 0.3s ease, left 0.3s ease;
+}
 
-    a:hover::after {
-        width: 100%;
-        left: 0;
-    }
+a.animate:hover::after {
+    width: 100%;
+    left: 0;
+}
 
-    a:hover {
-        color: var(--p-primary-color);
-    }
+a.animate:hover {
+    color: var(--p-primary-color);
+}
 
-    .p-component {
-        font-size: var(--text-base);
-    }
+.p-component {
+    font-size: var(--text-base);
+}
+
+.dark .p-floatlabel-on:has(input:focus) label,
+.dark .p-floatlabel-on:has(input.p-filled) label,
+.dark .p-floatlabel-on:has(input:-webkit-autofill) label,
+.dark .p-floatlabel-on:has(textarea:focus) label,
+.dark .p-floatlabel-on:has(textarea.p-filled) label,
+.dark .p-floatlabel-on:has(.p-inputwrapper-focus) label,
+.dark .p-floatlabel-on:has(.p-inputwrapper-filled) label {
+    padding: 0.3rem 0.4rem;
+    border-radius: 0.2rem;
 }

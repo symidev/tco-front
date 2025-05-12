@@ -1,16 +1,26 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, reactive } from 'vue'
 import { useStore } from 'vuex'
-import { toast } from 'vue-sonner'
-import { Lock, CheckCircle } from 'lucide-vue-next'
+import { useToast } from 'primevue/usetoast'
+import { cn } from '@/lib/utils'
+import Card from 'primevue/card'
+import InputText from 'primevue/inputtext'
+import IconField from 'primevue/iconfield'
+import InputIcon from 'primevue/inputicon'
+import FloatLabel from 'primevue/floatlabel'
+import Password from 'primevue/password'
+import Button from 'primevue/button'
+import Message from 'primevue/message'
+import { Lock, Key, CheckCircle2 } from 'lucide-vue-next'
 
 const store = useStore()
+const toast = useToast()
 
 // Check if this is coming from auto-connect
 const isAutoConnect = computed(() => store.state.auth.isAutoConnect)
 
 // Form data
-const formData = ref({
+const formData = reactive({
   currentPassword: '',
   newPassword: '',
   confirmPassword: ''
@@ -23,11 +33,19 @@ const isLoading = ref(false)
 const isSuccess = ref(false)
 
 // Form errors
-const errors = ref({
+const errors = reactive({
   currentPassword: '',
   newPassword: '',
   confirmPassword: ''
 })
+
+// Form submission state
+const isFormSubmitted = ref(false)
+
+// Computed properties pour l'invalidation des champs
+const showCurrentPasswordError = computed(() => isFormSubmitted.value && errors.currentPassword)
+const showNewPasswordError = computed(() => isFormSubmitted.value && errors.newPassword)
+const showConfirmPasswordError = computed(() => isFormSubmitted.value && errors.confirmPassword)
 
 // Validate form fields
 const validateField = (field) => {
@@ -35,42 +53,42 @@ const validateField = (field) => {
     case 'currentPassword':
       // Skip validation for currentPassword if coming from auto-connect
       if (isAutoConnect.value) {
-        errors.value.currentPassword = ''
+        errors.currentPassword = ''
         break
       }
 
-      if (!formData.value.currentPassword) {
-        errors.value.currentPassword = "Le mot de passe actuel est requis"
+      if (!formData.currentPassword) {
+        errors.currentPassword = "Le mot de passe actuel est requis"
       } else {
-        errors.value.currentPassword = ''
+        errors.currentPassword = ''
       }
       break
 
     case 'newPassword':
-      if (!formData.value.newPassword) {
-        errors.value.newPassword = "Le nouveau mot de passe est requis"
-      } else if (formData.value.newPassword.length < 8) {
-        errors.value.newPassword = "Le mot de passe doit contenir au moins 8 caractères"
-      } else if (!/[a-z]/.test(formData.value.newPassword)) {
-        errors.value.newPassword = "Le mot de passe doit contenir au moins une lettre minuscule"
-      } else if (!/[A-Z]/.test(formData.value.newPassword)) {
-        errors.value.newPassword = "Le mot de passe doit contenir au moins une lettre majuscule"
-      } else if (!/[0-9]/.test(formData.value.newPassword)) {
-        errors.value.newPassword = "Le mot de passe doit contenir au moins un chiffre"
-      } else if (!/[^a-zA-Z0-9]/.test(formData.value.newPassword)) {
-        errors.value.newPassword = "Le mot de passe doit contenir au moins un caractère spécial"
+      if (!formData.newPassword) {
+        errors.newPassword = "Le nouveau mot de passe est requis"
+      } else if (formData.newPassword.length < 8) {
+        errors.newPassword = "Le mot de passe doit contenir au moins 8 caractères"
+      } else if (!/[a-z]/.test(formData.newPassword)) {
+        errors.newPassword = "Le mot de passe doit contenir au moins une lettre minuscule"
+      } else if (!/[A-Z]/.test(formData.newPassword)) {
+        errors.newPassword = "Le mot de passe doit contenir au moins une lettre majuscule"
+      } else if (!/[0-9]/.test(formData.newPassword)) {
+        errors.newPassword = "Le mot de passe doit contenir au moins un chiffre"
+      } else if (!/[^a-zA-Z0-9]/.test(formData.newPassword)) {
+        errors.newPassword = "Le mot de passe doit contenir au moins un caractère spécial"
       } else {
-        errors.value.newPassword = ''
+        errors.newPassword = ''
       }
       break
 
     case 'confirmPassword':
-      if (!formData.value.confirmPassword) {
-        errors.value.confirmPassword = "La confirmation du mot de passe est requise"
-      } else if (formData.value.confirmPassword !== formData.value.newPassword) {
-        errors.value.confirmPassword = "Les mots de passe ne correspondent pas"
+      if (!formData.confirmPassword) {
+        errors.confirmPassword = "La confirmation du mot de passe est requise"
+      } else if (formData.confirmPassword !== formData.newPassword) {
+        errors.confirmPassword = "Les mots de passe ne correspondent pas"
       } else {
-        errors.value.confirmPassword = ''
+        errors.confirmPassword = ''
       }
       break
   }
@@ -78,6 +96,8 @@ const validateField = (field) => {
 
 // Validate all form fields
 const validateForm = () => {
+  isFormSubmitted.value = true
+
   // For auto-connect, skip currentPassword validation
   if (!isAutoConnect.value) {
     validateField('currentPassword')
@@ -86,7 +106,7 @@ const validateForm = () => {
   validateField('newPassword')
   validateField('confirmPassword')
 
-  return Object.values(errors.value).every(error => error === '')
+  return Object.values(errors).every(error => error === '')
 }
 
 // Handle form submission
@@ -106,7 +126,7 @@ const changePassword = async () => {
     let result
     if (isAutoConnect.value) {
       result = await store.dispatch('user/changePasswordAfterAutoConnect', {
-        newPassword: formData.value.newPassword
+        newPassword: formData.newPassword
       })
 
       // Reset auto-connect flag if successful
@@ -115,34 +135,41 @@ const changePassword = async () => {
       }
     } else {
       result = await store.dispatch('user/changePassword', {
-        currentPassword: formData.value.currentPassword,
-        newPassword: formData.value.newPassword
+        currentPassword: formData.currentPassword,
+        newPassword: formData.newPassword
       })
     }
 
     if (result.success) {
       // Reset form
-      formData.value = {
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      }
+      formData.currentPassword = ''
+      formData.newPassword = ''
+      formData.confirmPassword = ''
 
       // Show success message
       isSuccess.value = true
 
-      toast.success('Mot de passe mis à jour', {
-        description: 'Votre mot de passe a été changé avec succès.',
+      toast.add({
+        severity: 'success',
+        summary: 'Mot de passe mis à jour',
+        detail: 'Votre mot de passe a été changé avec succès.',
+        life: 3000
       })
     } else {
-      toast.error('Erreur lors du changement de mot de passe', {
-        description: result.error || 'Une erreur est survenue lors du changement de votre mot de passe.',
+      toast.add({
+        severity: 'error',
+        summary: 'Erreur lors du changement de mot de passe',
+        detail: result.error || 'Une erreur est survenue lors du changement de votre mot de passe.',
+        life: 5000
       })
     }
   } catch (error) {
     console.error('Change password error:', error)
-    toast.error('Erreur lors du changement de mot de passe', {
-      description: 'Une erreur inattendue est survenue.',
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur lors du changement de mot de passe',
+      detail: 'Une erreur inattendue est survenue.',
+      life: 5000
     })
   } finally {
     isLoading.value = false
@@ -152,84 +179,108 @@ const changePassword = async () => {
 
 <template>
   <div class="w-full max-w-2xl mx-auto px-2 sm:px-0">
-    <div class="card bg-base-200 shadow-sm">
-      <div class="card-body">
-        <h2 class="card-title flex items-center gap-2">
-          <Lock class="w-5 h-5" />
-          Changer mon mot de passe
-        </h2>
-
-        <!-- Success message -->
-        <div v-if="isSuccess" class="alert alert-success mb-4 flex items-center gap-2">
-          <CheckCircle class="w-5 h-5" />
-          <span>Votre mot de passe a été mis à jour avec succès!</span>
+    <Card>
+      <template #content>
+        <div class="flex items-center gap-2 mb-4">
+          <h2 class="text-xl font-semibold">Changer mon mot de passe</h2>
         </div>
 
-        <form @submit.prevent="changePassword" class="mt-6 space-y-4">
-          <div v-if="!isAutoConnect" class="form-control w-full">
-            <label class="label">
-              <span class="label-text mb-1">Mot de passe actuel</span>
-            </label>
-            <input
-                v-model="formData.currentPassword"
-                type="password"
-                class="input input-bordered w-full"
-                placeholder="Entrez votre mot de passe actuel"
-                @blur="validateField('currentPassword')"
-                :class="{'input-error': errors.currentPassword}"
-            />
-            <label v-if="errors.currentPassword" class="label">
-              <span class="label-text-alt text-error">{{ errors.currentPassword }}</span>
-            </label>
+        <!-- Success message -->
+        <Message v-if="isSuccess" severity="success" class="mb-4">
+          <div class="flex items-center gap-2">
+            <CheckCircle2 class="w-5 h-5" />
+            <span>Votre mot de passe a été mis à jour avec succès!</span>
           </div>
+        </Message>
 
-          <div class="form-control w-full">
-            <label class="label">
-              <span class="label-text mb-1">Nouveau mot de passe</span>
-            </label>
-            <input
-                v-model="formData.newPassword"
-                type="password"
-                class="input input-bordered w-full"
-                placeholder="Entrez votre nouveau mot de passe"
-                @blur="validateField('newPassword')"
-                :class="{'input-error': errors.newPassword}"
-            />
-            <label v-if="errors.newPassword" class="label">
-              <span class="label-text-alt text-error">{{ errors.newPassword }}</span>
-            </label>
-            <label v-else class="label">
-              <span class="label-text-alt text-primary whitespace-normal break-words text-justify text-xs mx-2">
+        <form @submit.prevent="changePassword" :class="cn('flex flex-col gap-4 mt-4')">
+          <div class="grid gap-6">
+            <!-- Mot de passe actuel -->
+            <div v-if="!isAutoConnect" class="grid gap-2">
+              <FloatLabel variant="on">
+                <IconField>
+                  <InputIcon><Key class="h-4 w-4"/></InputIcon>
+                  <Password
+                    id="currentPassword"
+                    v-model="formData.currentPassword"
+                    :invalid="showCurrentPasswordError"
+                    :feedback="false"
+                    aria-describedby="current-pwd-error"
+                    @blur="validateField('currentPassword')"
+                    toggleMask
+                    fluid
+                  />
+                </IconField>
+                <label for="currentPassword" class="text-primary">Mot de passe actuel</label>
+              </FloatLabel>
+              <small v-if="showCurrentPasswordError" id="current-pwd-error" class="p-error">{{ errors.currentPassword }}</small>
+            </div>
+
+            <!-- Nouveau mot de passe -->
+            <div class="grid gap-2">
+              <FloatLabel variant="on">
+                <IconField>
+                  <InputIcon><Key class="h-4 w-4"/></InputIcon>
+                  <Password
+                    id="newPassword"
+                    v-model="formData.newPassword"
+                    :invalid="showNewPasswordError"
+                    :feedback="false"
+                    aria-describedby="new-pwd-error"
+                    @blur="validateField('newPassword')"
+                    toggleMask
+                    fluid
+                  />
+                </IconField>
+                <label for="newPassword" class="text-primary">Nouveau mot de passe</label>
+              </FloatLabel>
+              <small v-if="showNewPasswordError" id="new-pwd-error" class="p-error">{{ errors.newPassword }}</small>
+              <small v-else class="text-sm opacity-75">
                 Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.
-              </span>
-            </label>
-          </div>
+              </small>
+            </div>
 
-          <div class="form-control w-full">
-            <label class="label">
-              <span class="label-text mb-1">Confirmez le nouveau mot de passe</span>
-            </label>
-            <input
-                v-model="formData.confirmPassword"
-                type="password"
-                class="input input-bordered w-full"
-                placeholder="Confirmez votre nouveau mot de passe"
-                @blur="validateField('confirmPassword')"
-                :class="{'input-error': errors.confirmPassword}"
-            />
-            <label v-if="errors.confirmPassword" class="label">
-              <span class="label-text-alt text-error">{{ errors.confirmPassword }}</span>
-            </label>
-          </div>
+            <!-- Confirmation du mot de passe -->
+            <div class="grid gap-2">
+              <FloatLabel variant="on">
+                <IconField>
+                  <InputIcon><Key class="h-4 w-4"/></InputIcon>
+                  <Password
+                    id="confirmPassword"
+                    v-model="formData.confirmPassword"
+                    :invalid="showConfirmPasswordError"
+                    :feedback="false"
+                    aria-describedby="confirm-pwd-error"
+                    @blur="validateField('confirmPassword')"
+                    toggleMask
+                    fluid
+                  />
+                </IconField>
+                <label for="confirmPassword" class="text-primary">Confirmez le nouveau mot de passe</label>
+              </FloatLabel>
+              <small v-if="showConfirmPasswordError" id="confirm-pwd-error" class="p-error">{{ errors.confirmPassword }}</small>
+            </div>
 
-          <div class="flex flex-col sm:flex-row sm:justify-end mt-6">
-            <button type="submit" class="btn btn-primary w-full sm:w-auto" :disabled="isLoading">
-              <span v-if="isLoading" class="loading loading-spinner loading-xs mr-2"></span>
-              {{ isLoading ? 'En cours...' : 'Changer le mot de passe' }}
-            </button>
+            <!-- Bouton de soumission -->
+            <div class="flex justify-end mt-4">
+              <Button
+                type="submit"
+                :label="isLoading ? 'En cours...' : 'Changer le mot de passe'"
+                :loading="isLoading"
+                :disabled="isLoading"
+                class="sm:w-auto w-full"
+              />
+            </div>
           </div>
         </form>
-      </div>
-    </div>
+      </template>
+    </Card>
   </div>
 </template>
+
+<style scoped>
+:deep([invalid="true"]),
+:deep(.p-invalid) {
+  border-color: var(--red-500) !important;
+}
+</style>

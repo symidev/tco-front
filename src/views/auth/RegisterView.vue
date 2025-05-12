@@ -272,10 +272,10 @@ const submitForm = async (isValid) => {
         <Divider />
 
         <!-- Lien vers la page de connexion -->
-        <div class="text-center text-sm">
+        <div class="text-center">
           Vous avez déjà un compte ?
           <div>
-            <RouterLink to="/login" class="text-primary hover:underline">
+            <RouterLink to="/login" class="animate">
               Connectez-vous
             </RouterLink>
           </div>

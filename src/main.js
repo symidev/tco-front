@@ -6,7 +6,7 @@ import router from './router'
 import store from './store'
 import PrimeVue from 'primevue/config';
 import Aura from '@primeuix/themes/aura';
-import Material from '@primeuix/themes/material';
+import Nora from '@primeuix/themes/nora';
 import {definePreset} from '@primeuix/themes';
 import ToastService from 'primevue/toastservice';
 
@@ -15,7 +15,7 @@ const app = createApp(App)
 app.use(router)
 app.use(store)
 app.use(ToastService)
-const tcoTheme = definePreset(Aura, {
+const tcoTheme = definePreset(Nora, {
     semantic: {
         formField: {
             paddingY: '0.4rem',
@@ -52,10 +52,11 @@ const tcoTheme = definePreset(Aura, {
             },
             dark: {
                 primary: {
-                    color: '{primary.300}',
+                    color: '{primary.500}',
                     inverseColor: '{zinc.950}',
-                    hoverColor: '{zinc.100}',
-                    activeColor: '{zinc.200}'
+                    hoverColor: '{primary.600}',
+                    activeColor: '{primary.600}',
+                    contrastColor: 'primary.0'
                 },
                 highlight: {
                     background: 'rgba(250, 250, 250, .16)',
@@ -94,6 +95,59 @@ const tcoTheme = definePreset(Aura, {
         }
     },
     components: {
+        tabs: {
+            colorScheme: {
+                dark: {
+                    root: {
+                    tablist: {
+                        background: 'transparent',
+                        border: {
+                            width: 0
+                        }
+                    },
+                    tab: {
+                        padding: '0 0rem',
+                        margin: '0.2rem 1.125rem',
+                        border: {
+                            width: 0
+                        },
+                        background: 'transparent',
+                        color: '{primary.0}',
+                        active: {
+                            background: 'transparent',
+                            color: '{primary.color}',
+                        },
+                        hover: {
+                            background: 'transparent',
+                            color: '{primary.color}',
+                        }
+                    }
+                    }
+                }
+            }
+        },
+
+        menubar: {
+            colorScheme: {
+                light: {
+                    root: {
+                        background: '{surface.50}',
+                        color: '{surface.700}',
+                        borderRadius: '0.5rem'
+                    },
+                },
+                dark: {
+                    root: {
+                        background: '{surface.900}',
+                        color: '{surface.0}',
+                        border: {
+                            color: '{surface.900}',
+                            radius: '0rem'
+                        }
+                    }
+                }
+            }
+        },
         steps: {
             item: {
                 label: {
@@ -106,13 +160,13 @@ const tcoTheme = definePreset(Aura, {
         },
         card: {
             body: {
-                padding: '2rem'
+                padding: '2rem',
             },
             colorScheme: {
                 light: {
                     root: {
                         background: '{surface.50}',
-                        color: '{surface.700}',
+                        color: '{surface.800}',
                         borderRadius: '0.5rem'
                     },
                     subtitle: {
@@ -121,7 +175,8 @@ const tcoTheme = definePreset(Aura, {
                 },
                 dark: {
                     root: {
-                        background: '{surface.900}',
+                        borderRadius: '1rem 1rem 0 0',
+                        background: '{surface.800}',
                         color: '{surface.0}'
                     },
                     subtitle: {
@@ -129,7 +184,14 @@ const tcoTheme = definePreset(Aura, {
                     }
                 }
             }
-        }
+        },
+        inputtext: {
+            colorScheme: {
+                dark: {
+                    //paddingY: '1rem'
+                }
+            }
+        },
     }
 });
 
@@ -137,7 +199,7 @@ app.use(PrimeVue, {
     theme: {
         preset: tcoTheme,
         options: {
-            darkModeSelector: '.dark-mode',
+            darkModeSelector: '.dark',
         }
     },
     ripple: true

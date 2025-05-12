@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
@@ -19,11 +19,22 @@ const LOCAL_STORAGE_KEY = 'password_reset_timestamp'
 const store = useStore()
 const router = useRouter()
 const toast = useToast()
-const email = ref('')
-const loading = ref(false)
+
+// États réactifs
+const formData = reactive({
+  email: ''
+})
+const errors = reactive({
+  email: ''
+})
+const isSubmitting = ref(false)
+const isFormSubmitted = ref(false)
 const lastRequestTime = ref(null)
 const remainingTime = ref(0)
 const timerInterval = ref(null)
+
+// Computed properties pour l'invalidation des champs
+const showEmailError = computed(() => isFormSubmitted.value && errors.email)
 
 // Vérifier s'il existe un timestamp dans le localStorage
 onMounted(() => {
@@ -84,7 +95,38 @@ const canRequestReset = computed(() => {
   return remainingTime.value <= 0
 })
 
+// Validation de l'email
+const validateEmail = (email) => {
+  if (!email) return 'L\'email est requis'
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(email)) return 'Veuillez entrer un email valide'
+
+  return ''
+}
+
+// Validation du formulaire
+const validateForm = () => {
+  isFormSubmitted.value = true
+  errors.email = validateEmail(formData.email)
+
+  if (errors.email) {
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur de validation',
+      detail: errors.email,
+      life: 5000
+    })
+    return false
+  }
+
+  return true
+}
+
 const handleSubmit = async () => {
+  // Vérifier si le formulaire est valide
+  if (!validateForm()) return
+
   // Vérifier si l'utilisateur est en periode de cooldown
   if (!canRequestReset.value) {
     toast.add({
@@ -96,10 +138,10 @@ const handleSubmit = async () => {
     return
   }
 
-  loading.value = true
+  isSubmitting.value = true
 
   try {
-    const result = await store.dispatch('auth/forgotPassword', { email: email.value })
+    const result = await store.dispatch('auth/forgotPassword', { email: formData.email })
     if (result.success) {
       // Afficher un toast de succès
       toast.add({
@@ -134,15 +176,15 @@ const handleSubmit = async () => {
       life: 5000
     })
   } finally {
-    loading.value = false
+    isSubmitting.value = false
   }
 }
 </script>
 
 <template>
-  <Card class="forgot-password-card">
+  <Card>
     <template #content>
-      <form @submit.prevent="handleSubmit" :class="cn('flex flex-col gap-6')">
+      <form @submit.prevent="handleSubmit" :class="cn('flex flex-col gap-4')">
         <div class="flex flex-col items-center gap-2 text-center">
           <h1 class="text-xl font-bold">
             Mot de passe oublié ?
@@ -155,30 +197,32 @@ const handleSubmit = async () => {
         <div class="grid gap-6">
           <!-- Champ Email -->
           <div class="grid gap-2">
-            <div class="w-full">
+            <div class="p-input-icon-left w-full">
               <FloatLabel variant="on">
                 <IconField>
                   <InputIcon><Mail class="h-4 w-4"/></InputIcon>
                   <InputText
                     type="email"
                     id="email"
-                    v-model="email"
+                    v-model="formData.email"
+                    :invalid="showEmailError"
                     aria-describedby="email-error"
-                    required
                     fluid
+                    required
                   />
                 </IconField>
-                <label for="email">Email</label>
+                <label for="email" class="text-primary">Email</label>
               </FloatLabel>
             </div>
+            <small v-if="errors.email && showEmailError" id="email-error" class="p-error">{{ errors.email }}</small>
           </div>
 
           <!-- Bouton de réinitialisation -->
           <Button
             type="submit"
-            :label="loading ? 'Chargement...' : (canRequestReset ? 'Réinitialiser le mot de passe' : `Attendre ${formattedRemainingTime}`)"
-            :loading="loading"
-            :disabled="loading || !canRequestReset"
+            :label="canRequestReset ? 'Réinitialiser le mot de passe' : `Attendre ${formattedRemainingTime}`"
+            :loading="isSubmitting"
+            :disabled="isSubmitting || !canRequestReset"
             fluid
             :title="!canRequestReset ? `Veuillez attendre ${formattedRemainingTime} avant de faire une nouvelle demande` : ''"
           >
@@ -188,13 +232,13 @@ const handleSubmit = async () => {
           </Button>
         </div>
 
-        <Divider />
+        <Divider/>
 
         <!-- Lien de connexion -->
         <div class="text-center">
           Vous avez déjà un compte ?
           <div>
-            <RouterLink to="/login">
+            <RouterLink to="/login" class="animate">
               Connectez-vous
             </RouterLink>
           </div>
@@ -205,22 +249,8 @@ const handleSubmit = async () => {
 </template>
 
 <style scoped>
-.forgot-password-card {
-  max-width: 100%;
-  border-radius: 0.5rem;
-}
-
-:deep(.p-card) {
-  border-radius: 0.5rem;
-}
-
-:deep(.p-card-content) {
-  padding: 1.5rem;
-}
-
-:deep(.p-inputtext),
-:deep(.p-password),
-:deep(.p-password-input) {
-  width: 100%;
+:deep([invalid="true"]),
+:deep(.p-invalid) {
+  border-color: var(--red-500) !important;
 }
 </style>

@@ -1,5 +1,12 @@
 <script setup>
-import { Landmark } from 'lucide-vue-next'
+import { ref, computed } from 'vue'
+import { Calculator, User, Phone, MapPin, Mail, Briefcase } from 'lucide-vue-next'
+import Card from 'primevue/card'
+import InputText from 'primevue/inputtext'
+import Checkbox from 'primevue/checkbox'
+import IconField from 'primevue/iconfield'
+import InputIcon from 'primevue/inputicon'
+import FloatLabel from 'primevue/floatlabel'
 
 // Props
 const props = defineProps({
@@ -13,139 +20,178 @@ const props = defineProps({
   }
 })
 
-// Émission d'événement pour mettre à jour le parent
 const emit = defineEmits(['update:show-comptable-info'])
 
-// Fonction appelée quand le toggle change
-const handleToggleChange = (event) => {
-  emit('update:show-comptable-info', event.target.checked)
+// Toggle pour afficher/masquer les informations comptables
+const toggleComptableInfo = () => {
+  emit('update:show-comptable-info', !props.showComptableInfo)
 }
 </script>
 
 <template>
-  <div class="card bg-base-200 shadow-sm">
-    <div class="card-body">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <h2 class="card-title flex items-center gap-2">
-          <Landmark class="w-5 h-5" />
-          Informations Comptables
-        </h2>
+  <Card class="shadow-sm mb-4">
+    <template #title>
+      <div class="flex items-center gap-2 text-primary">
+        <Calculator class="w-5 h-5" />
+        <h2>Informations Comptables</h2>
+      </div>
+    </template>
 
-        <div class="form-control">
-          <label class="label cursor-pointer">
-            <input
-                type="checkbox"
-                :checked="showComptableInfo"
-                @change="handleToggleChange"
-                class="toggle toggle-primary"
-            />
-            <span class="label-text ml-2">{{ showComptableInfo ? 'Masquer' : 'Afficher' }}</span>
+    <template #content>
+      <div class="grid gap-6">
+        <!-- Checkbox pour activer les informations comptables -->
+        <div class="flex items-center gap-2 mt-2">
+          <Checkbox
+            id="show_comptable_info"
+            :modelValue="showComptableInfo"
+            @update:modelValue="toggleComptableInfo"
+            binary
+          />
+          <label for="show_comptable_info" class="text-sm">
+            Renseigner les informations comptables (adresse de facturation différente)
           </label>
+        </div>
+
+        <div v-if="showComptableInfo" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+          <!-- Nom -->
+          <div class="grid gap-2">
+            <FloatLabel variant="on">
+              <IconField>
+                <InputIcon><User class="h-4 w-4"/></InputIcon>
+                <InputText
+                  id="comptable_nom"
+                  v-model="formData.comptable_nom"
+                  fluid
+                />
+              </IconField>
+              <label for="comptable_nom" class="text-primary">Nom</label>
+            </FloatLabel>
+          </div>
+
+          <!-- Prénom -->
+          <div class="grid gap-2">
+            <FloatLabel variant="on">
+              <IconField>
+                <InputIcon><User class="h-4 w-4"/></InputIcon>
+                <InputText
+                  id="comptable_prenom"
+                  v-model="formData.comptable_prenom"
+                  fluid
+                />
+              </IconField>
+              <label for="comptable_prenom" class="text-primary">Prénom</label>
+            </FloatLabel>
+          </div>
+
+          <!-- Fonction -->
+          <div class="grid gap-2">
+            <FloatLabel variant="on">
+              <IconField>
+                <InputIcon><Briefcase class="h-4 w-4"/></InputIcon>
+                <InputText
+                  id="comptable_fonction"
+                  v-model="formData.comptable_fonction"
+                  fluid
+                />
+              </IconField>
+              <label for="comptable_fonction" class="text-primary">Fonction</label>
+            </FloatLabel>
+          </div>
+
+          <!-- Email -->
+          <div class="grid gap-2">
+            <FloatLabel variant="on">
+              <IconField>
+                <InputIcon><Mail class="h-4 w-4"/></InputIcon>
+                <InputText
+                  id="comptable_email"
+                  v-model="formData.comptable_email"
+                  type="email"
+                  fluid
+                />
+              </IconField>
+              <label for="comptable_email" class="text-primary">Email</label>
+            </FloatLabel>
+          </div>
+
+          <!-- Téléphone -->
+          <div class="grid gap-2">
+            <FloatLabel variant="on">
+              <IconField>
+                <InputIcon><Phone class="h-4 w-4"/></InputIcon>
+                <InputText
+                  id="comptable_tel"
+                  v-model="formData.comptable_tel"
+                  type="tel"
+                  fluid
+                />
+              </IconField>
+              <label for="comptable_tel" class="text-primary">Téléphone</label>
+            </FloatLabel>
+          </div>
+
+          <!-- Rue -->
+          <div class="grid gap-2 col-span-1 md:col-span-2">
+            <FloatLabel variant="on">
+              <IconField>
+                <InputIcon><MapPin class="h-4 w-4"/></InputIcon>
+                <InputText
+                  id="comptable_rue"
+                  v-model="formData.comptable_rue"
+                  fluid
+                />
+              </IconField>
+              <label for="comptable_rue" class="text-primary">Rue</label>
+            </FloatLabel>
+          </div>
+
+          <!-- Code Postal -->
+          <div class="grid gap-2">
+            <FloatLabel variant="on">
+              <IconField>
+                <InputIcon><MapPin class="h-4 w-4"/></InputIcon>
+                <InputText
+                  id="comptable_cp"
+                  v-model="formData.comptable_cp"
+                  fluid
+                />
+              </IconField>
+              <label for="comptable_cp" class="text-primary">Code Postal</label>
+            </FloatLabel>
+          </div>
+
+          <!-- Ville -->
+          <div class="grid gap-2">
+            <FloatLabel variant="on">
+              <IconField>
+                <InputIcon><MapPin class="h-4 w-4"/></InputIcon>
+                <InputText
+                  id="comptable_ville"
+                  v-model="formData.comptable_ville"
+                  fluid
+                />
+              </IconField>
+              <label for="comptable_ville" class="text-primary">Ville</label>
+            </FloatLabel>
+          </div>
+        </div>
+
+        <div v-else class="text-center py-4 text-gray-500">
+          <p>Les informations comptables ne sont pas renseignées.</p>
+          <p class="text-sm mt-2">Cochez la case pour ajouter des informations comptables.</p>
         </div>
       </div>
-
-      <div v-if="showComptableInfo" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-        <div class="form-control w-full">
-          <label class="label">
-            <span class="label-text">Nom</span>
-          </label>
-          <input
-              v-model="formData.comptable_nom"
-              type="text"
-              class="input input-bordered w-full"
-              placeholder="Nom"
-          />
-        </div>
-
-        <div class="form-control w-full">
-          <label class="label">
-            <span class="label-text">Prénom</span>
-          </label>
-          <input
-              v-model="formData.comptable_prenom"
-              type="text"
-              class="input input-bordered w-full"
-              placeholder="Prénom"
-          />
-        </div>
-
-        <div class="form-control w-full">
-          <label class="label">
-            <span class="label-text">Fonction</span>
-          </label>
-          <input
-              v-model="formData.comptable_fonction"
-              type="text"
-              class="input input-bordered w-full"
-              placeholder="Fonction"
-          />
-        </div>
-
-        <div class="form-control w-full">
-          <label class="label">
-            <span class="label-text">Email</span>
-          </label>
-          <input
-              v-model="formData.comptable_email"
-              type="email"
-              class="input input-bordered w-full"
-              placeholder="Email"
-          />
-        </div>
-
-        <div class="form-control w-full">
-          <label class="label">
-            <span class="label-text">Téléphone</span>
-          </label>
-          <input
-              v-model="formData.comptable_tel"
-              type="tel"
-              class="input input-bordered w-full"
-              placeholder="Téléphone"
-          />
-        </div>
-
-        <div class="form-control w-full col-span-1 md:col-span-2">
-          <label class="label">
-            <span class="label-text">Rue</span>
-          </label>
-          <input
-              v-model="formData.comptable_rue"
-              type="text"
-              class="input input-bordered w-full"
-              placeholder="Rue"
-          />
-        </div>
-
-        <div class="form-control w-full">
-          <label class="label">
-            <span class="label-text">Code Postal</span>
-          </label>
-          <input
-              v-model="formData.comptable_cp"
-              type="text"
-              class="input input-bordered w-full"
-              placeholder="Code Postal"
-          />
-        </div>
-
-        <div class="form-control w-full">
-          <label class="label">
-            <span class="label-text">Ville</span>
-          </label>
-          <input
-              v-model="formData.comptable_ville"
-              type="text"
-              class="input input-bordered w-full"
-              placeholder="Ville"
-          />
-        </div>
-      </div>
-
-      <div v-else class="text-center py-4 text-neutral-content">
-        <p>Les informations comptables ne sont pas renseignées.</p>
-        <p class="text-sm mt-2">Activez l'interrupteur pour ajouter des informations comptables.</p>
-      </div>
-    </div>
-  </div>
+    </template>
+  </Card>
 </template>
+
+<style scoped>
+:deep(.p-inputtext) {
+  width: 100%;
+}
+
+:deep([invalid="true"]),
+:deep(.p-invalid) {
+  border-color: var(--red-500) !important;
+}
+</style>

@@ -1,5 +1,10 @@
 <script setup>
-import { UserCircle } from 'lucide-vue-next'
+import { UserCircle, User, Phone, MapPin, Briefcase } from 'lucide-vue-next'
+import Card from 'primevue/card'
+import InputText from 'primevue/inputtext'
+import IconField from 'primevue/iconfield'
+import InputIcon from 'primevue/inputicon'
+import FloatLabel from 'primevue/floatlabel'
 
 // Props
 const props = defineProps({
@@ -11,98 +16,133 @@ const props = defineProps({
 </script>
 
 <template>
-  <div class="card bg-base-200 shadow-sm">
-    <div class="card-body">
-      <h2 class="card-title flex items-center gap-2">
+  <Card class="shadow-sm mb-4">
+    <template #title>
+      <div class="flex items-center gap-2 text-primary mb-4">
         <UserCircle class="w-5 h-5" />
-        Informations Commerciales
-      </h2>
+        <h2>Informations Commerciales</h2>
+      </div>
+    </template>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-        <div class="form-control w-full">
-          <label class="label">
-            <span class="label-text">Nom</span>
-          </label>
-          <input
-              v-model="formData.commercial_nom"
-              type="text"
-              class="input input-bordered w-full"
-              placeholder="Nom"
-          />
+    <template #content>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Nom -->
+        <div class="grid gap-2">
+          <FloatLabel variant="on">
+            <IconField>
+              <InputIcon><User class="h-4 w-4"/></InputIcon>
+              <InputText
+                id="commercial_nom"
+                v-model="formData.commercial_nom"
+                fluid
+              />
+            </IconField>
+            <label for="commercial_nom" class="text-primary">Nom</label>
+          </FloatLabel>
         </div>
 
-        <div class="form-control w-full">
-          <label class="label">
-            <span class="label-text">Prénom</span>
-          </label>
-          <input
-              v-model="formData.commercial_prenom"
-              type="text"
-              class="input input-bordered w-full"
-              placeholder="Prénom"
-          />
+        <!-- Prénom -->
+        <div class="grid gap-2">
+          <FloatLabel variant="on">
+            <IconField>
+              <InputIcon><User class="h-4 w-4"/></InputIcon>
+              <InputText
+                id="commercial_prenom"
+                v-model="formData.commercial_prenom"
+                fluid
+              />
+            </IconField>
+            <label for="commercial_prenom" class="text-primary">Prénom</label>
+          </FloatLabel>
         </div>
 
-        <div class="form-control w-full">
-          <label class="label">
-            <span class="label-text">Fonction</span>
-          </label>
-          <input
-              v-model="formData.commercial_fonction"
-              type="text"
-              class="input input-bordered w-full"
-              placeholder="Fonction"
-          />
+        <!-- Fonction -->
+        <div class="grid gap-2">
+          <FloatLabel variant="on">
+            <IconField>
+              <InputIcon><Briefcase class="h-4 w-4"/></InputIcon>
+              <InputText
+                id="commercial_fonction"
+                v-model="formData.commercial_fonction"
+                fluid
+              />
+            </IconField>
+            <label for="commercial_fonction" class="text-primary">Fonction</label>
+          </FloatLabel>
         </div>
 
-        <div class="form-control w-full">
-          <label class="label">
-            <span class="label-text">Téléphone</span>
-          </label>
-          <input
-              v-model="formData.commercial_tel"
-              type="tel"
-              class="input input-bordered w-full"
-              placeholder="Téléphone"
-          />
+        <!-- Téléphone -->
+        <div class="grid gap-2">
+          <FloatLabel variant="on">
+            <IconField>
+              <InputIcon><Phone class="h-4 w-4"/></InputIcon>
+              <InputText
+                id="commercial_tel"
+                v-model="formData.commercial_tel"
+                type="tel"
+                fluid
+              />
+            </IconField>
+            <label for="commercial_tel" class="text-primary">Téléphone</label>
+          </FloatLabel>
         </div>
 
-        <div class="form-control w-full col-span-1 md:col-span-2">
-          <label class="label">
-            <span class="label-text">Rue</span>
-          </label>
-          <input
-              v-model="formData.commercial_rue"
-              type="text"
-              class="input input-bordered w-full"
-              placeholder="Rue"
-          />
+        <!-- Rue -->
+        <div class="grid gap-2 col-span-1 md:col-span-2">
+          <FloatLabel variant="on">
+            <IconField>
+              <InputIcon><MapPin class="h-4 w-4"/></InputIcon>
+              <InputText
+                id="commercial_rue"
+                v-model="formData.commercial_rue"
+                fluid
+              />
+            </IconField>
+            <label for="commercial_rue" class="text-primary">Rue</label>
+          </FloatLabel>
         </div>
 
-        <div class="form-control w-full">
-          <label class="label">
-            <span class="label-text">Code Postal</span>
-          </label>
-          <input
-              v-model="formData.commercial_cp"
-              type="text"
-              class="input input-bordered w-full"
-              placeholder="Code Postal"
-          />
+        <!-- Code Postal -->
+        <div class="grid gap-2">
+          <FloatLabel variant="on">
+            <IconField>
+              <InputIcon><MapPin class="h-4 w-4"/></InputIcon>
+              <InputText
+                id="commercial_cp"
+                v-model="formData.commercial_cp"
+                fluid
+              />
+            </IconField>
+            <label for="commercial_cp" class="text-primary">Code Postal</label>
+          </FloatLabel>
         </div>
 
-        <div class="form-control w-full">
-          <label class="label">
-            <span class="label-text">Ville</span>
-          </label>
-          <input
-              v-model="formData.commercial_ville"
-              type="text"
-              class="input input-bordered w-full"
-              placeholder="Ville"
-          />
+        <!-- Ville -->
+        <div class="grid gap-2">
+          <FloatLabel variant="on">
+            <IconField>
+              <InputIcon><MapPin class="h-4 w-4"/></InputIcon>
+              <InputText
+                id="commercial_ville"
+                v-model="formData.commercial_ville"
+                fluid
+              />
+            </IconField>
+            <label for="commercial_ville" class="text-primary">Ville</label>
+          </FloatLabel>
         </div>
       </div>
-    </div>
-  </div>
+    </template>
+  </Card>
 </template>
+
+<style scoped>
+:deep(.p-inputtext) {
+  width: 100%;
+}
+
+:deep([invalid="true"]),
+:deep(.p-invalid) {
+  border-color: var(--red-500) !important;
+}
+</style>

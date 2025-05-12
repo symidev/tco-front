@@ -1,35 +1,46 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
-
+import Tabs from 'primevue/tabs';
+import TabList from 'primevue/tablist';
+import Tab from 'primevue/tab';
 const route = useRoute()
+
+const items = ref([
+  {
+    label: 'Édition du profil',
+    icon: 'pi pi-user',
+    route: '/account',
+  },
+  {
+    label: 'Mot de passe',
+    icon: 'pi pi-lock',
+    route: '/account/password',
+  }
+])
+
+// Déterminer l'index de l'item actif
+const activeIndex = computed(() => {
+  const index = items.value.findIndex(item => item.route === route.path)
+  return index !== -1 ? items.value[index].route : '/account'
+})
 </script>
 
 <template>
   <div class="container mx-auto px-2 sm:px-4 md:px-6 py-4 md:py-6">
-    <div class="card bg-base-100 shadow-sm overflow-hidden">
-      <div class="card-body p-3 sm:p-6">
-        <h1 class="card-title text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Mon compte</h1>
-
-        <div class="tabs tabs-bordered mb-4 sm:mb-6 overflow-x-auto whitespace-nowrap">
-          <RouterLink
-              :to="{ name: 'profile' }"
-              class="tab tab-sm sm:tab-md md:tab-lg hover:text-primary"
-              :class="{ 'tab-active text-primary': route.name === 'profile' }"
-          >
-            Édition du profil
+      <h1 class="text-xl sm:text-2xl font-bold pb-6">Mon compte</h1>
+    <Tabs :value="activeIndex" class="py-6">
+      <TabList>
+        <Tab v-for="tab in items" :key="tab.label" :value="tab.route">
+          <RouterLink v-if="tab.route" v-slot="{ href, navigate }" :to="tab.route" custom>
+            <a :href="href" @click="navigate" class="flex items-center gap-2 text-inherit">
+              <i :class="tab.icon" />
+              <span>{{ tab.label }}</span>
+            </a>
           </RouterLink>
-          <RouterLink
-              :to="{ name: 'password' }"
-              class="tab tab-sm sm:tab-md md:tab-lg hover:text-primary"
-              :class="{ 'tab-active text-primary': route.name === 'password' }"
-          >
-            Mot de passe
-          </RouterLink>
-        </div>
-
-        <router-view></router-view>
-      </div>
-    </div>
+        </Tab>
+      </TabList>
+    </Tabs>
+    <RouterView/>
   </div>
 </template>

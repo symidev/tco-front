@@ -288,7 +288,7 @@ const nextStep = () => {
     <!-- Intérêt offre -->
     <div class="grid gap-2 mt-2">
       <label class="text-primary">Intérêt offre</label>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-6">
+      <div class="flex flex-col gap-2">
         <div v-for="option in interetOptions" :key="option.value" class="flex items-center gap-1">
           <Checkbox
             :id="`interet-${option.value}`"

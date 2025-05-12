@@ -180,7 +180,7 @@ const handleSubmit = async () => {
           <!-- Champ Mot de passe -->
           <div class="grid gap-2">
             <div class="flex items-center justify-end">
-              <RouterLink to="forget-password">
+              <RouterLink to="forget-password" class="animate">
                 Mot de passe oublié ?
               </RouterLink>
             </div>
@@ -223,7 +223,7 @@ const handleSubmit = async () => {
         <div class="text-center">
           Vous n'avez pas encore de compte ?
           <div>
-            <RouterLink to="register">
+            <RouterLink to="register" class="animate">
               Inscrivez-vous
             </RouterLink>
           </div>
