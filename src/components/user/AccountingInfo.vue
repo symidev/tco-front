@@ -123,11 +123,17 @@ const toggleComptableInfo = () => {
                   id="comptable_tel"
                   v-model="formData.comptable_tel"
                   type="tel"
+                  maxlength="10"
+                  :invalid="showTelError"
+                  @input="handleTelInput"
                   fluid
                 />
               </IconField>
               <label for="comptable_tel" class="text-primary">Téléphone</label>
             </FloatLabel>
+            <small v-if="showTelError" class="text-red-500">
+              Le téléphone doit contenir 10 chiffres
+            </small>
           </div>
 
           <!-- Rue -->

@@ -13,7 +13,65 @@ const props = defineProps({
   formData: {
     type: Object,
     required: true
+  },
+  validationActive: {
+    type: Boolean,
+    default: false
   }
+})
+
+// Validation du SIRET
+const isSiretValid = computed(() => {
+  return !props.formData.user_siret || (props.formData.user_siret.length === 14 && /^\d{14}$/.test(props.formData.user_siret))
+})
+
+// Validation du téléphone
+const isTelValid = computed(() => {
+  return !props.formData.user_tel || (props.formData.user_tel.length === 10 && /^\d{10}$/.test(props.formData.user_tel))
+})
+
+// Validation des champs d'intérêt et de connaissance
+const isOffreValid = computed(() => {
+  return props.formData.user_offre && props.formData.user_offre.length > 0
+})
+
+const isConnaissanceValid = computed(() => {
+  return props.formData.user_connaissance && props.formData.user_connaissance.length > 0
+})
+
+// Computed pour l'affichage des erreurs
+const showSiretError = computed(() => props.validationActive && !isSiretValid.value)
+const showTelError = computed(() => props.validationActive && !isTelValid.value)
+const showOffreError = computed(() => props.validationActive && !isOffreValid.value)
+const showConnaissanceError = computed(() => props.validationActive && !isConnaissanceValid.value)
+
+// Fonction pour normaliser la saisie du SIRET (seulement des chiffres)
+const handleSiretInput = (event) => {
+  // Supprimer tous les caractères non numériques
+  const value = event.target.value.replace(/\D/g, '')
+  // Limiter à 14 chiffres
+  const truncated = value.substring(0, 14)
+  // Mettre à jour le modèle
+  props.formData.user_siret = truncated
+}
+
+// Fonction pour normaliser la saisie du téléphone (seulement des chiffres)
+const handleTelInput = (event) => {
+  // Supprimer tous les caractères non numériques
+  const value = event.target.value.replace(/\D/g, '')
+  // Limiter à 10 chiffres
+  const truncated = value.substring(0, 10)
+  // Mettre à jour le modèle
+  props.formData.user_tel = truncated
+}
+
+// Exposer les méthodes de validation
+defineExpose({
+  validateSiret: () => isSiretValid.value,
+  validateTel: () => isTelValid.value,
+  validateOffre: () => isOffreValid.value,
+  validateConnaissance: () => isConnaissanceValid.value,
+  validate: () => isSiretValid.value && isTelValid.value && isOffreValid.value && isConnaissanceValid.value
 })
 
 // Computed properties
@@ -36,17 +94,6 @@ const connaissanceOptions = [
   {value: 'autre', label: 'Autre'}
 ]
 
-// Fonctions pour contrôler la saisie du SIRET
-const handleSiretInput = (event) => {
-  // Supprimer tous les caractères non numériques
-  const value = event.target.value.replace(/\D/g, '')
-
-  // Limiter à 14 chiffres
-  const truncated = value.substring(0, 14)
-
-  // Mettre à jour le modèle
-  props.formData.user_siret = truncated
-}
 </script>
 
 <template>
@@ -103,13 +150,17 @@ const handleSiretInput = (event) => {
 
         <!-- Intérêt offre -->
         <div class="grid gap-2 mt-2">
-          <label class="text-primary">Intérêt offre</label>
-          <div class="flex flex-col gap-2">
+          <div class="flex items-center gap-2">
+            <label class="text-primary">Intérêt offre</label>
+            <span v-if="showOffreError" class="text-red-500 text-xs">*Au moins une option requise</span>
+          </div>
+          <div class="flex flex-col gap-2" :class="{ 'border-red-500 border p-2 rounded': showOffreError }">
             <div v-for="option in interetOptions" :key="option.value" class="flex items-center gap-1">
               <Checkbox
                 :id="`interet-${option.value}`"
                 :value="option.value"
                 v-model="formData.user_offre"
+                :class="{ 'p-invalid': showOffreError }"
               />
               <label :for="`interet-${option.value}`" class="text-sm">{{ option.label }}</label>
             </div>
@@ -118,8 +169,11 @@ const handleSiretInput = (event) => {
 
         <!-- Canal de connaissance -->
         <div class="grid gap-2 mt-2">
-          <label class="text-primary">Canal de connaissance</label>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-6">
+          <div class="flex items-center gap-2">
+            <label class="text-primary">Canal de connaissance</label>
+            <span v-if="showConnaissanceError" class="text-red-500 text-xs">*Au moins une option requise</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-6" :class="{ 'border-red-500 border p-2 rounded': showConnaissanceError }">
             <!-- Options normales (sauf "autre") -->
             <div
               v-for="option in connaissanceOptions.filter(opt => opt.value !== 'autre')"
@@ -130,6 +184,7 @@ const handleSiretInput = (event) => {
                 :id="`connaissance-${option.value}`"
                 :value="option.value"
                 v-model="formData.user_connaissance"
+                :class="{ 'p-invalid': showConnaissanceError }"
               />
               <label :for="`connaissance-${option.value}`" class="text-sm">{{ option.label }}</label>
             </div>

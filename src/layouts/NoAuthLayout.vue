@@ -30,17 +30,5 @@ onMounted(() => {
         >
       </div>
     </div>
-    <Toaster
-        :duration="5000"
-        :toastOptions="{
-    unstyled: true,
-    classes: {
-      error: 'bg-error-content text-error w-[300px] border border-error rounded-lg py-2 px-5 flex flex-row gap-2 items-center text-sm',
-      success: 'bg-white text-success w-[300px] border border-success rounded-lg py-2 px-5 flex flex-row gap-2 items-center text-sm',
-      warning: 'bg-warning-content text-warning w-[300px] border border-warning rounded-lg py-2 px-5 flex flex-row gap-2 items-center text-sm',
-      info: 'bg-info-content text-info w-[300px] border border-info rounded-lg py-2 px-5 flex flex-row gap-2 items-center text-sm'
-    }
-  }"
-    />
   </main>
 </template>

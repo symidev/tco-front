@@ -1,8 +1,7 @@
-import { ref, computed } from 'vue'
-import { useStore } from 'vuex'
-import { toast } from 'vue-sonner'
+import {ref, computed} from 'vue'
+import {useStore} from 'vuex'
 
-export function useUserProfile() {
+export function useUserProfile(toast) {
     const store = useStore()
 
     // Loading states
@@ -15,6 +14,14 @@ export function useUserProfile() {
 
     // Toggle state for comptable info visibility
     const showComptableInfo = ref(false)
+
+    const validationActive = ref(false)
+
+    // Déclarer les références aux composants
+    const companyInfoRefObject = ref(null)
+    const commercialInfoRefObject = ref(null)
+    const accountingInfoRefObject = ref(null)
+
 
     // Form data
     const formData = ref({
@@ -62,6 +69,84 @@ export function useUserProfile() {
         formData.value.comptable_rue = ''
         formData.value.comptable_cp = ''
         formData.value.comptable_ville = ''
+    }
+
+    const validateForm = () => {
+        // Activer la validation pour afficher les erreurs dans les composants enfants
+        validationActive.value = true
+        let isValid = true
+        let errorMessage = ''
+
+        // Vérifier d'abord que les références existent
+        const hasCompanyInfoRef = companyInfoRefObject.value && typeof companyInfoRefObject.value === 'object'
+        const hasCommercialInfoRef = commercialInfoRefObject.value && typeof commercialInfoRefObject.value === 'object'
+        const hasAccountingInfoRef = accountingInfoRefObject.value && typeof accountingInfoRefObject.value === 'object'
+
+        // Validation du SIRET
+        if (hasCompanyInfoRef && typeof companyInfoRefObject.value.validateSiret === 'function') {
+            const isSiretValid = companyInfoRefObject.value.validateSiret()
+            if (!isSiretValid) {
+                isValid = false
+                errorMessage = "Le SIRET doit contenir 14 chiffres"
+            }
+        }
+
+        // Validation du téléphone de l'entreprise
+        if (hasCompanyInfoRef && typeof companyInfoRefObject.value.validateTel === 'function') {
+            const isTelValid = companyInfoRefObject.value.validateTel()
+            if (!isTelValid) {
+                isValid = false
+                errorMessage = "Le téléphone de l'entreprise doit contenir 10 chiffres"
+            }
+        }
+
+        // Validation du téléphone commercial
+        if (hasCommercialInfoRef && typeof commercialInfoRefObject.value.validate === 'function') {
+            const isCommercialTelValid = commercialInfoRefObject.value.validate()
+            if (!isCommercialTelValid) {
+                isValid = false
+                errorMessage = "Le téléphone commercial doit contenir 10 chiffres"
+            }
+        }
+
+        // Validation du téléphone comptable si affiché
+        if (showComptableInfo.value && hasAccountingInfoRef && typeof accountingInfoRefObject.value.validate === 'function') {
+            const isComptableTelValid = accountingInfoRefObject.value.validate()
+            if (!isComptableTelValid) {
+                isValid = false
+                errorMessage = "Le téléphone comptable doit contenir 10 chiffres"
+            }
+        }
+
+        // Validation de l'intérêt de l'offre
+        if (hasCompanyInfoRef && typeof companyInfoRefObject.value.validateOffre === 'function') {
+            const isOffreValid = companyInfoRefObject.value.validateOffre()
+            if (!isOffreValid) {
+                isValid = false
+                errorMessage = "Veuillez sélectionner au moins un intérêt pour l'offre"
+            }
+        }
+
+        // Validation du canal de connaissance
+        if (hasCompanyInfoRef && typeof companyInfoRefObject.value.validateConnaissance === 'function') {
+            const isConnaissanceValid = companyInfoRefObject.value.validateConnaissance()
+            if (!isConnaissanceValid) {
+                isValid = false
+                errorMessage = "Veuillez sélectionner au moins un canal de connaissance"
+            }
+        }
+
+        if (!isValid && errorMessage) {
+            toast.add({
+                severity: 'warn',
+                summary: errorMessage,
+                life: 10000
+            })
+        } else if (isValid) {
+
+        }
+
+        return isValid
     }
 
     /**
@@ -133,6 +218,11 @@ export function useUserProfile() {
      * Sauvegarde le profil utilisateur
      */
     const saveProfile = async () => {
+        // Valider le formulaire avant de soumettre
+        if (!validateForm()) {
+            return
+        }
+
         isSaving.value = true
 
         try {
@@ -190,16 +280,21 @@ export function useUserProfile() {
             const result = await store.dispatch('user/updateUserProfile', apiData)
 
             if (result.success) {
-                toast.success('Profil mis à jour', {
-                    description: 'Vos informations ont été mises à jour avec succès.',
+                toast.add({
+                    severity: 'success',
+                    summary: 'Profil mis à jour',
+                    detail: 'Vos informations ont été mises à jour avec succès.',
+                    life: 3000
                 })
             } else {
-                toast.error('Erreur lors de la mise à jour', {
-                    description: result.error || 'Une erreur est survenue lors de la mise à jour de votre profil.',
+                toast.add({
+                    severity: 'error',
+                    summary: 'Erreur lors de la mise à jour',
+                    detail: result.error || 'Une erreur est survenue lors de la mise à jour de votre profil.',
+                    life: 3000
                 })
             }
         } catch (error) {
-            console.error('Update profile error:', error)
             toast.error('Erreur lors de la mise à jour', {
                 description: 'Une erreur inattendue est survenue.',
             })
@@ -215,6 +310,17 @@ export function useUserProfile() {
         showComptableInfo,
         loadUserData,
         saveProfile,
-        toggleComptableInfo
+        toggleComptableInfo,
+        validationActive,
+        // Exposer les setters pour les références avec vérification
+        setCompanyInfoRef: (el) => {
+            companyInfoRefObject.value = el;
+        },
+        setCommercialInfoRef: (el) => {
+            commercialInfoRefObject.value = el;
+        },
+        setAccountingInfoRef: (el) => {
+            accountingInfoRefObject.value = el;
+        }
     }
 }

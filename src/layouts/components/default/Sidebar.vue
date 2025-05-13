@@ -48,7 +48,7 @@ const menuItems = [
     ]"
   >
     <!-- Logo en haut de la sidebar -->
-    <div class="p-2 border-b border-base-300">
+    <div class="p-2 border-b border-logo-color">
       <RouterLink to="/" @click="closeSidebarOnMobile">
         <img src="@/assets/images/logo.png" alt="Logo" class="h-12 mx-auto"/>
       </RouterLink>

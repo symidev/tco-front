@@ -5,13 +5,41 @@ import InputText from 'primevue/inputtext'
 import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 import FloatLabel from 'primevue/floatlabel'
+import { computed } from 'vue'
 
 // Props
 const props = defineProps({
   formData: {
     type: Object,
     required: true
+  },
+  validationActive: {
+    type: Boolean,
+    default: false
   }
+})
+
+// Validation du téléphone
+const isTelValid = computed(() => {
+  return !props.formData.commercial_tel || (props.formData.commercial_tel.length === 10 && /^\d{10}$/.test(props.formData.commercial_tel))
+})
+
+// Computed pour l'affichage des erreurs
+const showTelError = computed(() => props.validationActive && !isTelValid.value)
+
+// Fonction pour normaliser la saisie du téléphone (seulement des chiffres)
+const handleTelInput = (event) => {
+  // Supprimer tous les caractères non numériques
+  const value = event.target.value.replace(/\D/g, '')
+  // Limiter à 10 chiffres
+  const truncated = value.substring(0, 10)
+  // Mettre à jour le modèle
+  props.formData.commercial_tel = truncated
+}
+
+// Exposer la méthode de validation
+defineExpose({
+  validate: () => isTelValid.value
 })
 </script>
 
@@ -80,11 +108,17 @@ const props = defineProps({
                 id="commercial_tel"
                 v-model="formData.commercial_tel"
                 type="tel"
+                maxlength="10"
+                :invalid="showTelError"
+                @input="handleTelInput"
                 fluid
               />
             </IconField>
             <label for="commercial_tel" class="text-primary">Téléphone</label>
           </FloatLabel>
+          <small v-if="showTelError" class="text-red-500">
+            Le téléphone doit contenir 10 chiffres
+          </small>
         </div>
 
         <!-- Rue -->

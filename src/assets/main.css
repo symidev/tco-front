@@ -66,3 +66,7 @@ a.animate:hover {
     border-radius: 0.1rem;
     color: var(--p-surface-100);
 }
+
+.dark .border-logo-color {
+    border-color: var(--p-surface-800);
+}

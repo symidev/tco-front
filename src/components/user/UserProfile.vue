@@ -1,6 +1,5 @@
 <script setup>
-import {ref, computed, onMounted} from 'vue'
-import {toast} from 'vue-sonner'
+import {ref, computed, onMounted, watch} from 'vue'
 import Button from 'primevue/button'
 import ProgressSpinner from 'primevue/progressspinner'
 import Card from 'primevue/card'
@@ -9,6 +8,9 @@ import CommercialInfo from './CommercialInfo.vue'
 import AccountingInfo from './AccountingInfo.vue'
 import {useUserProfile} from '@/composables/useUserProfile'
 import {RefreshCw, Save} from 'lucide-vue-next'
+import {useToast} from 'primevue/usetoast'
+
+const toast = useToast()
 
 // Utilisation du composable pour la logique
 const {
@@ -18,13 +20,36 @@ const {
   showComptableInfo,
   loadUserData,
   saveProfile,
-  toggleComptableInfo
-} = useUserProfile()
+  toggleComptableInfo,
+  validationActive,
+  setCompanyInfoRef,
+  setCommercialInfoRef,
+  setAccountingInfoRef
+} = useUserProfile(toast)
+
+// Création des références locales
+const companyInfoRef = ref(null)
+const commercialInfoRef = ref(null)
+const accountingInfoRef = ref(null)
 
 // Chargement des données au montage du composant
 onMounted(() => {
   loadUserData()
 })
+
+// Utiliser watch pour s'assurer que les références sont mises à jour correctement
+// quand les composants sont montés
+watch(companyInfoRef, (newValue) => {
+  if (newValue) setCompanyInfoRef(newValue)
+}, { immediate: true })
+
+watch(commercialInfoRef, (newValue) => {
+  if (newValue) setCommercialInfoRef(newValue)
+}, { immediate: true })
+
+watch(accountingInfoRef, (newValue) => {
+  if (newValue) setAccountingInfoRef(newValue)
+}, { immediate: true })
 </script>
 
 <template>
@@ -33,10 +58,20 @@ onMounted(() => {
       <ProgressSpinner v-if="isLoading" style="width:50px;height:50px" strokeWidth="5"/>
       <form v-else @submit.prevent="saveProfile" class="grid">
         <!-- Sections d'informations -->
-        <CompanyInfo :form-data="formData"/>
-        <CommercialInfo :form-data="formData"/>
+        <CompanyInfo
+            :form-data="formData"
+            ref="companyInfoRef"
+            :validationActive="validationActive"
+        />
+        <CommercialInfo
+            :form-data="formData"
+            ref="commercialInfoRef"
+            :validationActive="validationActive"
+        />
         <AccountingInfo
             :form-data="formData"
+            ref="accountingInfoRef"
+            :validationActive="validationActive"
             :show-comptable-info="showComptableInfo"
             @update:show-comptable-info="toggleComptableInfo"
         />
