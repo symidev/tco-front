@@ -74,3 +74,6 @@ a.animate:hover {
 .dark .p-drawer {
     background-color: var(--p-surface-900);
 }
+#app .p-steppanel {
+    background-color: transparent;
+}

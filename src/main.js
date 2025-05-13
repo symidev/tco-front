@@ -227,8 +227,27 @@ const tcoTheme = definePreset(Nora, {
                 }
             }
         },
+        stepper: {
+            colorScheme: {
+                light: {
+                    steppannel: {
+                        background: 'transparent',
+                    }
+                }
+            }
+        },
         checkbox: {
             colorScheme: {
+                light: {
+                    background: '{surface.0}',
+                    hhoverBackground: '{surface.0}',
+                    checkedBackground: '{surface.0}',
+                    checkedHoverBackground: '{surface.0}',
+                    iconColor: '{surface.0}',
+                    iconCheckedColor: '{primary.color}',
+                    iconCheckedHoverColor: '{primary.color}',
+                    hoverBorderColor: '{primary.color}'
+                },
                 dark: {
                     root: {
                         background: '{surface.900}',

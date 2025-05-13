@@ -233,9 +233,9 @@ const submitForm = async (isValid) => {
         <!-- Indicateur d'étape -->
         <Stepper value="1" linear>
           <StepList>
-            <Step value="1">Général</Step>
-            <Step value="2">Commercial</Step>
-            <Step value="3" v-if="differentAccountingInfo">Comptable</Step>
+            <Step value="1"></Step>
+            <Step value="2"></Step>
+            <Step value="3" v-if="differentAccountingInfo"></Step>
           </StepList>
           <StepPanels>
             <StepPanel v-slot="{ activateCallback }" value="1">
