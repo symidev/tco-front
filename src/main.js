@@ -228,16 +228,18 @@ const tcoTheme = definePreset(Nora, {
             }
         },
         checkbox: {
-            dark: {
-                root: {
-                    background: '{surface.900}',
-                    hoverBackground: '{surface.900}',
-                    checkedBackground: '{surface.900}',
-                    checkedHoverBackground: '{surface.900}',
-                    iconColor: '{surface.100}',
-                    iconCheckedColor: '{primary.color}',
-                    iconCheckedHoverColor: '{primary.color}',
-                    hoverBorderColor: '{primary.color}'
+            colorScheme: {
+                dark: {
+                    root: {
+                        background: '{surface.900}',
+                        hoverBackground: '{surface.900}',
+                        checkedBackground: '{surface.900}',
+                        checkedHoverBackground: '{surface.900}',
+                        iconColor: '{surface.100}',
+                        iconCheckedColor: '{primary.color}',
+                        iconCheckedHoverColor: '{primary.color}',
+                        hoverBorderColor: '{primary.color}'
+                    }
                 }
             }
         },
