@@ -240,6 +240,15 @@ const tcoTheme = definePreset(Nora, {
                     hoverBorderColor: '{primary.color}'
                 }
             }
+        },
+        drawer: {
+            dark: {
+                root: {
+                    background: '{surface.900}',
+                    color: '{surface.100}',
+                    headerPadding: '0.1rem 0 0 0',
+                }
+            }
         }
     }
 });

@@ -6,12 +6,10 @@ const store = useStore()
 </script>
 
 <template>
-  <div class="container mx-auto p-6">
-    <div class="flex flex-row justify-center text-center">
-      <div class="flex flex-col  mb-6">
-        <h1 class="text-2xl font-bold">Mes catalogues</h1>
-        <h2>In progress</h2>
-      </div>
+  <div class="gap-3 w-full flex justify-center">
+    <div class="w-full max-w-[1200px] flex flex-1 flex-col my-8">
+      <h1 class="text-xl sm:text-2xl font-bold pb-6">Mes catalogues</h1>
+      <h2>In progress</h2>
     </div>
   </div>
 </template>

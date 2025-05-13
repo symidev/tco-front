@@ -7,9 +7,9 @@ const tokenInfo = computed(() => store.state.auth.tokenInfo)
 </script>
 
 <template>
-  <div class="container mx-auto p-6">
-    <div class="flex justify-center mb-6">
-      <h1 class="text-2xl font-bold">Tableau de bord</h1>
+  <div class="gap-3 w-full flex justify-center">
+    <div class="w-full max-w-[1200px] flex flex-1 flex-col my-8">
+      <h1 class="text-xl sm:text-2xl font-bold pb-6">Tableau de bord</h1>
     </div>
   </div>
 </template>

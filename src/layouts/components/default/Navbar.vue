@@ -4,9 +4,13 @@ import {useRouter} from 'vue-router'
 import {useStore} from 'vuex'
 import {computed} from 'vue'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
-import { CircleUser, UserPen, Key, LogOut } from 'lucide-vue-next';
+import { CircleUser, UserPen, Key, LogOut, Menu as MenuIcon } from 'lucide-vue-next';
 
-const props = defineProps({items: Array})
+const props = defineProps({
+  items: Array,
+  isMobile: Boolean
+})
+const emit = defineEmits(['toggleMobileSidebar'])
 const router = useRouter()
 const store = useStore()
 
@@ -47,6 +51,14 @@ const url = null;
 
 <template>
   <Menubar :model="items" class="bg-surface-50 shadow-sm px-4 py-2">
+    <template #start v-if="isMobile">
+      <button
+          @click="emit('toggleMobileSidebar')"
+          class="p-2"
+      >
+        <MenuIcon class="w-5 h-5 text-surface-200" />
+      </button>
+    </template>
     <template #end>
       <Menu as="div" class="relative ml-3 py-1">
         <div>

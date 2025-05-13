@@ -70,3 +70,7 @@ a.animate:hover {
 .dark .border-logo-color {
     border-color: var(--p-surface-800);
 }
+
+.dark .p-drawer {
+    background-color: var(--p-surface-900);
+}

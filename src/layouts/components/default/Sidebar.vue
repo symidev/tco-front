@@ -43,8 +43,9 @@ const menuItems = [
 <template>
   <aside
       :class="[
-      'sidebar bg-base-200 fixed top-0 left-0 h-screen z-30 w-56 transition-all duration-300 ease-in-out flex flex-col',
-      props.isOpen ? 'translate-x-0 shadow-lg' : '-translate-x-full'
+      'sidebar bg-surface-900 z-30 transition-all duration-300 ease-in-out flex flex-col',
+      !props.isMobile ? 'h-screen fixed top-0 left-0 w-56' : 'h-auto w-40',
+      !props.isMobile && (props.isOpen ? 'translate-x-0 shadow-lg' : '-translate-x-full')
     ]"
   >
     <!-- Logo en haut de la sidebar -->
@@ -60,7 +61,7 @@ const menuItems = [
         <RouterLink
             :to="item.path"
             @click="closeSidebarOnMobile"
-            :class="['flex items-center', isActive(item.path) ? 'text-primary font-medium rounded-lg hover:bg-base-200 cursor-default' : '']"
+            :class="['flex items-center my-3', isActive(item.path) ? 'text-primary font-medium rounded-lg hover:bg-base-200 cursor-default' : 'text-surface-100']"
         >
           <component :is="item.icon" class="w-5 h-5 mr-2" />
           <span>{{ item.label }}</span>
@@ -69,21 +70,28 @@ const menuItems = [
     </ul>
 
     <!-- Bouton de basculement en bas de la sidebar -->
-    <div class="border-t border-base-300 px-6 py-2">
+    <!--<div class="border-t border-base-300 px-6 py-2">
       <button
           @click="toggleSidebar"
           class="btn btn-circle btn-sm w-full flex justify-center bg-base-200 hover:bg-base-100"
       >
         <ChevronsLeft class="w-5 h-5" />
       </button>
-    </div>
+    </div>-->
   </aside>
 </template>
 
 <style scoped>
-/* Assurer que la sidebar prend toute la hauteur et gère le défilement */
+/* Assurer que la sidebar gère correctement le défilement selon le mode */
 .sidebar {
-  height: 100vh;
   overflow-y: auto;
+}
+
+/* Ajuster le style en mode mobile pour éviter le défilement */
+@media (max-width: 767px) {
+  .sidebar {
+    overflow-y: visible;
+    height: auto;
+  }
 }
 </style>
