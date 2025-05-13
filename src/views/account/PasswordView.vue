@@ -197,7 +197,7 @@ const changePassword = async () => {
           <div class="grid gap-6">
             <!-- Mot de passe actuel -->
             <div v-if="!isAutoConnect" class="grid gap-2">
-              <FloatLabel variant="on">
+              <FloatLabel variant="in">
                 <IconField>
                   <InputIcon><Key class="h-4 w-4"/></InputIcon>
                   <Password
@@ -218,7 +218,7 @@ const changePassword = async () => {
 
             <!-- Nouveau mot de passe -->
             <div class="grid gap-2">
-              <FloatLabel variant="on">
+              <FloatLabel variant="in">
                 <IconField>
                   <InputIcon><Key class="h-4 w-4"/></InputIcon>
                   <Password
@@ -242,7 +242,7 @@ const changePassword = async () => {
 
             <!-- Confirmation du mot de passe -->
             <div class="grid gap-2">
-              <FloatLabel variant="on">
+              <FloatLabel variant="in">
                 <IconField>
                   <InputIcon><Key class="h-4 w-4"/></InputIcon>
                   <Password

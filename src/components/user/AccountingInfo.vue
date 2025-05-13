@@ -55,7 +55,7 @@ const toggleComptableInfo = () => {
         <div v-if="showComptableInfo" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
           <!-- Nom -->
           <div class="grid gap-2">
-            <FloatLabel variant="on">
+            <FloatLabel variant="in">
               <IconField>
                 <InputIcon><User class="h-4 w-4"/></InputIcon>
                 <InputText
@@ -70,7 +70,7 @@ const toggleComptableInfo = () => {
 
           <!-- Prénom -->
           <div class="grid gap-2">
-            <FloatLabel variant="on">
+            <FloatLabel variant="in">
               <IconField>
                 <InputIcon><User class="h-4 w-4"/></InputIcon>
                 <InputText
@@ -85,7 +85,7 @@ const toggleComptableInfo = () => {
 
           <!-- Fonction -->
           <div class="grid gap-2">
-            <FloatLabel variant="on">
+            <FloatLabel variant="in">
               <IconField>
                 <InputIcon><Briefcase class="h-4 w-4"/></InputIcon>
                 <InputText
@@ -100,7 +100,7 @@ const toggleComptableInfo = () => {
 
           <!-- Email -->
           <div class="grid gap-2">
-            <FloatLabel variant="on">
+            <FloatLabel variant="in">
               <IconField>
                 <InputIcon><Mail class="h-4 w-4"/></InputIcon>
                 <InputText
@@ -116,7 +116,7 @@ const toggleComptableInfo = () => {
 
           <!-- Téléphone -->
           <div class="grid gap-2">
-            <FloatLabel variant="on">
+            <FloatLabel variant="in">
               <IconField>
                 <InputIcon><Phone class="h-4 w-4"/></InputIcon>
                 <InputText
@@ -132,7 +132,7 @@ const toggleComptableInfo = () => {
 
           <!-- Rue -->
           <div class="grid gap-2 col-span-1 md:col-span-2">
-            <FloatLabel variant="on">
+            <FloatLabel variant="in">
               <IconField>
                 <InputIcon><MapPin class="h-4 w-4"/></InputIcon>
                 <InputText
@@ -147,7 +147,7 @@ const toggleComptableInfo = () => {
 
           <!-- Code Postal -->
           <div class="grid gap-2">
-            <FloatLabel variant="on">
+            <FloatLabel variant="in">
               <IconField>
                 <InputIcon><MapPin class="h-4 w-4"/></InputIcon>
                 <InputText
@@ -162,7 +162,7 @@ const toggleComptableInfo = () => {
 
           <!-- Ville -->
           <div class="grid gap-2">
-            <FloatLabel variant="on">
+            <FloatLabel variant="in">
               <IconField>
                 <InputIcon><MapPin class="h-4 w-4"/></InputIcon>
                 <InputText

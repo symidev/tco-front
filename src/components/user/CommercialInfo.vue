@@ -28,7 +28,7 @@ const props = defineProps({
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Nom -->
         <div class="grid gap-2">
-          <FloatLabel variant="on">
+          <FloatLabel variant="in">
             <IconField>
               <InputIcon><User class="h-4 w-4"/></InputIcon>
               <InputText
@@ -43,7 +43,7 @@ const props = defineProps({
 
         <!-- Prénom -->
         <div class="grid gap-2">
-          <FloatLabel variant="on">
+          <FloatLabel variant="in">
             <IconField>
               <InputIcon><User class="h-4 w-4"/></InputIcon>
               <InputText
@@ -58,7 +58,7 @@ const props = defineProps({
 
         <!-- Fonction -->
         <div class="grid gap-2">
-          <FloatLabel variant="on">
+          <FloatLabel variant="in">
             <IconField>
               <InputIcon><Briefcase class="h-4 w-4"/></InputIcon>
               <InputText
@@ -73,7 +73,7 @@ const props = defineProps({
 
         <!-- Téléphone -->
         <div class="grid gap-2">
-          <FloatLabel variant="on">
+          <FloatLabel variant="in">
             <IconField>
               <InputIcon><Phone class="h-4 w-4"/></InputIcon>
               <InputText
@@ -89,7 +89,7 @@ const props = defineProps({
 
         <!-- Rue -->
         <div class="grid gap-2 col-span-1 md:col-span-2">
-          <FloatLabel variant="on">
+          <FloatLabel variant="in">
             <IconField>
               <InputIcon><MapPin class="h-4 w-4"/></InputIcon>
               <InputText
@@ -104,7 +104,7 @@ const props = defineProps({
 
         <!-- Code Postal -->
         <div class="grid gap-2">
-          <FloatLabel variant="on">
+          <FloatLabel variant="in">
             <IconField>
               <InputIcon><MapPin class="h-4 w-4"/></InputIcon>
               <InputText
@@ -119,7 +119,7 @@ const props = defineProps({
 
         <!-- Ville -->
         <div class="grid gap-2">
-          <FloatLabel variant="on">
+          <FloatLabel variant="in">
             <IconField>
               <InputIcon><MapPin class="h-4 w-4"/></InputIcon>
               <InputText

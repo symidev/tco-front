@@ -95,33 +95,42 @@ const tcoTheme = definePreset(Nora, {
         }
     },
     components: {
+        formField: {
+            colorScheme: {
+                dark: {
+                    root: {
+                        background: 'transparent'
+                    }
+                }
+            }
+        },
         tabs: {
             colorScheme: {
                 dark: {
                     root: {
-                    tablist: {
-                        background: 'transparent',
-                        border: {
-                            width: 0
-                        }
-                    },
-                    tab: {
-                        padding: '0 0rem',
-                        margin: '0.2rem 1.125rem',
-                        border: {
-                            width: 0
-                        },
-                        background: 'transparent',
-                        color: '{primary.0}',
-                        active: {
+                        tablist: {
                             background: 'transparent',
-                            color: '{primary.color}',
+                            border: {
+                                width: 0
+                            }
                         },
-                        hover: {
+                        tab: {
+                            padding: '0 0rem',
+                            margin: '0.2rem 1.125rem',
+                            border: {
+                                width: 0
+                            },
                             background: 'transparent',
-                            color: '{primary.color}',
+                            color: '{primary.0}',
+                            active: {
+                                background: 'transparent',
+                                color: '{primary.color}',
+                            },
+                            hover: {
+                                background: 'transparent',
+                                color: '{primary.color}',
+                            }
                         }
-                    }
                     }
                 }
             }
@@ -165,7 +174,7 @@ const tcoTheme = definePreset(Nora, {
             colorScheme: {
                 light: {
                     root: {
-                        background: '{surface.50}',
+                        background: '{surface.100}',
                         color: '{surface.800}',
                         borderRadius: '0.5rem'
                     },
@@ -177,7 +186,7 @@ const tcoTheme = definePreset(Nora, {
                     root: {
                         borderRadius: '1rem 1rem 0 0',
                         background: '{surface.800}',
-                        color: '{surface.0}'
+                        color: '{surface.100}'
                     },
                     subtitle: {
                         color: '{surface.400}'
@@ -188,10 +197,49 @@ const tcoTheme = definePreset(Nora, {
         inputtext: {
             colorScheme: {
                 dark: {
+                    root: {
+                        background: '{surface.900}',
+                        color: '{surface.0}',
+                    }
                     //paddingY: '1rem'
                 }
             }
         },
+        floatlabel: {
+            colorScheme: {
+                dark: {
+                    root: {
+                        color: '{surface.100}',
+                        active: {
+                            color: '{primary.color}',
+                        }
+                    }
+                }
+            }
+        },
+        iconfield: {
+            colorScheme: {
+                dark: {
+                    root: {
+                        iconColor: '{surface.100}',
+                    }
+                }
+            }
+        },
+        checkbox: {
+            dark: {
+                root: {
+                    background: '{surface.900}',
+                    hoverBackground: '{surface.900}',
+                    checkedBackground: '{surface.900}',
+                    checkedHoverBackground: '{surface.900}',
+                    iconColor: '{surface.100}',
+                    iconCheckedColor: '{primary.color}',
+                    iconCheckedHoverColor: '{primary.color}',
+                    hoverBorderColor: '{primary.color}'
+                }
+            }
+        }
     }
 });
 

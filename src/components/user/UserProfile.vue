@@ -29,7 +29,7 @@ onMounted(() => {
 
 <template>
   <div class="gap-3 w-full flex justify-center">
-    <div class="w-full max-w-[700px] flex flex-1 flex-col my-8">
+    <div class="w-full max-w-[1200px] flex flex-1 flex-col my-8">
       <ProgressSpinner v-if="isLoading" style="width:50px;height:50px" strokeWidth="5"/>
       <form v-else @submit.prevent="saveProfile" class="grid">
         <!-- Sections d'informations -->

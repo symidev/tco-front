@@ -71,7 +71,7 @@ const handleSiretInput = (event) => {
 
         <!-- Raison sociale -->
         <div class="grid gap-2">
-          <FloatLabel variant="on">
+          <FloatLabel variant="in">
             <IconField>
               <InputIcon><Building class="h-4 w-4"/></InputIcon>
               <InputText
@@ -86,7 +86,7 @@ const handleSiretInput = (event) => {
 
         <!-- SIRET -->
         <div class="grid gap-2">
-          <FloatLabel variant="on">
+          <FloatLabel variant="in">
             <IconField>
               <InputIcon><Hash class="h-4 w-4"/></InputIcon>
               <InputText

@@ -6,7 +6,7 @@
 @import 'primeicons/primeicons.css';
 
 @theme {
-    --text-base: 1rem;
+    --text-base: 1.02rem;
     --text-lg: 1.15rem;
     --text-xl: 1.3rem;
 }
@@ -63,6 +63,6 @@ a.animate:hover {
 .dark .p-floatlabel-on:has(textarea.p-filled) label,
 .dark .p-floatlabel-on:has(.p-inputwrapper-focus) label,
 .dark .p-floatlabel-on:has(.p-inputwrapper-filled) label {
-    padding: 0.3rem 0.4rem;
-    border-radius: 0.2rem;
+    border-radius: 0.1rem;
+    color: var(--p-surface-100);
 }
