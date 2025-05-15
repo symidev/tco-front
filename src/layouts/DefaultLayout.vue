@@ -31,11 +31,10 @@ const closeSidebarOnOverlay = () => {
 
 // Ajouter les écouteurs d'événements lors du montage du composant
 onMounted(() => {
-  document.body.classList.add('dark');
+  document.documentElement.classList.add('dark');
   checkScreenSize()
   window.addEventListener('resize', checkScreenSize)
 })
-
 // Nettoyer les écouteurs d'événements lors du démontage du composant
 onUnmounted(() => {
   window.removeEventListener('resize', checkScreenSize)
@@ -60,7 +59,7 @@ onUnmounted(() => {
         position="left"
         :modal="true"
         :showCloseIcon="true"
-        class="w-40 p-0"
+        class="w-15 p-0"
         :contentStyle="{ padding: '0', overflow: 'hidden' }"
         @hide="isOpen = false"
     >

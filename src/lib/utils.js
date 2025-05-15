@@ -19,14 +19,16 @@ export const apiClient = axios.create({
     baseURL: API_URL
 });
 
+// Fonction utilitaire pour identifier les routes d'authentification
+export const isAuthRoute = (url) => url.includes('/jwt/token') || url.includes('/jwt/refresh');
+
 // Configuration des intercepteurs pour les requêtes qui nécessitent un token
 export function setupApiInterceptors(store) {
     // Intercepteur de requête pour ajouter automatiquement le token
     apiClient.interceptors.request.use(
         config => {
             // Ne pas ajouter le token pour les routes d'authentification
-            const isAuthRoute = config.url.includes('/jwt/token') || config.url.includes('/jwt/refresh');
-            if (!isAuthRoute && store.state.auth.token) {
+            if (!isAuthRoute(config.url) && store.state.auth.token) {
                 config.headers.Authorization = `Bearer ${store.state.auth.token}`;
             }
             return config;
@@ -43,10 +45,9 @@ export function setupApiInterceptors(store) {
             if (error.response?.status === 403 && !error.config._isRetry) {
                 console.log('first try');
                 // Ne pas tenter de rafraîchir si c'est une route d'authentification
-                const isAuthRoute = error.config.url.includes('/jwt/token') || error.config.url.includes('/jwt/refresh');
 
                 // Si un refresh token existe, tenter de rafraîchir
-                if (!isAuthRoute && store.state.auth.refreshToken) {
+                if (!isAuthRoute(error.config.url) && store.state.auth.refreshToken) {
                     try {
                         error.config._isRetry = true;
                         await store.dispatch('auth/refreshToken');

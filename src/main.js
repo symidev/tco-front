@@ -9,12 +9,14 @@ import Aura from '@primeuix/themes/aura';
 import Nora from '@primeuix/themes/nora';
 import {definePreset} from '@primeuix/themes';
 import ToastService from 'primevue/toastservice';
+import ConfirmationService from 'primevue/confirmationservice';
 
 const app = createApp(App)
 
 app.use(router)
 app.use(store)
 app.use(ToastService)
+app.use(ConfirmationService)
 
 const tcoTheme = definePreset(Nora, {
     semantic: {
@@ -170,7 +172,7 @@ const tcoTheme = definePreset(Nora, {
         },
         card: {
             body: {
-                padding: '2rem',
+                padding: '1.5rem',
             },
             colorScheme: {
                 light: {
@@ -185,7 +187,7 @@ const tcoTheme = definePreset(Nora, {
                 },
                 dark: {
                     root: {
-                        borderRadius: '1rem 1rem 0 0',
+                        borderRadius: '0.3rem',
                         background: '{surface.800}',
                         color: '{surface.100}'
                     },
@@ -268,6 +270,61 @@ const tcoTheme = definePreset(Nora, {
                     background: '{surface.900}',
                     color: '{surface.100}',
                     headerPadding: '0.1rem 0 0 0',
+                }
+            }
+        },
+        datatable: {
+            colorScheme: {
+                dark: {
+                    root: {
+                        paginator: {
+                            bottom: {
+                                borderWidth: '0rem',
+                            }
+                        },
+                        borderColor: '{surface.400}',
+                        headerCell: {
+                            selectedBackground: '{var(--p-datatable-header-cell-background)}',
+                            background:'{surface.800}'
+                        },
+                        row: {
+                            background: '{surface.800}',
+                        }
+                    }
+                }
+            }
+        },
+        paginator: {
+            colorScheme: {
+                dark: {
+                    root: {
+                        background: '{surface.800}',
+                        borderRadius: '0rem',
+                    }
+                }
+            }
+        },
+        menu: {
+            colorScheme: {
+                dark: {
+                    root: {
+                        borderRadius: '0.3rem',
+                        listGap: '0.5rem',
+                        listPadding: '0.7rem',
+                        item: {
+                            focusBackground: '{surface.900}',
+                            focusColor: '{primary.500}',
+                        }
+                    }
+                }
+            }
+        },
+        dialog: {
+            colorScheme: {
+                dark: {
+                    root: {
+                        borderRadius: '0.3rem',
+                    }
                 }
             }
         }

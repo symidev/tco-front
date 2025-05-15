@@ -58,6 +58,11 @@ const url = null;
       >
         <MenuIcon class="w-5 h-5 text-surface-200" />
       </button>
+      <div class="p-2 border-b border-logo-color">
+        <RouterLink to="/">
+          <img src="@/assets/images/logo.png" alt="Logo" class="h-12 mx-auto"/>
+        </RouterLink>
+      </div>
     </template>
     <template #end>
       <Menu as="div" class="relative ml-3 py-1">

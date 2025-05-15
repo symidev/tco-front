@@ -7,6 +7,7 @@ import NoAuthLayout from '@/layouts/NoAuthLayout.vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import EmptyLayout from '@/layouts/EmptyLayout.vue'
 import Toast from 'primevue/toast';
+import ConfirmDialog from 'primevue/confirmdialog';
 
 const layouts = {
   NoAuthLayout,
@@ -39,4 +40,5 @@ checkRfeParameter();
     <RouterView/>
   </component>
   <Toast position="bottom-right"/>
+  <ConfirmDialog></ConfirmDialog>
 </template>

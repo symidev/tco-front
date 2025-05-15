@@ -1,4 +1,4 @@
-import { apiClient } from '@/lib/utils';
+import apiService from './apiService';
 
 export const comparoService = {
   /**
@@ -6,7 +6,7 @@ export const comparoService = {
    * @returns {Promise<Object>} Les données de réponse de l'API
    */
   getAllComparos() {
-    return apiClient.get('/api/tco/comparo');
+    return apiService.get('/api/tco/comparo');
   },
 
   /**
@@ -15,6 +15,9 @@ export const comparoService = {
    * @returns {Promise<Object>} Les données de réponse de l'API
    */
   getComparoByUuid(uuid) {
-    return apiClient.get(`/api/tco/comparo/${uuid}`);
+    return apiService.get(`/api/tco/comparo/${uuid}`) ;
+  },
+  deleteComparoByUuid(uuid) {
+    return apiService.delete(`/api/tco/comparo/${uuid}`) ;
   }
 };

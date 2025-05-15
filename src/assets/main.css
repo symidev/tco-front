@@ -11,6 +11,11 @@
     --text-xl: 1.3rem;
 }
 
+@media screen and (max-width: 768px) {
+    .p-column-mobile-hidden {
+        display: none !important;
+    }
+}
 html,
 body {
     font-size: var(--text-base);
@@ -76,4 +81,17 @@ a.animate:hover {
 }
 #app .p-steppanel {
     background-color: transparent;
+}
+.dark .p-datatable-paginator-bottom .p-paginator {
+    justify-content: right;
+}
+@media screen and (max-width: 768px) {
+    .dark .sidebar .menu {
+        border: none;
+    }
+}
+@media screen and (min-width: 768px) {
+    .dark .sidebar .menu {
+        border-right: 1px solid var(--p-surface-800);
+    }
 }

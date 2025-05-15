@@ -3,7 +3,7 @@ import {Toaster} from 'vue-sonner'
 import {onMounted} from 'vue'
 
 onMounted(() => {
-  document.body.classList.remove('dark');
+  document.documentElement.classList.remove('dark');
 })
 </script>
 
