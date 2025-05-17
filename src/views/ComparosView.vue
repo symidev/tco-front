@@ -115,7 +115,7 @@ const createIconTemplate = (IconComponent) => {
 
 // Menu pour les comparos en cours
 const getProgressMenuItems = (comparo) => {
-  return [
+  const items = [
     {
       label: 'Éditer',
       icon: Edit,
@@ -133,6 +133,15 @@ const getProgressMenuItems = (comparo) => {
       }
     },
     {
+      label: 'Lancer l\'analyse',
+      condition: comparo.countVehicule > 1,
+      icon: Car,
+      command: () => {
+        // TODO: Remplacer par la route d'édition
+        router.push('/');
+      }
+    },
+    {
       label: 'Supprimer',
       icon: Trash2,
       command: () => {
@@ -140,6 +149,7 @@ const getProgressMenuItems = (comparo) => {
       }
     }
   ];
+  return items.filter(item => !item.hasOwnProperty('condition') || item.condition === true);
 };
 
 // Fonction utilitaire pour télécharger un fichier

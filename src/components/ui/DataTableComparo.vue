@@ -4,7 +4,7 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Menu from 'primevue/menu';
 import Button from 'primevue/button';
-import { ref } from 'vue';
+import { ref,computed} from 'vue';
 import { MoreVertical } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -54,9 +54,10 @@ const showMenu = (event, data) => {
   menu.value.toggle(event);
 };
 
-const getMenuItems = () => {
-  return props.menuItems(selectedRow.value);
-};
+const menuModelItems = computed(() => {
+  return selectedRow.value ? props.menuItems(selectedRow.value) : [];
+});
+
 </script>
 
 <template>
@@ -158,7 +159,7 @@ const getMenuItems = () => {
     </template>
   </DataTable>
 
-  <Menu ref="menu" :model="getMenuItems()" :popup="true">
+  <Menu ref="menu" :model="menuModelItems" :popup="true">
     <template #item="{ item }">
       <a class="p-menuitem-link flex items-center cursor-pointer text-sm">
         <component :is="item.icon" v-if="item.icon" class="w-4 h-4 mr-2 text-primary-500" />
