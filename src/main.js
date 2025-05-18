@@ -350,10 +350,6 @@ app.use(PrimeVue, {
     },
     ripple: true
 });
-import { setStoreForApi } from '@/services/api/apiService'
-
-// Définir le store pour l'API
-setStoreForApi(store)
 
 // Chargement initial des données du site si l'utilisateur est connecté
 // Attendre un court instant pour s'assurer que l'authentification est terminée

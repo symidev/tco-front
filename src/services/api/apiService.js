@@ -1,9 +1,10 @@
 import axios from 'axios';
 import router from '@/router';
+import store from '@/store';
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
-// Création d'une instance axios pour les services indépendante du store
+// Création d'une instance axios pour les services
 const apiService = axios.create({
     baseURL: API_URL
 });
@@ -16,8 +17,8 @@ apiService.interceptors.request.use(
     config => {
         // Ne pas ajouter le token pour les routes d'authentification
         if (!isAuthRoute(config.url)) {
-            // Récupérer le token depuis localStorage
-            const token = localStorage.getItem('token');
+            // Récupérer le token depuis le store
+            const token = store.state.auth.token;
             if (token) {
                 config.headers.Authorization = `Bearer ${token}`;
             }
@@ -27,71 +28,41 @@ apiService.interceptors.request.use(
     error => Promise.reject(error)
 );
 
-// Nous utiliserons le store de manière dynamique pour éviter les références circulaires
-let storeInstance = null
-
-// Fonction pour définir le store après son initialisation
-export const setStoreForApi = (store) => {
-  storeInstance = store
-}
-
 // Configuration des intercepteurs de réponse pour gérer les erreurs 403
 apiService.interceptors.response.use(
-    response => {
-        // Si la réponse provient de l'endpoint de rafraîchissement du token,
-        // déclencher un événement pour rafraîchir les données du site
-        if (response.config.url && response.config.url.includes('/jwt/refresh')) {
-            // Utiliser un délai pour s'assurer que le token est bien mis à jour avant
-            setTimeout(() => {
-                if (storeInstance) {
-                    storeInstance.dispatch('siteData/fetchSiteData');
-                }
-            }, 100);
-        }
-        return response;
-    },
+    response => response,
     async error => {
         // Vérifier si l'erreur est 403 et que ce n'est pas déjà une tentative de refresh
         if (error.response?.status === 403 && !error.config._isRetry) {
             // Ne pas tenter de rafraîchir si c'est une route d'authentification
             if (!isAuthRoute(error.config.url)) {
-                const refreshToken = localStorage.getItem('refreshToken');
+                // Vérifier si un refresh token existe dans le store
+                const refreshToken = store.getters['auth/getRefreshToken'];
 
                 // Si un refresh token existe, tenter de rafraîchir
                 if (refreshToken) {
                     try {
                         error.config._isRetry = true;
 
-                        // Appel pour rafraîchir le token
-                        const response = await axios.post(`${API_URL}/jwt/refresh`, {
-                            refresh_token: refreshToken
-                        });
+                        // Utiliser l'action du store pour rafraîchir le token
+                        const refreshResult = await store.dispatch('auth/refreshToken');
 
-                        // Stocker le nouveau token
-                        if (response.data.token) {
-                            localStorage.setItem('token', response.data.token);
-                            localStorage.setItem('refreshToken', response.data.refresh_token);
-
+                        if (refreshResult.success) {
                             // Réessayer la requête originale avec le nouveau token
-                            error.config.headers.Authorization = `Bearer ${response.data.token}`;
+                            error.config.headers.Authorization = `Bearer ${store.state.auth.token}`;
                             return apiService(error.config);
+                        } else {
+                            throw new Error(refreshResult.error || 'Échec du rafraîchissement');
                         }
                     } catch (refreshError) {
-                        // Si le refresh échoue, nettoyer l'authentification
-                        localStorage.removeItem('token');
-                        localStorage.removeItem('refreshToken');
+                        // Si le refresh échoue, le store a déjà nettoyé l'authentification via clearAuth
                         return Promise.reject(refreshError);
                     }
-                } else {
-                    // Si pas de refresh token, nettoyer l'authentification
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('refreshToken');
                 }
             }
         } else if (error.response?.status === 403 && error.config._isRetry) {
             // Si déjà une tentative de refresh qui a échoué, rediriger vers login
-            localStorage.removeItem('token');
-            localStorage.removeItem('refreshToken');
+            store.commit('auth/clearAuth');
             router.push({
                 path: '/login',
                 query: {reason: 'se'}

@@ -1,8 +1,8 @@
 export default {
-  isAuthenticated: state => !!localStorage.getItem('token'),
-  getToken: state => localStorage.getItem('token') || null,
+  isAuthenticated: state => !!state.token,
+  getToken: state => !!state.token,
   getTokenInfo: state => state.tokenInfo,
-  getRefreshToken: state => localStorage.getItem('refreshToken') || null,
+  getRefreshToken: state => state.refreshToken,
   getUser: state => state.user,
   getError: state => state.error,
   isLoading: state => state.loading
