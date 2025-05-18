@@ -120,8 +120,7 @@ const getProgressMenuItems = (comparo) => {
       label: 'Éditer',
       icon: Edit,
       command: () => {
-        // TODO: Remplacer par la route d'édition
-        router.push('/');
+        router.push(`/comparo/${comparo.uuid}`);
       }
     },
     {
@@ -274,6 +273,7 @@ onMounted(() => {
             class="mb-6"
             size="medium"
             v-if="comparos?.progress.length + comparos?.completed.length < maxComparos || maxComparos === -1"
+            @click="router.push('/comparo/add')"
         >
           <Plus class="h-4 w-4 mr-2"/>
           Créer un comparo

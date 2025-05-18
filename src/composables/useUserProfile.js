@@ -37,6 +37,10 @@ export function useUserProfile(toast) {
         commercial_cp: '',
         commercial_ville: '',
 
+        // User IS et charges patronales
+        user_is: '',
+        user_charge_patronale: '',
+
         // Comptable info
         comptable_nom: '',
         comptable_prenom: '',
@@ -201,6 +205,8 @@ export function useUserProfile(toast) {
 
                 user_raison_sociale: userData.field_user_raison_sociale || '',
                 user_siret: userData.field_user_siret || '',
+                user_is: userData.field_user_is || 28,
+                user_charge_patronale: userData.field_user_charge_patronale || 48,
 
                 user_connaissance: userConnaissance,
                 user_connaissance_autre: userData.field_user_connaissance_autre || '',
@@ -241,6 +247,8 @@ export function useUserProfile(toast) {
                 // Add company info
                 field_user_raison_sociale: formData.value.user_raison_sociale,
                 field_user_siret: formData.value.user_siret,
+                field_user_is: formData.value.user_is,
+                field_user_charge_patronale: formData.value.user_charge_patronale,
 
                 // Add user preferences
                 field_user_offre: formData.value.user_offre,

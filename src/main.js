@@ -327,6 +327,16 @@ const tcoTheme = definePreset(Nora, {
                     }
                 }
             }
+        },
+        textarea: {
+            colorScheme: {
+                dark: {
+                    root: {
+                        background: '{surface.900}',
+                        color: '{surface.100}',
+                    }
+                }
+            }
         }
     }
 });
@@ -340,4 +350,15 @@ app.use(PrimeVue, {
     },
     ripple: true
 });
-app.mount('#app')
+import { setStoreForApi } from '@/services/api/apiService'
+
+// Définir le store pour l'API
+setStoreForApi(store)
+
+// Chargement initial des données du site si l'utilisateur est connecté
+// Attendre un court instant pour s'assurer que l'authentification est terminée
+setTimeout(() => {
+  store.dispatch('siteData/getSiteDataIfNeeded').finally(() => {
+    app.mount('#app')
+  })
+}, 100)

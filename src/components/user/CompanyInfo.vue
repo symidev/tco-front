@@ -1,6 +1,6 @@
 <script setup>
-import { computed } from 'vue'
-import { Building, Mail, Hash } from 'lucide-vue-next'
+import {computed} from 'vue'
+import {Building, Mail, Hash, Percent} from 'lucide-vue-next'
 import Card from 'primevue/card'
 import InputText from 'primevue/inputtext'
 import Checkbox from 'primevue/checkbox'
@@ -100,7 +100,7 @@ const connaissanceOptions = [
   <Card class="shadow-sm mb-4">
     <template #title>
       <div class="flex items-center gap-2 text-primary">
-        <Building class="w-5 h-5" />
+        <Building class="w-5 h-5"/>
         <h2>Informations Société</h2>
       </div>
     </template>
@@ -112,19 +112,21 @@ const connaissanceOptions = [
           <div class="flex flex-col sm:flex-row sm:items-center gap-2">
             <label class="text-primary font-medium">Email :</label>
             <div class="text-sm">{{ props.formData.email }}</div>
-            <span class="text-xs text-primary italic">(Pour modifier votre email, veuillez contacter l'administrateur)</span>
+            <span
+                class="text-xs text-primary italic">(Pour modifier votre email, veuillez contacter l'administrateur)</span>
           </div>
         </div>
-
         <!-- Raison sociale -->
         <div class="grid gap-2">
           <FloatLabel variant="in">
             <IconField>
-              <InputIcon><Building class="h-4 w-4"/></InputIcon>
+              <InputIcon>
+                <Building class="h-4 w-4"/>
+              </InputIcon>
               <InputText
-                id="raison_sociale"
-                v-model="formData.user_raison_sociale"
-                fluid
+                  id="raison_sociale"
+                  v-model="formData.user_raison_sociale"
+                  fluid
               />
             </IconField>
             <label for="raison_sociale" class="text-primary">Raison sociale</label>
@@ -135,16 +137,53 @@ const connaissanceOptions = [
         <div class="grid gap-2">
           <FloatLabel variant="in">
             <IconField>
-              <InputIcon><Hash class="h-4 w-4"/></InputIcon>
+              <InputIcon>
+                <Hash class="h-4 w-4"/>
+              </InputIcon>
               <InputText
-                id="siret"
-                v-model="formData.user_siret"
-                maxlength="14"
-                @input="handleSiretInput"
-                fluid
+                  id="siret"
+                  v-model="formData.user_siret"
+                  maxlength="14"
+                  @input="handleSiretInput"
+                  fluid
               />
             </IconField>
             <label for="siret" class="text-primary">SIRET</label>
+          </FloatLabel>
+        </div>
+        <!-- IS par défaut -->
+        <div class="grid gap-2">
+          <FloatLabel variant="in">
+            <IconField>
+              <InputIcon>
+                <Percent class="h-4 w-4"/>
+              </InputIcon>
+              <InputText
+                  id="user_is"
+                  v-model="props.formData.user_is"
+                  type="number"
+                  fluid
+              />
+            </IconField>
+            <label for="user_is" class="text-primary">IS par défaut</label>
+          </FloatLabel>
+        </div>
+
+        <!-- Charge patronale par défaut -->
+        <div class="grid gap-2">
+          <FloatLabel variant="in">
+            <IconField>
+              <InputIcon>
+                <Percent class="h-4 w-4"/>
+              </InputIcon>
+              <InputText
+                  id="user_charge_patronale"
+                  v-model="props.formData.user_charge_patronale"
+                  type="number"
+                  fluid
+              />
+            </IconField>
+            <label for="user_charge_patronale" class="text-primary">Charge patronale par défaut</label>
           </FloatLabel>
         </div>
 
@@ -157,10 +196,10 @@ const connaissanceOptions = [
           <div class="flex flex-col gap-2" :class="{ 'border-red-500 border p-2 rounded': showOffreError }">
             <div v-for="option in interetOptions" :key="option.value" class="flex items-center gap-1">
               <Checkbox
-                :id="`interet-${option.value}`"
-                :value="option.value"
-                v-model="formData.user_offre"
-                :class="{ 'p-invalid': showOffreError }"
+                  :id="`interet-${option.value}`"
+                  :value="option.value"
+                  v-model="formData.user_offre"
+                  :class="{ 'p-invalid': showOffreError }"
               />
               <label :for="`interet-${option.value}`" class="text-sm">{{ option.label }}</label>
             </div>
@@ -173,43 +212,44 @@ const connaissanceOptions = [
             <label class="text-primary">Canal de connaissance</label>
             <span v-if="showConnaissanceError" class="text-red-500 text-xs">*Au moins une option requise</span>
           </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-6" :class="{ 'border-red-500 border p-2 rounded': showConnaissanceError }">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-6"
+               :class="{ 'border-red-500 border p-2 rounded': showConnaissanceError }">
             <!-- Options normales (sauf "autre") -->
             <div
-              v-for="option in connaissanceOptions.filter(opt => opt.value !== 'autre')"
-              :key="option.value"
-              class="flex items-center gap-1"
+                v-for="option in connaissanceOptions.filter(opt => opt.value !== 'autre')"
+                :key="option.value"
+                class="flex items-center gap-1"
             >
               <Checkbox
-                :id="`connaissance-${option.value}`"
-                :value="option.value"
-                v-model="formData.user_connaissance"
-                :class="{ 'p-invalid': showConnaissanceError }"
+                  :id="`connaissance-${option.value}`"
+                  :value="option.value"
+                  v-model="formData.user_connaissance"
+                  :class="{ 'p-invalid': showConnaissanceError }"
               />
               <label :for="`connaissance-${option.value}`" class="text-sm">{{ option.label }}</label>
             </div>
 
             <!-- Option "autre" sur toute la largeur -->
             <div
-              v-if="connaissanceOptions.some(opt => opt.value === 'autre')"
-              class="flex items-center col-span-1 sm:col-span-2 gap-1"
+                v-if="connaissanceOptions.some(opt => opt.value === 'autre')"
+                class="flex items-center col-span-1 sm:col-span-2 gap-1"
             >
               <Checkbox
-                id="connaissance-autre"
-                value="autre"
-                v-model="formData.user_connaissance"
+                  id="connaissance-autre"
+                  value="autre"
+                  v-model="formData.user_connaissance"
               />
               <label for="connaissance-autre" class="text-sm">
                 {{ connaissanceOptions.find(opt => opt.value === 'autre')?.label || 'Autre' }}
               </label>
 
               <InputText
-                v-if="isOtherKnowledgeSelected"
-                v-model="formData.user_connaissance_autre"
-                size="small"
-                class="ml-2 flex-grow"
-                placeholder="Précisez..."
-                fluid
+                  v-if="isOtherKnowledgeSelected"
+                  v-model="formData.user_connaissance_autre"
+                  size="small"
+                  class="ml-2 flex-grow"
+                  placeholder="Précisez..."
+                  fluid
               />
             </div>
           </div>

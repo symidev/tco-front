@@ -27,9 +27,29 @@ apiService.interceptors.request.use(
     error => Promise.reject(error)
 );
 
+// Nous utiliserons le store de manière dynamique pour éviter les références circulaires
+let storeInstance = null
+
+// Fonction pour définir le store après son initialisation
+export const setStoreForApi = (store) => {
+  storeInstance = store
+}
+
 // Configuration des intercepteurs de réponse pour gérer les erreurs 403
 apiService.interceptors.response.use(
-    response => response,
+    response => {
+        // Si la réponse provient de l'endpoint de rafraîchissement du token,
+        // déclencher un événement pour rafraîchir les données du site
+        if (response.config.url && response.config.url.includes('/jwt/refresh')) {
+            // Utiliser un délai pour s'assurer que le token est bien mis à jour avant
+            setTimeout(() => {
+                if (storeInstance) {
+                    storeInstance.dispatch('siteData/fetchSiteData');
+                }
+            }, 100);
+        }
+        return response;
+    },
     async error => {
         // Vérifier si l'erreur est 403 et que ce n'est pas déjà une tentative de refresh
         if (error.response?.status === 403 && !error.config._isRetry) {

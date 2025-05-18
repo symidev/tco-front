@@ -54,17 +54,19 @@ export default {
     }
   },
 
-  async refreshToken({ commit, state }) {
-    try {
-      const response = await apiClient.post(`/jwt/refresh`, {
-        refresh_token: state.refreshToken
-      })
-
-      const { token, refresh_token } = response.data
-
-      console.log('token');
-      commit('setToken', token)
-      commit('setRefreshToken', refresh_token)
+  async refreshToken({ commit, dispatch, state }) {
+      try {
+        const response = await apiClient.post(`/jwt/refresh`, {
+          refresh_token: state.refreshToken
+        })
+  
+        const { token, refresh_token } = response.data
+  
+        commit('setToken', token)
+        commit('setRefreshToken', refresh_token)
+        
+        // Rafraîchir les données du site après un refresh token réussi
+        dispatch('siteData/fetchSiteData', null, { root: true })
 
       return { success: true }
     } catch (error) {

@@ -36,6 +36,20 @@ const router = createRouter({
             meta: { layout: 'DefaultLayout', requiresAuth: true }
         },
         {
+            path: '/comparo/add',
+            name: 'ComparoAdd',
+            component: () => import('../views/ComparoForm.vue'),
+            props: { mode: 'add' },
+            meta: { layout: 'DefaultLayout', requiresAuth: true }
+                    },
+                    {
+            path: '/comparo/:uuid',
+            name: 'ComparoEdit',
+            component: () => import('../views/ComparoForm.vue'),
+            props: route => ({ mode: 'edit', uuid: route.params.uuid }),
+            meta: { layout: 'DefaultLayout', requiresAuth: true }
+        },
+        {
             path: '/calc-aen',
             name: 'calc-aen',
             component: () => import('../views/CalcAenView.vue'),
