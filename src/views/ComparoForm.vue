@@ -13,6 +13,7 @@ import InputIcon from 'primevue/inputicon';
 import FloatLabel from 'primevue/floatlabel';
 import { comparoService } from '@/services/api/comparoService';
 import { Save, RefreshCw, Type, FileText, Car, Clock, Percent } from 'lucide-vue-next';
+import { useStore } from 'vuex';
 
 const props = defineProps({
   mode: {
@@ -26,11 +27,26 @@ const props = defineProps({
 });
 
 const router = useRouter();
-const route = useRoute();
+const store = useStore();
 const toast = useToast();
 
 const loading = ref(false);
 const saving = ref(false);
+
+const isUser = computed(() => {
+  const siteIsDefault = store.getters['siteData/getNestedData']('site', 'is-default');
+  if (store.state.auth?.tokenInfo?.drupal && store.state.auth?.tokenInfo?.drupal?.isDefault) {
+    return store.state.auth.tokenInfo.drupal?.isDefault ?? siteIsDefault;
+  }
+  return siteIsDefault;
+})
+const chargePatronaleUser = computed(() => {
+  const siteChargePatronaleDefault = store.getters['siteData/getNestedData']('site', 'charge-patronale-default');
+  if (store.state.auth?.tokenInfo?.drupal && store.state.auth?.tokenInfo?.drupal?.chargePatronaleDefault) {
+    return store.state.auth.tokenInfo.drupal?.chargePatronaleDefault ?? siteChargePatronaleDefault;
+  }
+  return siteChargePatronaleDefault;
+})
 
 const formData = ref({
   title: '',
@@ -39,8 +55,8 @@ const formData = ref({
   field_aen_type: 'loyer',
   field_km: 120000,
   field_duree: 36,
-  field_charge_patronale: 48,
-  field_is: 28
+  field_charge_patronale: chargePatronaleUser,
+  field_is: isUser
 });
 
 const pageTitle = computed(() => {

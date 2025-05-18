@@ -27,8 +27,18 @@ const comparos = ref({
 });
 const loading = ref(false);
 
-const maxVehicule = computed(() => store.state.auth.tokenInfo.drupal?.nbMaxVehicules ?? 3)
-const maxComparos = computed(() => store.state.auth.tokenInfo.drupal?.nbMaxComparos ?? 3)
+const maxVehicule = computed(() => {
+  if (store.state.auth?.tokenInfo?.drupal && store.state.auth?.tokenInfo?.drupal?.nbMaxVehicules) {
+    return store.state.auth.tokenInfo.drupal?.nbMaxVehicules ?? 3;
+  }
+  return 3;
+})
+const maxComparos = computed(() => {
+  if (store.state.auth?.tokenInfo?.drupal && store.state.auth?.tokenInfo?.drupal?.nbMaxComparos) {
+    return store.state.auth.tokenInfo.drupal?.nbMaxComparos ?? 3;
+  }
+  return 3;
+})
 
 // Fonction pour récupérer les comparos
 const fetchComparos = async () => {
