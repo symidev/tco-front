@@ -121,7 +121,7 @@ const saveComparo = async () => {
         life: 3000
       });
       // Redirection vers la page d'édition du comparo nouvellement créé
-      router.push(`/comparo/${response.data.uuid}`);
+      router.push(`/comparo/${response.data.uuid}/vehicules`);
     }
   } catch (error) {
     console.error('Erreur lors de la sauvegarde du comparo:', error);

@@ -289,6 +289,13 @@ const tcoTheme = definePreset(Nora, {
                         },
                         row: {
                             background: '{surface.800}',
+                        },
+                        footer: {
+                            background: '{surface.800}',
+                            color: '{surface.100}',
+                            border: {
+                                width: '0rem',
+                            }
                         }
                     }
                 }

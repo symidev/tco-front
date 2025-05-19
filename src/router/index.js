@@ -41,8 +41,15 @@ const router = createRouter({
             component: () => import('../views/ComparoForm.vue'),
             props: { mode: 'add' },
             meta: { layout: 'DefaultLayout', requiresAuth: true }
-                    },
-                    {
+        },
+        {
+            path: '/comparo/:uuid/vehicules',
+            name: 'ComparoVehicules',
+            component: () => import('../views/ComparoVehiculesView.vue'),
+            props: route => ({ uuid: route.params.uuid }),
+            meta: { layout: 'DefaultLayout', requiresAuth: true }
+        },
+        {
             path: '/comparo/:uuid',
             name: 'ComparoEdit',
             component: () => import('../views/ComparoForm.vue'),

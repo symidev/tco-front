@@ -137,8 +137,7 @@ const getProgressMenuItems = (comparo) => {
       label: 'Gérer les véhicules',
       icon: Car,
       command: () => {
-        // TODO: Remplacer par la route d'édition
-        router.push('/');
+        router.push(`/comparo/${comparo.uuid}/vehicules`);
       }
     },
     {
