@@ -50,6 +50,24 @@ const router = createRouter({
             meta: { layout: 'DefaultLayout', requiresAuth: true }
         },
         {
+            path: '/comparo/:uuidComparo/vehicules/add',
+            name: 'VehiculeAdd',
+            component: () => import('../views/VehiculeForm.vue'),
+            props: route => ({ mode: 'add', comparoUuid: route.params.uuidComparo }),
+            meta: { layout: 'DefaultLayout', requiresAuth: true }
+        },
+        {
+            path: '/comparo/:uuidComparo/vehicules/:uuidVehicule',
+            name: 'VehiculeEdit',
+            component: () => import('../views/VehiculeForm.vue'),
+            props: route => ({ 
+                mode: 'edit', 
+                comparoUuid: route.params.uuidComparo,
+                vehiculeUuid: route.params.uuidVehicule 
+            }),
+            meta: { layout: 'DefaultLayout', requiresAuth: true }
+        },
+        {
             path: '/comparo/:uuid',
             name: 'ComparoEdit',
             component: () => import('../views/ComparoForm.vue'),

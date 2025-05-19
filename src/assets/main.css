@@ -95,3 +95,6 @@ a.animate:hover {
         border-right: 1px solid var(--p-surface-800);
     }
 }
+.dark .p-select-label {
+    padding-inline: 2.4rem;
+}

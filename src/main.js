@@ -301,6 +301,16 @@ const tcoTheme = definePreset(Nora, {
                 }
             }
         },
+        select: {
+            colorScheme: {
+                dark: {
+                    root: {
+                        background: '{surface.900}',
+                        color: '{surface.100}',
+                    }
+                }
+            }
+        },
         paginator: {
             colorScheme: {
                 dark: {
