@@ -11,7 +11,7 @@ import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
 import FloatLabel from 'primevue/floatlabel';
 import { comparoService } from '@/services/api/comparoService';
-import { Save, RefreshCw, Car, PlugZap, Droplets, Gauge, Weight, Factory, Fuel } from 'lucide-vue-next';
+import { Save, RefreshCw, Car, PlugZap, Droplets, Gauge, Weight, Factory, Fuel, Euro, Percent } from 'lucide-vue-next';
 import { useStore } from 'vuex';
 
 const props = defineProps({
@@ -91,6 +91,8 @@ const pageTitle = computed(() => {
   return props.mode === 'edit' ? 'Éditer un véhicule' : 'Créer un véhicule';
 });
 
+const comparoName = ref('')
+
 // Réinitialiser les valeurs des champs de consommation en fonction de l'énergie
 watch(() => formData.value.energie, (newValue) => {
   if (newValue) {
@@ -110,6 +112,7 @@ const loadVehiculeData = async () => {
   try {
     const response = await comparoService.getVehiculeByUuid(props.comparoUuid, props.vehiculeUuid);
     const vehicule = response.data;
+    comparoName.value = vehicule.comparoName;
 
     const selectedMarque = marques.value.find(m => m.id === vehicule.marque.id);
     const selectedEnergie = energies.value.find(e => e.key === vehicule.energie);
@@ -345,7 +348,7 @@ onMounted(() => {
 <template>
   <div class="gap-3 w-full flex justify-center">
     <div class="w-full max-w-[1200px] flex flex-1 flex-col my-8">
-      <h1 class="text-xl sm:text-2xl font-bold pb-6">{{ pageTitle }}</h1>
+      <h1 class="text-xl sm:text-2xl font-bold pb-6">{{ pageTitle }} <span v-if="comparoName">pour le comparo <span class="text-primary">{{ comparoName }}</span></span></h1>
 
       <div v-if="loading" class="flex justify-center items-center py-8">
         <ProgressSpinner />
@@ -403,7 +406,7 @@ onMounted(() => {
               </div>
 
               <!-- Finition -->
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div class="grid gap-2">
                   <FloatLabel variant="in">
                     <IconField>
@@ -458,7 +461,7 @@ onMounted(() => {
               </div>
 
               <!-- Énergie et consommations sur une même ligne -->
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <!-- Énergie -->
                 <div class="grid gap-2">
                   <FloatLabel variant="in">
@@ -517,7 +520,7 @@ onMounted(() => {
                 </div>
               </div>
 
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div class="grid gap-2">
                   <FloatLabel variant="in">
                     <IconField>
@@ -575,13 +578,13 @@ onMounted(() => {
               </div>
 
               <!-- Prix, Prix options et Remise -->
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <!-- Prix -->
                 <div class="grid gap-2">
                   <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
-                        <Car class="h-4 w-4"/>
+                        <Euro class="h-4 w-4"/>
                       </InputIcon>
                       <InputText
                         id="prix"
@@ -599,7 +602,7 @@ onMounted(() => {
                   <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
-                        <Car class="h-4 w-4"/>
+                        <Euro class="h-4 w-4"/>
                       </InputIcon>
                       <InputText
                         id="prix_options"
