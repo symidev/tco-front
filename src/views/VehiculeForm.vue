@@ -50,7 +50,21 @@ const formData = ref({
   co2: '',
   prix: '',
   prix_options: '',
-  remise: ''
+  remise: '',
+  loueur: null,
+  loyer: '',
+  entretien: '',
+  pneumatique: '',
+  gardiennage_pneus: '',
+  vehicule_relais: '',
+  assu_rc: '',
+  assu_dommages: '',
+  perte_fi: '',
+  carte_carb: '',
+  carte_elec: '',
+  badge_telepeage: '',
+  vignette_critair: '',
+  autre_cout: ''
 });
 
 // Liste des marques et modèles
@@ -73,6 +87,11 @@ const energies = computed(() => {
 // Liste des boites
 const boites = computed(() => {
   return store.getters['siteData/getNestedData']('vehicule-boite') || [];
+});
+
+// Liste des loueurs
+const loueurs = computed(() => {
+  return store.getters['siteData/getNestedData']('loueur') || [];
 });
 
 // Gestion de la désactivation des champs de consommation en fonction de l'énergie
@@ -117,6 +136,7 @@ const loadVehiculeData = async () => {
     const selectedMarque = marques.value.find(m => m.id === vehicule.marque.id);
     const selectedEnergie = energies.value.find(e => e.key === vehicule.energie);
     const selectedBoite = boites.value.find(b => b.key === vehicule.boite);
+    const selectedLoueur = vehicule.loueur ? loueurs.value.find(l => l.id === vehicule.loueur.id) : null;
 
     formData.value = {
       marque: selectedMarque || null,
@@ -131,7 +151,21 @@ const loadVehiculeData = async () => {
       co2: vehicule.co2 || '',
       prix: vehicule.prix || '',
       prix_options: vehicule.prix_options || '',
-      remise: vehicule.remise || ''
+      remise: vehicule.remise || '',
+      loueur: selectedLoueur,
+      loyer: vehicule.loyer_financier || '',
+      entretien: vehicule.entretien || '',
+      pneumatique: vehicule.pneumatique || '',
+      gardiennage_pneus: vehicule.pneumatique_garde || '',
+      vehicule_relais: vehicule.vehicule_relais || '',
+      assu_rc: vehicule.assurance_rc || '',
+      assu_dommages: vehicule.assurance_dommage || '',
+      perte_fi: vehicule.perte_fi || '',
+      carte_carb: vehicule.carte_carb || '',
+      carte_elec: vehicule.carte_elec || '',
+      badge_telepeage: vehicule.badge_telepeage || '',
+      vignette_critair: vehicule.vignette_critair || '',
+      autre_cout: vehicule.autre_cout || ''
     };
     const selectedModele = modeles.value.find(m => m.id === vehicule.modele.id);
     formData.value.modele = selectedModele || null;
@@ -154,7 +188,7 @@ const resetForm = () => {
 
 const validateForm = () => {
   // Vérifier les champs obligatoires
-  if (!formData.value.marque || !formData.value.modele || !formData.value.energie) {
+  if (!formData.value.marque || !formData.value.modele || !formData.value.energie || !formData.value.loueur || !formData.value.loyer) {
     toast.add({
       severity: 'error',
       summary: 'Erreur',
@@ -279,6 +313,33 @@ const validateForm = () => {
     return false;
   }
 
+  // Validation du loyer (obligatoire)
+  if (!formData.value.loyer || !/^[0-9]+(\.[0-9]+)?$/.test(formData.value.loyer)) {
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Le loyer doit être un nombre (avec décimale possible)',
+      life: 3000
+    });
+    return false;
+  }
+
+  // Validation des autres coûts financiers (si renseignés)
+  const financialFields = ['entretien', 'pneumatique', 'gardiennage_pneus', 'vehicule_relais',
+    'assu_rc', 'assu_dommages', 'perte_fi', 'carte_carb', 'carte_elec', 'badge_telepeage', 'vignette_critair', 'autre_cout'];
+
+  for (const field of financialFields) {
+    if (formData.value[field] && !/^[0-9]+(\.[0-9]+)?$/.test(formData.value[field])) {
+      toast.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: `Le champ "${field.replace('_', ' ')}" doit être un nombre (avec décimale possible)`,
+        life: 3000
+      });
+      return false;
+    }
+  }
+
   return true;
 };
 
@@ -302,7 +363,21 @@ const saveVehicule = async () => {
       co2: formData.value.co2,
       prix: formData.value.prix,
       prix_options: formData.value.prix_options || '0',
-      remise: formData.value.remise || '0'
+      remise: formData.value.remise || '0',
+      loueur: {target_id: formData.value.loueur?.id},
+      loyer: formData.value.loyer,
+      entretien: formData.value.entretien || '0',
+      pneumatique: formData.value.pneumatique || '0',
+      gardiennage_pneus: formData.value.gardiennage_pneus || '0',
+      vehicule_relais: formData.value.vehicule_relais || '0',
+      assu_rc: formData.value.assu_rc || '0',
+      assu_dommages: formData.value.assu_dommages || '0',
+      perte_fi: formData.value.perte_fi || '0',
+      carte_carb: formData.value.carte_carb || '0',
+      carte_elec: formData.value.carte_elec || '0',
+      badge_telepeage: formData.value.badge_telepeage || '0',
+      vignette_critair: formData.value.vignette_critair || '0',
+      autre_cout: formData.value.autre_cout || '0'
     };
 
     let response;
@@ -372,7 +447,7 @@ onMounted(() => {
                         v-model="formData.marque"
                         :options="marques"
                         optionLabel="name"
-                        autoFilterFocus="true"
+                        :autoFilterFocus="true"
                         :filter="true"
                         class="w-full"
                         required
@@ -396,7 +471,7 @@ onMounted(() => {
                         optionLabel="title"
                         :filter="true"
                         class="w-full"
-                        autoFilterFocus="true"
+                        :autoFilterFocus="true"
                         required
                       />
                     </IconField>
@@ -628,6 +703,267 @@ onMounted(() => {
                       />
                     </IconField>
                     <label for="remise" class="text-primary">Remise (%)</label>
+                  </FloatLabel>
+                </div>
+              </div>
+            </div>
+          </template>
+        </Card>
+
+        <Card class="shadow-sm mb-4">
+          <template #title>Financement (coût mensuel)</template>
+          <template #content>
+            <div class="grid gap-6 mb-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Loueur -->
+                <div class="grid gap-2">
+                  <FloatLabel variant="in">
+                    <IconField>
+                      <InputIcon>
+                        <Car class="h-4 w-4"/>
+                      </InputIcon>
+                      <Select
+                        id="loueur"
+                        v-model="formData.loueur"
+                        :options="loueurs"
+                        optionLabel="name"
+                        :filter="true"
+                        :autoFilterFocus="true"
+                        class="w-full"
+                        required
+                      />
+                    </IconField>
+                    <label for="loueur" class="text-primary">Loueur *</label>
+                  </FloatLabel>
+                </div>
+
+                <!-- Loyer -->
+                <div class="grid gap-2">
+                  <FloatLabel variant="in">
+                    <IconField>
+                      <InputIcon>
+                        <Euro class="h-4 w-4"/>
+                      </InputIcon>
+                      <InputText
+                        id="loyer"
+                        v-model="formData.loyer"
+                        required
+                        fluid
+                      />
+                    </IconField>
+                    <label for="loyer" class="text-primary">Loyer *</label>
+                  </FloatLabel>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Entretien -->
+                <div class="grid gap-2">
+                  <FloatLabel variant="in">
+                    <IconField>
+                      <InputIcon>
+                        <Euro class="h-4 w-4"/>
+                      </InputIcon>
+                      <InputText
+                        id="entretien"
+                        v-model="formData.entretien"
+                        fluid
+                      />
+                    </IconField>
+                    <label for="entretien" class="text-primary">Entretien</label>
+                  </FloatLabel>
+                </div>
+
+                <!-- Pneumatique -->
+                <div class="grid gap-2">
+                  <FloatLabel variant="in">
+                    <IconField>
+                      <InputIcon>
+                        <Euro class="h-4 w-4"/>
+                      </InputIcon>
+                      <InputText
+                        id="pneumatique"
+                        v-model="formData.pneumatique"
+                        fluid
+                      />
+                    </IconField>
+                    <label for="pneumatique" class="text-primary">Pneumatique</label>
+                  </FloatLabel>
+                </div>
+
+                <!-- Gardiennage pneus -->
+                <div class="grid gap-2">
+                  <FloatLabel variant="in">
+                    <IconField>
+                      <InputIcon>
+                        <Euro class="h-4 w-4"/>
+                      </InputIcon>
+                      <InputText
+                        id="gardiennage_pneus"
+                        v-model="formData.gardiennage_pneus"
+                        fluid
+                      />
+                    </IconField>
+                    <label for="gardiennage_pneus" class="text-primary">Gardiennage pneus</label>
+                  </FloatLabel>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Véhicule relais -->
+                <div class="grid gap-2">
+                  <FloatLabel variant="in">
+                    <IconField>
+                      <InputIcon>
+                        <Euro class="h-4 w-4"/>
+                      </InputIcon>
+                      <InputText
+                        id="vehicule_relais"
+                        v-model="formData.vehicule_relais"
+                        fluid
+                      />
+                    </IconField>
+                    <label for="vehicule_relais" class="text-primary">Véhicule relais</label>
+                  </FloatLabel>
+                </div>
+
+                <!-- Assurance RC -->
+                <div class="grid gap-2">
+                  <FloatLabel variant="in">
+                    <IconField>
+                      <InputIcon>
+                        <Euro class="h-4 w-4"/>
+                      </InputIcon>
+                      <InputText
+                        id="assu_rc"
+                        v-model="formData.assu_rc"
+                        fluid
+                      />
+                    </IconField>
+                    <label for="assu_rc" class="text-primary">Assurance RC</label>
+                  </FloatLabel>
+                </div>
+
+                <!-- Assurance dommages -->
+                <div class="grid gap-2">
+                  <FloatLabel variant="in">
+                    <IconField>
+                      <InputIcon>
+                        <Euro class="h-4 w-4"/>
+                      </InputIcon>
+                      <InputText
+                        id="assu_dommages"
+                        v-model="formData.assu_dommages"
+                        fluid
+                      />
+                    </IconField>
+                    <label for="assu_dommages" class="text-primary">Assurance dommages</label>
+                  </FloatLabel>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Perte financière -->
+                <div class="grid gap-2">
+                  <FloatLabel variant="in">
+                    <IconField>
+                      <InputIcon>
+                        <Euro class="h-4 w-4"/>
+                      </InputIcon>
+                      <InputText
+                        id="perte_fi"
+                        v-model="formData.perte_fi"
+                        fluid
+                      />
+                    </IconField>
+                    <label for="perte_fi" class="text-primary">Perte financière</label>
+                  </FloatLabel>
+                </div>
+
+                <!-- Carte carburant -->
+                <div class="grid gap-2">
+                  <FloatLabel variant="in">
+                    <IconField>
+                      <InputIcon>
+                        <Euro class="h-4 w-4"/>
+                      </InputIcon>
+                      <InputText
+                        id="carte_carb"
+                        v-model="formData.carte_carb"
+                        fluid
+                      />
+                    </IconField>
+                    <label for="carte_carb" class="text-primary">Carte carburant</label>
+                  </FloatLabel>
+                </div>
+
+                <!-- Carte électrique -->
+                <div class="grid gap-2">
+                  <FloatLabel variant="in">
+                    <IconField>
+                      <InputIcon>
+                        <Euro class="h-4 w-4"/>
+                      </InputIcon>
+                      <InputText
+                        id="carte_elec"
+                        v-model="formData.carte_elec"
+                        fluid
+                      />
+                    </IconField>
+                    <label for="carte_elec" class="text-primary">Carte électrique</label>
+                  </FloatLabel>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Badge Télépéage -->
+                <div class="grid gap-2">
+                  <FloatLabel variant="in">
+                    <IconField>
+                      <InputIcon>
+                        <Euro class="h-4 w-4"/>
+                      </InputIcon>
+                      <InputText
+                        id="badge_telepeage"
+                        v-model="formData.badge_telepeage"
+                        fluid
+                      />
+                    </IconField>
+                    <label for="badge_telepeage" class="text-primary">Badge Télépéage</label>
+                  </FloatLabel>
+                </div>
+
+                <!-- Vignette Critair -->
+                <div class="grid gap-2">
+                  <FloatLabel variant="in">
+                    <IconField>
+                      <InputIcon>
+                        <Euro class="h-4 w-4"/>
+                      </InputIcon>
+                      <InputText
+                        id="vignette_critair"
+                        v-model="formData.vignette_critair"
+                        fluid
+                      />
+                    </IconField>
+                    <label for="vignette_critair" class="text-primary">Vignette Critair</label>
+                  </FloatLabel>
+                </div>
+
+                <!-- Autre coût -->
+                <div class="grid gap-2">
+                  <FloatLabel variant="in">
+                    <IconField>
+                      <InputIcon>
+                        <Euro class="h-4 w-4"/>
+                      </InputIcon>
+                      <InputText
+                        id="autre_cout"
+                        v-model="formData.autre_cout"
+                        fluid
+                      />
+                    </IconField>
+                    <label for="autre_cout" class="text-primary">Autre coût</label>
                   </FloatLabel>
                 </div>
               </div>
