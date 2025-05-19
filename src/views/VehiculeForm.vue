@@ -47,7 +47,10 @@ const formData = ref({
   conso_carburant: '',
   conso_electrique: '',
   poids: '',
-  co2: ''
+  co2: '',
+  prix: '',
+  prix_options: '',
+  remise: ''
 });
 
 // Liste des marques et modèles
@@ -122,7 +125,10 @@ const loadVehiculeData = async () => {
       conso_carburant: vehicule.conso_carb || '',
       conso_electrique: vehicule.conso_kwh || '',
       poids: vehicule.pvom || '',
-      co2: vehicule.co2 || ''
+      co2: vehicule.co2 || '',
+      prix: vehicule.prix || '',
+      prix_options: vehicule.prix_options || '',
+      remise: vehicule.remise || ''
     };
     const selectedModele = modeles.value.find(m => m.id === vehicule.modele.id);
     formData.value.modele = selectedModele || null;
@@ -237,6 +243,39 @@ const validateForm = () => {
     return false;
   }
 
+  // Validation du prix
+  if (!formData.value.prix || !/^[0-9]+(\.[0-9]+)?$/.test(formData.value.prix)) {
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Le prix du véhicule doit être un nombre (avec décimale possible)',
+      life: 3000
+    });
+    return false;
+  }
+
+  // Validation du prix des options (si renseigné)
+  if (formData.value.prix_options && !/^[0-9]+(\.[0-9]+)?$/.test(formData.value.prix_options)) {
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Le prix des options doit être un nombre (avec décimale possible)',
+      life: 3000
+    });
+    return false;
+  }
+
+  // Validation de la remise (si renseignée)
+  if (formData.value.remise && !/^[0-9]+(\.[0-9]+)?$/.test(formData.value.remise)) {
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'La remise doit être un nombre (avec décimale possible)',
+      life: 3000
+    });
+    return false;
+  }
+
   return true;
 };
 
@@ -257,7 +296,10 @@ const saveVehicule = async () => {
       conso_carb: formData.value.conso_carburant,
       conso_kwh: formData.value.conso_electrique,
       pvom: formData.value.poids,
-      co2: formData.value.co2
+      co2: formData.value.co2,
+      prix: formData.value.prix,
+      prix_options: formData.value.prix_options || '0',
+      remise: formData.value.remise || '0'
     };
 
     let response;
@@ -327,6 +369,7 @@ onMounted(() => {
                         v-model="formData.marque"
                         :options="marques"
                         optionLabel="name"
+                        autoFilterFocus="true"
                         :filter="true"
                         class="w-full"
                         required
@@ -350,6 +393,7 @@ onMounted(() => {
                         optionLabel="title"
                         :filter="true"
                         class="w-full"
+                        autoFilterFocus="true"
                         required
                       />
                     </IconField>
@@ -526,6 +570,61 @@ onMounted(() => {
                       />
                     </IconField>
                     <label for="co2" class="text-primary">CO2 *</label>
+                  </FloatLabel>
+                </div>
+              </div>
+
+              <!-- Prix, Prix options et Remise -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Prix -->
+                <div class="grid gap-2">
+                  <FloatLabel variant="in">
+                    <IconField>
+                      <InputIcon>
+                        <Car class="h-4 w-4"/>
+                      </InputIcon>
+                      <InputText
+                        id="prix"
+                        v-model="formData.prix"
+                        required
+                        fluid
+                      />
+                    </IconField>
+                    <label for="prix" class="text-primary">Prix du véhicule *</label>
+                  </FloatLabel>
+                </div>
+
+                <!-- Prix options -->
+                <div class="grid gap-2">
+                  <FloatLabel variant="in">
+                    <IconField>
+                      <InputIcon>
+                        <Car class="h-4 w-4"/>
+                      </InputIcon>
+                      <InputText
+                        id="prix_options"
+                        v-model="formData.prix_options"
+                        fluid
+                      />
+                    </IconField>
+                    <label for="prix_options" class="text-primary">Prix des options</label>
+                  </FloatLabel>
+                </div>
+
+                <!-- Remise -->
+                <div class="grid gap-2">
+                  <FloatLabel variant="in">
+                    <IconField>
+                      <InputIcon>
+                        <Percent class="h-4 w-4"/>
+                      </InputIcon>
+                      <InputText
+                        id="remise"
+                        v-model="formData.remise"
+                        fluid
+                      />
+                    </IconField>
+                    <label for="remise" class="text-primary">Remise (%)</label>
                   </FloatLabel>
                 </div>
               </div>
