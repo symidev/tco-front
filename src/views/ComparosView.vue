@@ -273,7 +273,7 @@ onMounted(() => {
     <div class="w-full max-w-[1200px] flex flex-1 flex-col my-8">
       <div class="w-full justify-between flex flex-row">
         <h1 class="text-xl sm:text-2xl font-bold pb-6">Comparos
-          <span v-if="maxComparos !== -1" class="ml-2 text-3xl">{{ comparos?.progress.length + comparos?.completed.length }}/{{
+          <span v-if="maxComparos !== -1 && !loading" class="ml-2 text-3xl">{{ comparos?.progress.length + comparos?.completed.length }}/{{
               maxComparos
             }}</span>
         </h1>
@@ -282,7 +282,7 @@ onMounted(() => {
             severity="primary"
             class="mb-6"
             size="medium"
-            v-if="comparos?.progress.length + comparos?.completed.length < maxComparos || maxComparos === -1"
+            v-if="(comparos?.progress.length + comparos?.completed.length < maxComparos || maxComparos === -1) && !loading"
             @click="router.push('/comparo/add')"
         >
           <Plus class="h-4 w-4 mr-2"/>
