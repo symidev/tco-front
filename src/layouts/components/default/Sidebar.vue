@@ -2,6 +2,8 @@
 <script setup>
 import { Car, FileText, Book, Calculator, ChevronsLeft, Home } from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
+import { useStore } from 'vuex'
+import { computed } from 'vue'
 
 const props = defineProps({
   isOpen: Boolean,
@@ -10,8 +12,9 @@ const props = defineProps({
 
 const emit = defineEmits(['toggleSidebar', 'closeSidebar'])
 
-// Récupérer la route active
+// Récupérer la route active et le store
 const route = useRoute()
+const store = useStore()
 
 // Fermer la sidebar lorsqu'un lien est cliqué (uniquement en mode mobile)
 const closeSidebarOnMobile = () => {
@@ -30,14 +33,43 @@ const isActive = (path) => {
   return route.path === path
 }
 
-// Liste des éléments du menu
-const menuItems = [
+// Fonction pour vérifier si l'utilisateur a les permissions nécessaires
+const hasPermission = (permissions) => {
+  // Si aucune permission n'est requise
+  if (!permissions || permissions.length === 0) {
+    return true
+  }
+
+  // Récupérer les rôles de l'utilisateur
+  const userRoles = computed( () => store.state.auth?.tokenInfo?.drupal?.roles || [])
+  // Vérifier que userRoles est bien un tableau
+  if (!Array.isArray(userRoles.value)) {
+    console.warn('Les rôles utilisateur ne sont pas dans un format valide');
+    return false;
+  }
+
+  // Normalisation et comparaison insensible à la casse
+  return permissions.some(permission => {
+    if (typeof permission !== 'string') return false;
+    const normalizedPermission = permission.trim().toLowerCase();
+    return userRoles.value.some(role =>
+        typeof role === 'string' && role.trim().toLowerCase() === normalizedPermission
+    );
+  });
+}
+
+// Liste des éléments du menu avec les permissions requises
+const allMenuItems = [
   { path: '/', icon: Home, label: 'Tableau de bord' },
-  { path: '/vehicules', icon: Car, label: 'Véhicules' },
-  { path: '/comparos', icon: FileText, label: 'Comparatifs' },
-  { path: '/catalogues', icon: Book, label: 'Catalogues' },
-  { path: '/calc-aen', icon: Calculator, label: 'Calculateur AEN' }
+  { path: '/comparos', icon: FileText, label: 'Comparatifs', permissions: ['comparo', 'catalogue'] },
+  { path: '/catalogues', icon: Book, label: 'Catalogues', permissions: ['catalogue'] },
+  { path: '/calc-aen', icon: Calculator, label: 'Calculateur AEN', permissions: ['catalogue'] }
 ]
+
+// Filtrer les éléments du menu selon les permissions de l'utilisateur
+const menuItems = computed(() => {
+  return allMenuItems.filter(item => hasPermission(item.permissions))
+})
 </script>
 
 <template>

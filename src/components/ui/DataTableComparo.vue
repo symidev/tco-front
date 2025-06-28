@@ -86,7 +86,7 @@ const menuModelItems = computed(() => {
         field="description"
         header="Description"
         style="width: 350px; min-width: 350px; max-width: 350px;"
-        class="hidden lg:table-cell cursor-help"
+        class="hidden lg:table-cell"
     >
       <template #body="slotProps">
         <div class="truncate" :title="slotProps.data.description">{{ slotProps.data.description }}</div>

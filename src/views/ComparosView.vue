@@ -145,8 +145,38 @@ const getProgressMenuItems = (comparo) => {
       condition: comparo.countVehicule > 1,
       icon: Car,
       command: () => {
-        // TODO: Remplacer par la route d'édition
-        router.push('/');
+        confirm.require({
+          message: 'Une fois l\'analyse lancée, plus aucune modification de ce comparo ne pourra être effectuée. Souhaitez-vous continuer ?',
+          header: 'Confirmation d\'analyse',
+          icon: 'pi pi-info-circle',
+          acceptLabel: 'Oui, lancer l\'analyse',
+          rejectLabel: 'Annuler',
+          acceptClass: 'p-button-primary',
+          accept: async () => {
+            loading.value = true;
+            try {
+              const response = await comparoService.analyzeComparo(comparo.uuid);
+              toast.add({
+                severity: 'success',
+                summary: 'Analyse lancée',
+                detail: 'L\'analyse du comparo a été lancée avec succès',
+                life: 3000
+              });
+              console.log('Véhicules analysés:', response.data.vehicules);
+              router.push(`/comparo/${comparo.uuid}/analyse`);
+            } catch (error) {
+              console.error('Erreur lors de l\'analyse:', error);
+              toast.add({
+                severity: 'error',
+                summary: 'Erreur',
+                detail: 'Une erreur est survenue lors de l\'analyse',
+                life: 3000
+              });
+            } finally {
+              loading.value = false;
+            }
+          }
+        });
       }
     },
     {
@@ -221,8 +251,7 @@ const getCompletedMenuItems = (comparo) => {
       label: 'Voir l\'analyse',
       icon: Eye,
       command: () => {
-        // TODO: Remplacer par la route d'analyse
-        router.push('/');
+        router.push(`/comparo/${comparo.uuid}/analyse`);
       }
     },
     {

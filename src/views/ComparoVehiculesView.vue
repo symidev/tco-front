@@ -187,16 +187,29 @@ const analyzeComparo = () => {
     acceptLabel: 'Oui, lancer l\'analyse',
     rejectLabel: 'Annuler',
     acceptClass: 'p-button-primary',
-    accept: () => {
-      // TODO: Implémenter l'analyse du comparo
-      console.log('Lancer l\'analyse du comparo:', comparo.value.uuid);
-      toast.add({
-        severity: 'success',
-        summary: 'Analyse lancée',
-        detail: 'L\'analyse du comparo a été lancée avec succès',
-        life: 3000
-      });
-      router.push('/comparos');
+    accept: async () => {
+      loading.value = true;
+      try {
+        const response = await comparoService.analyzeComparo(comparo.value.uuid);
+        toast.add({
+          severity: 'success',
+          summary: 'Analyse lancée',
+          detail: 'L\'analyse du comparo a été lancée avec succès',
+          life: 3000
+        });
+        console.log('Véhicules analysés:', response.data.vehicules);
+        router.push(`/comparo/${comparo.value.uuid}/analyse`);
+      } catch (error) {
+        console.error('Erreur lors de l\'analyse:', error);
+        toast.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: 'Une erreur est survenue lors de l\'analyse',
+          life: 3000
+        });
+      } finally {
+        loading.value = false;
+      }
     }
   });
 };
@@ -220,7 +233,7 @@ onMounted(() => {
                 maxVehicule
               }}</span>
           </h1>
-          <Button
+          <!--<Button
               v-if="canAddVehicule"
               severity="primary"
               size="medium"
@@ -228,7 +241,7 @@ onMounted(() => {
           >
             <Plus class="w-4 h-4 mr-2"/>
             Ajouter un véhicule
-          </Button>
+          </Button>-->
         </div>
 
         <Card class="shadow-sm mb-6">

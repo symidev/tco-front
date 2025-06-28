@@ -75,6 +75,13 @@ const router = createRouter({
             meta: { layout: 'DefaultLayout', requiresAuth: true }
         },
         {
+            path: '/comparo/:uuid/analyse',
+            name: 'ComparoAnalyse',
+            component: () => import('../views/ComparoAnalyseView.vue'),
+            props: route => ({ uuid: route.params.uuid }),
+            meta: { layout: 'DefaultLayout', requiresAuth: true }
+        },
+        {
             path: '/calc-aen',
             name: 'calc-aen',
             component: () => import('../views/CalcAenView.vue'),

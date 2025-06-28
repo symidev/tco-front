@@ -53,6 +53,22 @@ export const comparoService = {
       }
     });
   },
+  /**
+   * Récupère les informations d'analyse d'un comparo spécifique par son UUID
+   * @param {string} uuid - L'identifiant unique du comparo
+   * @returns {Promise<Object>} Les données de réponse de l'API
+   */
+  getComparoAnalyseByUuid(uuid) {
+    return apiService.get(`/api/tco/comparo/${uuid}/analyse`) ;
+  },
+  /**
+   * Lance l'analyse d'un comparo
+   * @param {string} uuid - L'identifiant unique du comparo
+   * @returns {Promise<Object>} Les données de réponse de l'API
+   */
+  analyzeComparo(uuid) {
+    return apiService.post(`/api/tco/comparo/${uuid}/analyse`);
+  },
 
   /**
    * Récupère les informations d'un véhicule spécifique par son UUID

@@ -14,6 +14,33 @@ const emit = defineEmits(['toggleMobileSidebar'])
 const router = useRouter()
 const store = useStore()
 
+// Fonction pour vérifier si l'utilisateur a les permissions nécessaires
+const hasPermission = (permissions) => {
+  // Si aucune permission n'est requise
+  if (!permissions || permissions.length === 0) {
+    return true
+  }
+
+  // Récupérer les rôles de l'utilisateur
+  const userRoles = store.state.auth?.tokenInfo?.roles || []
+
+  // Vérifier si l'utilisateur a au moins un des rôles requis
+  return permissions.some(permission => userRoles.includes(permission))
+}
+
+// Filtrer les éléments du menu en fonction des permissions
+const filteredItems = computed(() => {
+  if (!props.items) return []
+
+  return props.items.filter(item => {
+    // Si l'élément n'a pas de propriété permissions, il est toujours visible
+    if (!item.permissions) return true
+
+    // Sinon, vérifier les permissions
+    return hasPermission(item.permissions)
+  })
+})
+
 const userActions = [
   {
     label: 'Mon profil',
@@ -54,7 +81,7 @@ const url = computed(() => {
 </script>
 
 <template>
-  <Menubar :model="items" class="bg-surface-50 shadow-sm px-4 py-2">
+  <Menubar :model="filteredItems" class="bg-surface-50 shadow-sm px-4 py-2">
     <template #start v-if="isMobile">
       <button
           @click="emit('toggleMobileSidebar')"

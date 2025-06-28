@@ -205,8 +205,8 @@ export function useUserProfile(toast) {
 
                 user_raison_sociale: userData.field_user_raison_sociale || '',
                 user_siret: userData.field_user_siret || '',
-                user_is: userData.field_user_is || 28,
-                user_charge_patronale: userData.field_user_charge_patronale || 48,
+                user_is: userData.field_user_is || '',
+                user_charge_patronale: userData.field_user_charge_patronale || '',
 
                 user_connaissance: userConnaissance,
                 user_connaissance_autre: userData.field_user_connaissance_autre || '',
