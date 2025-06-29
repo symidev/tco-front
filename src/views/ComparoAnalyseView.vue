@@ -9,6 +9,8 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import ColumnGroup from 'primevue/columngroup';
 import Row from 'primevue/row';
+import Panel from 'primevue/panel';
+import Badge from 'primevue/badge';
 
 import { comparoService } from '@/services/api/comparoService';
 
@@ -18,9 +20,11 @@ const toast = useToast();
 
 const loading = ref(true);
 const comparo = ref(null);
+const expandedSections = ref(new Set(['infos_vehicule', 'contrat', 'fiscalite', 'energie', 'tco', 'ventilation_tco']));
 
 // Structure de données pour le tableau
 const sectionsData = ref([]);
+const sectionsConfig = ref([]);
 
 // Fonction pour calculer la puissance en KW
 const getPuissanceKW = (puissanceCV) => {
@@ -147,6 +151,16 @@ const formatNumber = (value, decimals = 2) => {
   return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: decimals }).format(value);
 };
 
+// Fonction pour basculer l'état d'expansion d'une section
+const toggleSection = (sectionId) => {
+  if (expandedSections.value.has(sectionId)) {
+    expandedSections.value.delete(sectionId);
+  } else {
+    expandedSections.value.add(sectionId);
+  }
+  expandedSections.value = new Set(expandedSections.value);
+};
+
 // Préparation des données pour le DataTable
 const prepareTableData = () => {
   if (!comparo.value?.vehicules?.length) return;
@@ -241,15 +255,14 @@ const prepareTableData = () => {
   // Structurer les données pour le DataTable
   const tableData = [];
 
-  sections.forEach(section => {
-    // Ajouter l'en-tête de section en tant que ligne de groupe
-    tableData.push({
-      id: `section_${section.id}`,
-      type: 'header',
-      label: section.title
-    });
+  sectionsConfig.value = sections;
 
-    // Ajouter les lignes
+  // Créer les données pour chaque section séparément
+  const sectionDataMap = {};
+
+  sections.forEach(section => {
+    const sectionData = [];
+
     section.rows.forEach(row => {
       const rowData = {
         id: row.id,
@@ -266,11 +279,13 @@ const prepareTableData = () => {
         };
       });
 
-      tableData.push(rowData);
+      sectionData.push(rowData);
     });
+
+    sectionDataMap[section.id] = sectionData;
   });
 
-  sectionsData.value = tableData;
+  sectionsData.value = sectionDataMap;
 };
 
 // Fonction pour télécharger un fichier depuis une URL
@@ -371,82 +386,98 @@ onMounted(() => {
           <h1 class="text-xl sm:text-2xl font-bold">Analyse du comparo</h1>
         </div>
 
-        <Card class="shadow-sm mb-6">
+        <!-- En-tête avec badges des véhicules -->
+        <Card class="shadow-lg mb-6 border-0 rounded-lg overflow-hidden">
           <template #title>
-            <div class="flex items-center gap-2 text-primary">
-              <h2 class="text-md font-semibold">{{ comparo.title }}</h2>
+            <div class="flex items-center justify-between bg-surface-900 text-white p-6 -m-6 mb-6">
+              <div class="flex items-center gap-3">
+                <h2 class="text-xl font-bold">{{ comparo.title }}</h2>
+              </div>
+              <Badge :value="comparo.vehicules.length" severity="info" class="text-sm">véhicules</Badge>
             </div>
           </template>
           <template #content>
-            <div class="p-4">
-              <!-- Tableau comparatif avec PrimeVue DataTable -->
-              <DataTable
-                :value="sectionsData"
-                class="comparison-table"
-                scrollable
-                scrollHeight="flex"
-                responsiveLayout="scroll"
-                tableStyle="min-width: 50rem"
-                size="small"
-                groupRowsBy="type"
-              >
-                <!-- En-tête personnalisé avec les titres de véhicules -->
-                <ColumnGroup type="header">
-                  <Row>
-                    <Column :frozen="true" style="width: 300px; min-width: 300px" />
-                    <Column
+            <div class="space-y-1">
+              <!-- Tableau d'en-tête avec les véhicules -->
+              <div class="sticky mb-4 top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+                <div class="grid grid-cols-[300px_1fr] gap-0 min-w-[800px]">
+                  <div class="bg-surface-900 p-4 font-semibold text-white border-r border-gray-200">
+                    Critères de comparaison
+                  </div>
+                  <div class="grid gap-0" :style="`grid-template-columns: repeat(${comparo.vehicules.length}, 1fr)`">
+                    <div
                       v-for="(vehicule, index) in comparo.vehicules"
                       :key="'header_'+vehicule.id"
-                      :header="`${vehicule?.marque?.name} ${vehicule?.modele?.title}`"
-                    />
-                  </Row>
-                </ColumnGroup>
-
-                <!-- Colonne pour le nom des propriétés -->
-                <Column
-                  field="label"
-
-                  style="width: 300px; min-width: 300px"
-                  headerStyle="display: none"
-                >
-                  <template #body="{ data }">
-                    <div
-                      :class="{
-                        'font-semibold': data.type === 'data',
-                        'font-bold text-md pt-6 text-primary': data.type === 'header'
-                      }"
+                      class="bg-surface-900 p-4 text-center border-r border-gray-200 last:border-r-0 hover:bg-surface-800 transition-all duration-300"
                     >
-                      {{ data.label }}
+                      <div class="font-bold text-white text-sm">{{ vehicule?.marque?.name }}</div>
+                      <div class="text-xs text-gray-300 mt-1">{{ vehicule?.modele?.title }}</div>
+                      <div class="text-xs text-blue-400 font-medium mt-1">{{ vehicule?.finition }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sections repliables -->
+              <div class="space-y-4">
+                <Panel
+                  v-for="section in sectionsConfig"
+                  :key="section.id"
+                  :collapsed="!expandedSections.has(section.id)"
+                  @toggle="toggleSection(section.id)"
+                  class="section-panel border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300"
+                  :toggleable="true"
+                >
+                  <template #header>
+                    <div class="flex items-center gap-3 w-full">
+                      <span class="font-bold text-white">{{ section.title }}</span>
                     </div>
                   </template>
-                </Column>
 
-                <!-- Colonne dynamique pour chaque véhicule -->
-                <Column
-                  v-for="(vehicule, index) in comparo.vehicules"
-                  :key="'value_'+vehicule.id"
-                  :field="`vehicule_${index}.value`"
-                  headerStyle="display: none"
-                >
-                  <template #body="{ data, column }">
-                    <!-- Si c'est un en-tête de section, n'affiche rien car nous utilisons le template de rowgroup -->
-                    <div
-                      v-if="data.type === 'data'"
-                      class="text-left"
-                      :class="data[`vehicule_${index}`]?.class || ''"
+                  <div v-if="expandedSections.has(section.id)" class="overflow-hidden">
+                    <DataTable
+                      :value="sectionsData[section.id]"
+                      class="comparison-table-section"
+                      size="small"
+                      :showHeaders="false"
+                      stripedRows
+                      :rowHover="true"
                     >
-                      {{ data[`vehicule_${index}`]?.value }}
-                    </div>
-                  </template>
-                </Column>
+                      <!-- Colonne pour le nom des propriétés -->
+                      <Column
+                        field="label"
+                        style="width: 300px; min-width: 300px"
+                        class="property-column"
+                      >
+                        <template #body="{ data }">
+                          <div class="font-medium text-white py-2">
+                            {{ data.label }}
+                          </div>
+                        </template>
+                      </Column>
 
-                <!-- Template personnalisé pour les en-têtes de section -->
-                <template #rowgroupheader="{ data, index }">
-                  <td v-if="data.type === 'header'" :colspan="comparo.vehicules.length + 1" class="section-header py-2 px-4">
-                    <div class="font-bold text-md">{{ data.label }}</div>
-                  </td>
-                </template>
-              </DataTable>
+                      <!-- Colonne dynamique pour chaque véhicule -->
+                      <Column
+                        v-for="(vehicule, index) in comparo.vehicules"
+                        :key="'value_'+vehicule.id+section.id"
+                        :field="`vehicule_${index}.value`"
+                        class="value-column"
+                      >
+                        <template #body="{ data }">
+                          <div
+                            class="text-center py-2 font-medium transition-all duration-200 rounded px-2"
+                            :class="[
+                              data[`vehicule_${index}`]?.class || ''
+                            ]"
+                          >
+                            {{ data[`vehicule_${index}`]?.value }}
+                          </div>
+                        </template>
+                      </Column>
+                    </DataTable>
+                  </div>
+                </Panel>
+              </div>
             </div>
           </template>
         </Card>
@@ -483,60 +514,208 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* Style pour le DataTable */
-:deep(.comparison-table) {
-  /* Supprime les bordures multiples */
+/* Animations et transitions */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Style pour les panneaux de section */
+:deep(.section-panel) {
+  animation: slideIn 0.3s ease-out;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:deep(.section-panel:hover) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Style pour les DataTables des sections */
+:deep(.comparison-table-section) {
   border-collapse: collapse;
+  border-radius: 0px;
+  overflow: hidden;
 }
 
-:deep(.p-datatable-wrapper) {
-  overflow-x: auto;
+:deep(.comparison-table-section .p-datatable-wrapper) {
+  border-radius: 8px;
+  overflow: hidden;
 }
 
-:deep(.p-datatable-scrollable-body) {
-  overflow-y: visible;
+:deep(.comparison-table-section .p-datatable-tbody > tr) {
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #f3f4f6;
 }
 
-:deep(.p-datatable-tbody tr[data-type="header"] td) {
-  font-weight: bold;
-  font-size: 1.125rem;
-  padding: 0.5rem 1rem;
+:deep(.comparison-table-section .p-datatable-tbody > tr:last-child) {
+  border-bottom: none;
 }
 
-:deep(.p-frozen-column) {
-  z-index: 1;
+:deep(.comparison-table-section .p-datatable-tbody > tr:hover) {
+  background-color: #f3f4f6 !important;
+}
+
+:deep(.comparison-table-section .p-datatable-tbody > tr:nth-child(even)) {
+  background-color: #f9fafb;
+}
+
+:deep(.comparison-table-section .p-datatable-tbody > tr:nth-child(even):hover) {
+  background-color: #f1f5f9 !important;
+}
+
+/* Style pour les cellules */
+:deep(.comparison-table-section .p-datatable-tbody > tr > td) {
+  padding: 12px 16px;
+  border-right: 1px solid #e5e7eb;
+  vertical-align: middle;
+}
+
+:deep(.comparison-table-section .p-datatable-tbody > tr > td:last-child) {
+  border-right: none;
+}
+
+/* Style pour la colonne des propriétés */
+:deep(.property-column) {
+  background-color: var(--surface-900) !important;
+  font-weight: 600;
+  color: white;
+  border-right: 2px solid #e5e7eb !important;
+}
+
+/* Style pour les cellules de valeurs avec mise en évidence */
+:deep(.value-column .text-green-400) {
+  color: #10b981 !important;
+  font-weight: 700;
+  position: relative;
+}
+
+:deep(.value-column .text-orange-400) {
+  color: #f59e0b !important;
+  font-weight: 700;
+  position: relative;
+}
+
+/* Icônes pour les meilleures/pires valeurs */
+:deep(.text-green-400::before) {
+  content: '▼';
+  color: #10b981;
+  font-size: 0.75rem;
+  margin-right: 4px;
+  opacity: 0.7;
+}
+
+:deep(.text-orange-400::before) {
+  content: '▲';
+  color: #f59e0b;
+  font-size: 0.75rem;
+  margin-right: 4px;
+  opacity: 0.7;
+}
+
+/* Style pour l'en-tête principal */
+:deep(.p-card-title) {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Style pour les badges */
+:deep(.p-badge) {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
   font-weight: 600;
 }
 
-/* Style pour les lignes d'en-tête */
-:deep(.p-datatable-tbody > tr[data-type="header"]) {
-  font-weight: bold;
+/* Style pour les panneaux repliables */
+:deep(.section-panel) {
+  border-radius: 8px;
+  overflow: hidden;
 }
 
-/* Style pour les en-têtes de section */
-:deep(.section-header) {
-  background-color: var(--surface-100);
-  text-align: left;
-  border-bottom: 1px solid var(--surface-200);
-  border-top: 1px solid var(--surface-200);
+:deep(.p-panel .p-panel-header) {
+  background: var(--surface-900) !important;
+  border: none;
+  border-radius: 0;
+  padding: 1rem 1.5rem;
+  transition: all 0.3s ease;
 }
 
-/* Alignement à gauche pour toutes les cellules de données */
-:deep(.p-datatable .p-datatable-tbody > tr > td) {
-  text-align: left;
+:deep(.p-panel .p-panel-header:hover) {
+  background: var(--surface-800) !important;
 }
 
-:deep(.p-datatable .p-datatable-thead > tr > th) {
-  text-align: left;
+:deep(.p-panel .p-panel-content) {
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  background-color: white;
 }
 
-/* Ajustement responsive */
+:deep(.p-panel.p-panel-toggleable .p-panel-header .p-panel-header-icon) {
+  color: #6366f1;
+  transition: all 0.3s ease;
+}
+
+:deep(.p-panel.p-panel-toggleable .p-panel-header .p-panel-header-icon:hover) {
+  color: #4f46e5;
+  transform: scale(1.1);
+}
+
+/* Animation pour le contenu des panneaux */
+:deep(.p-panel .p-panel-content .p-toggleable-content) {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Style pour l'en-tête fixe */
+.sticky {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-  :deep(.p-datatable-scrollable-body) {
-    overflow-x: auto;
+  :deep(.comparison-table-section) {
+    font-size: 0.875rem;
   }
 
-  :deep(.p-frozen-column) {
+  :deep(.comparison-table-section .p-datatable-tbody > tr > td) {
+    padding: 8px 12px;
   }
+
+  :deep(.section-panel:hover) {
+    transform: none;
+  }
+}
+
+/* Style pour le conteneur principal */
+.space-y-1 > * + * {
+  margin-top: 0.25rem;
+}
+
+.space-y-4 > * + * {
+  margin-top: 1rem;
+}
+
+/* Animation au chargement */
+.comparison-table-section {
+  animation: fadeIn 0.5s ease-out;
 }
 </style>

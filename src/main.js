@@ -297,7 +297,8 @@ const tcoTheme = definePreset(Nora, {
                                 width: '0rem',
                             }
                         }
-                    }
+                    },
+                    rowStripedBackground: '{surface.700}',
                 }
             }
         },
