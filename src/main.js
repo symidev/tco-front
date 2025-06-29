@@ -290,6 +290,7 @@ const tcoTheme = definePreset(Nora, {
                         row: {
                             background: '{surface.800}',
                         },
+                        rowStripedBackground: '{surface.700}',
                         footer: {
                             background: '{surface.800}',
                             color: '{surface.100}',

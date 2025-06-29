@@ -387,28 +387,27 @@ onMounted(() => {
         </div>
 
         <!-- En-tête avec badges des véhicules -->
-        <Card class="shadow-lg mb-6 border-0 rounded-lg overflow-hidden">
+        <Card class="shadow-lg mb-6 border-0 rounded-lg card-no-overflow">
           <template #title>
             <div class="flex items-center justify-between bg-surface-900 text-white p-6 -m-6 mb-6">
               <div class="flex items-center gap-3">
                 <h2 class="text-xl font-bold">{{ comparo.title }}</h2>
               </div>
-              <Badge :value="comparo.vehicules.length" severity="info" class="text-sm">véhicules</Badge>
             </div>
           </template>
           <template #content>
-            <div class="space-y-1">
-              <!-- Tableau d'en-tête avec les véhicules -->
-              <div class="sticky mb-4 top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
-                <div class="grid grid-cols-[300px_1fr] gap-0 min-w-[800px]">
-                  <div class="bg-surface-900 p-4 font-semibold text-white border-r border-gray-200">
-                    Critères de comparaison
-                  </div>
-                  <div class="grid gap-0" :style="`grid-template-columns: repeat(${comparo.vehicules.length}, 1fr)`">
+            <div class="space-y-1 content-no-overflow">
+              <!-- Tableau d'en-tête avec les véhicules - Sticky Header -->
+              <div class="sticky-header-container">
+                <div class="header-sticky bg-white border-b border-gray-200 shadow-lg mb-4 rounded-t-lg">
+                  <div class="header-grid gap-0" :style="`--total-columns: ${comparo.vehicules.length + 1}`">
+                    <div class="header-criteria bg-surface-900 p-4 font-semibold text-white border-r border-gray-200">
+                      Critères de comparaison
+                    </div>
                     <div
                       v-for="(vehicule, index) in comparo.vehicules"
                       :key="'header_'+vehicule.id"
-                      class="bg-surface-900 p-4 text-center border-r border-gray-200 last:border-r-0 hover:bg-surface-800 transition-all duration-300"
+                      class="bg-surface-900 text-center p-4 border-r border-gray-200 last:border-r-0 hover:bg-surface-800 transition-all duration-300"
                     >
                       <div class="font-bold text-white text-sm">{{ vehicule?.marque?.name }}</div>
                       <div class="text-xs text-gray-300 mt-1">{{ vehicule?.modele?.title }}</div>
@@ -419,7 +418,7 @@ onMounted(() => {
               </div>
 
               <!-- Sections repliables -->
-              <div class="space-y-4">
+              <div class="space-y-4 sections-container">
                 <Panel
                   v-for="section in sectionsConfig"
                   :key="section.id"
@@ -442,11 +441,11 @@ onMounted(() => {
                       :showHeaders="false"
                       stripedRows
                       :rowHover="true"
+                      :style="`--total-columns: ${comparo.vehicules.length + 1}`"
                     >
                       <!-- Colonne pour le nom des propriétés -->
                       <Column
                         field="label"
-                        style="width: 300px; min-width: 300px"
                         class="property-column"
                       >
                         <template #body="{ data }">
@@ -551,11 +550,26 @@ onMounted(() => {
   border-collapse: collapse;
   border-radius: 0px;
   overflow: hidden;
+  table-layout: fixed;
+  width: 100%;
 }
 
 :deep(.comparison-table-section .p-datatable-wrapper) {
   border-radius: 8px;
   overflow: hidden;
+}
+
+:deep(.comparison-table-section .p-datatable-table) {
+  table-layout: fixed;
+  width: 100%;
+}
+
+:deep(.comparison-table-section .property-column) {
+  width: calc(100% / var(--total-columns)) !important;
+}
+
+:deep(.comparison-table-section .value-column) {
+  width: calc(100% / var(--total-columns)) !important;
 }
 
 :deep(.comparison-table-section .p-datatable-tbody > tr) {
@@ -684,10 +698,43 @@ onMounted(() => {
   animation: fadeIn 0.3s ease-out;
 }
 
-/* Style pour l'en-tête fixe */
-.sticky {
+/* Style pour l'en-tête sticky dans le conteneur */
+.sticky-header-container {
+  position: relative;
+}
+
+.header-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 100;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Corrections pour les overflow qui cassent le sticky/fixed */
+.card-no-overflow :deep(.p-card-content) {
+  overflow: visible !important;
+}
+
+.content-no-overflow {
+  overflow: visible !important;
+}
+
+.sections-container {
+  overflow: visible !important;
+}
+
+:deep(.section-panel) {
+  overflow: visible !important;
+}
+
+:deep(.p-panel) {
+  overflow: visible !important;
+}
+
+:deep(.p-panel-content) {
+  overflow: visible !important;
 }
 
 /* Responsive */
@@ -717,5 +764,11 @@ onMounted(() => {
 /* Animation au chargement */
 .comparison-table-section {
   animation: fadeIn 0.5s ease-out;
+}
+
+/* Style pour l'en-tête avec colonnes égales */
+.header-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--total-columns), 1fr);
 }
 </style>
