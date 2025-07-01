@@ -79,6 +79,15 @@ const modeles = computed(() => {
   return selectedMarque?.modeles || [];
 });
 
+// Fonction pour formater l'affichage des modèles (title + moteur)
+const getModeleDisplayName = (modele) => {
+  if (!modele) return '';
+  if (modele.moteur && modele.moteur.trim() !== '') {
+    return `${modele.title} - ${modele.moteur}`;
+  }
+  return modele.title;
+};
+
 // Liste des énergies
 const energies = computed(() => {
   return store.getters['siteData/getNestedData']('vehicule-energie') || [];
@@ -111,6 +120,61 @@ const pageTitle = computed(() => {
 });
 
 const comparoName = ref('')
+
+// Fonction pour réinitialiser les champs énergie et consommation
+const resetEnergieAndConsommation = () => {
+  formData.value.energie = null;
+  formData.value.conso_electrique = '';
+  formData.value.conso_carburant = '';
+};
+
+// Fonction pour récupérer les infos du modèle sélectionné
+const updateFormDataFromModele = (selectedModele) => {
+  if (selectedModele) {
+    // Récupérer les infos de consommation du modèle
+    if (selectedModele.conso_elec) {
+      formData.value.conso_electrique = selectedModele.conso_elec.toString();
+    }
+    if (selectedModele.conso_thermique) {
+      formData.value.conso_carburant = selectedModele.conso_thermique.toString();
+    }
+    
+    // Récupérer l'énergie du modèle et la sélectionner
+    if (selectedModele.energie) {
+      const selectedEnergie = energies.value.find(e => e.key === selectedModele.energie);
+      if (selectedEnergie) {
+        formData.value.energie = selectedEnergie;
+      }
+    }
+  }
+};
+
+// Watcher pour le changement de marque - réinitialise modèle et champs associés
+watch(() => formData.value.marque, (newMarque, oldMarque) => {
+  // Si la marque change, réinitialiser le modèle et les champs associés
+  if (oldMarque && newMarque?.id !== oldMarque?.id) {
+    formData.value.modele = null;
+    resetEnergieAndConsommation();
+  }
+}, { deep: true });
+
+// Watcher pour le changement de modèle
+watch(() => formData.value.modele, (newModele, oldModele) => {
+  // Si le modèle change, réinitialiser d'abord les champs
+  if (oldModele && newModele?.id !== oldModele?.id) {
+    resetEnergieAndConsommation();
+  }
+  
+  // Puis appliquer les nouvelles valeurs du modèle sélectionné
+  if (newModele) {
+    updateFormDataFromModele(newModele);
+  }
+  
+  // Si le modèle est supprimé/null, réinitialiser les champs
+  if (!newModele && oldModele) {
+    resetEnergieAndConsommation();
+  }
+}, { deep: true });
 
 // Réinitialiser les valeurs des champs de consommation en fonction de l'énergie
 watch(() => formData.value.energie, (newValue) => {
@@ -473,7 +537,14 @@ onMounted(() => {
                         class="w-full"
                         :autoFilterFocus="true"
                         required
-                      />
+                      >
+                        <template #option="{ option }">
+                          <div>{{ getModeleDisplayName(option) }}</div>
+                        </template>
+                        <template #value="{ value }">
+                          <div v-if="value">{{ getModeleDisplayName(value) }}</div>
+                        </template>
+                      </Select>
                     </IconField>
                     <label for="modele" class="text-primary">Modèle *</label>
                   </FloatLabel>

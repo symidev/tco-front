@@ -136,7 +136,6 @@ const menuModelItems = computed(() => {
         field="actions"
         header="Actions"
         style="width: 70px; min-width: 70px; max-width: 70px"
-        :frozen="true"
         alignFrozen="right"
     >
       <template #body="slotProps">
@@ -177,6 +176,29 @@ const menuModelItems = computed(() => {
   }
 }
 
+/* Hover léger sur les lignes des tableaux */
+:deep(.p-datatable-tbody > tr) {
+  transition: background-color 0.2s ease !important;
+}
+
+:deep(.p-datatable-tbody > tr:hover) {
+  background-color: var(--p-surface-700);
+}
+
+/* Hover spécifique pour les lignes striées */
+:deep(.p-datatable-striped .p-datatable-tbody > tr:nth-child(even):hover) {
+  background-color: rgba(59, 130, 246, 0.12) !important;
+}
+
+/* S'assurer que les styles PrimeVue par défaut sont surchargés */
+:deep(.p-datatable .p-datatable-tbody > tr:hover) {
+  background-color: var(--p-surface-700);
+}
+
+:deep(.p-datatable.p-datatable-striped .p-datatable-tbody > tr:nth-child(even):hover) {
+  background-color: var(--p-surface-700);
+}
+
 /* Amélioration du responsive pour la colonne titre */
 @media (max-width: 640px) {
   :deep(.p-datatable th),
@@ -194,6 +216,6 @@ const menuModelItems = computed(() => {
 }
 
 :deep(.p-menuitem-link:hover) {
-  background-color: var(--surface-hover);
+  background-color: var(--p-surface-700);
 }
 </style>

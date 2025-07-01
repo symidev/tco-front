@@ -59,7 +59,7 @@ onUnmounted(() => {
         position="left"
         :modal="true"
         :showCloseIcon="true"
-        class="w-15 p-0"
+        class="w-64 p-0"
         :contentStyle="{ padding: '0', overflow: 'hidden' }"
         @hide="isOpen = false"
     >
@@ -68,7 +68,7 @@ onUnmounted(() => {
           :isMobile="isMobile"
           @toggleSidebar="toggleSidebar"
           @closeSidebar="isOpen = false"
-          class="static transform-none shadow-none w-full bg-surface-900"
+          class="static transform-none shadow-none w-64 bg-surface-900"
       />
     </Drawer>
 
@@ -76,19 +76,19 @@ onUnmounted(() => {
         class="flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out overflow-x-hidden"
         :class="{
           'ml-0 w-full': isMobile || !isOpen,
-          'ml-56 w-[calc(100%-14rem)]': !isMobile && isOpen
+          'ml-64 w-[calc(100%-16rem)]': !isMobile && isOpen
         }"
     >
       <div class="fixed top-0 left-0 right-0 z-50" :class="{
           'ml-0': isMobile || !isOpen,
-          'ml-56': !isMobile && isOpen
+          'ml-64': !isMobile && isOpen
         }">
         <Navbar
             :isMobile="isMobile"
             @toggleMobileSidebar="toggleSidebar"
         />
       </div>
-      <main class="w-full px-8 sm:px-12 md:px-16 py-4 sm:py-6 md:py-8 mt-16">
+      <main class="w-full px-4 md:px-8 py-4 md:py-6 mt-16">
         <slot></slot>
       </main>
     </div>

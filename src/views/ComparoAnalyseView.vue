@@ -7,10 +7,7 @@ import Card from 'primevue/card';
 import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import ColumnGroup from 'primevue/columngroup';
-import Row from 'primevue/row';
 import Panel from 'primevue/panel';
-import Badge from 'primevue/badge';
 
 import { comparoService } from '@/services/api/comparoService';
 
@@ -173,7 +170,7 @@ const prepareTableData = () => {
         { id: 'loueur', name: 'Loueur', getValue: (v) => v.loueur?.name || '' },
         { id: 'marque', name: 'Marque', getValue: (v) => v.marque?.name || '' },
         { id: 'modele', name: 'Modèle', getValue: (v) => v.modele?.title || '' },
-        { id: 'finition', name: 'Finition', getValue: (v) => v.finition || '' },
+        { id: 'moteur_finition', name: 'Moteur/Finition', getValue: (v) => v.modele?.moteur ? v.modele?.moteur : v.finition || '' },
         {id: 'type_fisc', name: 'Type fiscal', getValue: (v) => v.type_fisc?.toUpperCase() || ''},
         { id: 'energie', name: 'Carburant', getValue: (v) => v.energie?.toUpperCase() || '' },
         { id: 'puissance', name: 'Puissance', getValue: (v) => v.puissance ? `${v.puissance} ch` : '' },
@@ -411,7 +408,7 @@ onMounted(() => {
                     >
                       <div class="font-bold text-white text-sm">{{ vehicule?.marque?.name }}</div>
                       <div class="text-xs text-gray-300 mt-1">{{ vehicule?.modele?.title }}</div>
-                      <div class="text-xs text-blue-400 font-medium mt-1">{{ vehicule?.finition }}</div>
+                      <div class="text-xs text-blue-400 font-medium mt-1">{{ vehicule?.modele?.moteur ? vehicule?.modele?.moteur : vehicule?.finition }}</div>
                     </div>
                   </div>
                 </div>
@@ -429,7 +426,7 @@ onMounted(() => {
                 >
                   <template #header>
                     <div class="flex items-center gap-3 w-full">
-                      <span class="font-bold text-white">{{ section.title }}</span>
+                      <span class="font-bold text-white cursor-pointer" @click="toggleSection(section.id)">{{ section.title }}</span>
                     </div>
                   </template>
 

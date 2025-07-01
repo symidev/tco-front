@@ -5,7 +5,7 @@ import {useStore} from 'vuex'
 import Card from 'primevue/card'
 import ComparoDataTable from '@/components/ui/DataTableComparo.vue'
 import {useRouter} from 'vue-router'
-import {Edit, Trash2, Eye, FileSpreadsheet, FileText, Car, Plus} from 'lucide-vue-next';
+import {Edit, Trash2, Eye, FileSpreadsheet, FileText, Car, Plus, TrendingUp, Clock, CheckCircle2, BarChart3} from 'lucide-vue-next';
 import {useToast} from 'primevue/usetoast';
 import {useConfirm} from "primevue/useconfirm";
 import Button from 'primevue/button';
@@ -297,39 +297,93 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="gap-3 w-full flex justify-center">
-    <div class="w-full max-w-[1200px] flex flex-1 flex-col my-8">
-      <div class="w-full justify-between flex flex-row">
-        <h1 class="text-xl sm:text-2xl font-bold pb-6">Comparos
-          <span v-if="maxComparos !== -1 && !loading" class="ml-2 text-3xl">{{ comparos?.progress.length + comparos?.completed.length }}/{{
-              maxComparos
-            }}</span>
-        </h1>
-        <Button
-            type="button"
-            severity="primary"
-            class="mb-6"
-            size="medium"
-            v-if="(comparos?.progress.length + comparos?.completed.length < maxComparos || maxComparos === -1) && !loading"
-            @click="router.push('/comparo/add')"
-        >
-          <Plus class="h-4 w-4 mr-2"/>
-          Créer un comparo
-        </Button>
-      </div>
-      <div v-if="loading" class="flex justify-center items-center py-8">
-        <ProgressSpinner/>
+  <div class="page-container">
+    <div class="page-content">
+      <!-- Header avec titre et bouton -->
+      <div class="page-header">
+        <div class="header-content">
+          <div class="title-section">
+            <h1 class="page-title">
+              <BarChart3 class="title-icon" />
+              Comparatifs véhicules
+            </h1>
+            <p class="page-subtitle">Gérez et analysez vos comparaisons de véhicules</p>
+          </div>
+        </div>
+
+        <!-- Bouton d'action -->
+        <div class="header-actions">
+          <Button
+              severity="primary"
+              class="create-btn"
+              v-if="(comparos?.progress.length + comparos?.completed.length < maxComparos || maxComparos === -1) && !loading"
+              @click="router.push('/comparo/add')"
+              outlined
+          >
+            <Plus class="w-4 h-4 mr-2"/>
+            Nouveau comparo
+          </Button>
+        </div>
       </div>
 
-      <div v-else class="comparos-list grid gap-4">
-        <Card class="shadow-sm mb-4">
-          <template #title>
-            <div class="flex items-center gap-2 text-primary mb-4">
-              <h2>En cours</h2>
+      <!-- Statistiques en pleine largeur -->
+      <div class="stats-container">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-progress">
+              <Clock class="w-5 h-5" />
             </div>
-          </template>
+            <div class="stat-content">
+              <div class="stat-number">{{ comparos?.progress.length || 0 }}</div>
+              <div class="stat-label">En cours</div>
+            </div>
+          </div>
 
-          <template #content>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-completed">
+              <CheckCircle2 class="w-5 h-5" />
+            </div>
+            <div class="stat-content">
+              <div class="stat-number">{{ comparos?.completed.length || 0 }}</div>
+              <div class="stat-label">Terminés</div>
+            </div>
+          </div>
+
+          <div class="stat-card" v-if="maxComparos !== -1">
+            <div class="stat-icon stat-icon-total">
+              <TrendingUp class="w-5 h-5" />
+            </div>
+            <div class="stat-content">
+              <div class="stat-number">{{ comparos?.progress.length + comparos?.completed.length }}/{{ maxComparos }}</div>
+              <div class="stat-label">Total utilisé</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading state -->
+      <div v-if="loading" class="loading-container">
+        <div class="loading-card">
+          <ProgressSpinner class="loading-spinner" />
+          <p class="loading-text">Chargement des comparos...</p>
+        </div>
+      </div>
+
+      <!-- Content -->
+      <div v-else class="content-grid">
+        <!-- Section En cours -->
+        <div class="section-card section-progress">
+          <div class="section-header">
+            <div class="section-title">
+              <Clock class="section-icon" />
+              <h2>Comparos en cours</h2>
+              <div class="section-badge section-badge-progress">
+                {{ comparos?.progress.length || 0 }}
+              </div>
+            </div>
+          </div>
+
+          <div class="section-content">
             <ComparoDataTable
                 :data="comparos.progress"
                 title="Comparos en cours"
@@ -339,17 +393,22 @@ onMounted(() => {
                 empty-message="Aucun comparo en cours"
                 :menu-items="getProgressMenuItems"
             />
-          </template>
-        </Card>
+          </div>
+        </div>
 
-        <Card class="shadow-sm mb-4">
-          <template #title>
-            <div class="flex items-center gap-2 text-primary mb-4">
+        <!-- Section Historique -->
+        <div class="section-card section-completed">
+          <div class="section-header">
+            <div class="section-title">
+              <CheckCircle2 class="section-icon" />
               <h2>Historique</h2>
+              <div class="section-badge section-badge-completed">
+                {{ comparos?.completed.length || 0 }}
+              </div>
             </div>
-          </template>
+          </div>
 
-          <template #content>
+          <div class="section-content">
             <ComparoDataTable
                 :data="comparos.completed"
                 title="Historique"
@@ -361,19 +420,355 @@ onMounted(() => {
                 :show-analyse-column="true"
                 :show-created-column="false"
             />
-          </template>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-/* Styles pour les icônes si nécessaire */
+/* Container principal */
+.page-container {
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  display: flex;
+  justify-content: center;
+}
+
+.page-content {
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Header */
+.page-header {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2rem;
+}
+
+.header-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.title-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.page-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 2rem;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+}
+
+.title-icon {
+  width: 2rem;
+  height: 2rem;
+  color: #f59e0b;
+}
+
+.page-subtitle {
+  color: #94a3b8;
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* Conteneur des statistiques */
+.stats-container {
+  width: 100%;
+}
+
+/* Statistiques */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  width: 100%;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, var(--p-surface-800) 0%, var(--p-surface-700) 100%);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.stat-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.stat-icon-progress {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+.stat-icon-completed {
+  background: linear-gradient(135deg, #10b981, #047857);
+}
+
+.stat-icon-total {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-number {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--p-surface-50);
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--p-surface-200);
+  font-weight: 500;
+}
+
+/* Actions */
+.header-actions {
+  display: flex;
+  align-items: flex-start;
+}
+
+.create-btn {
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.create-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Loading */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  padding: 4rem 0;
+}
+
+.loading-card {
+  background: white;
+  border-radius: 1rem;
+  padding: 3rem;
+  text-align: center;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+.loading-spinner {
+  margin-bottom: 1rem;
+}
+
+.loading-text {
+  color: #64748b;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* Content grid */
+.content-grid {
+  display: grid;
+  gap: 2rem;
+}
+
+/* Section cards */
+.section-card {
+  background: white;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.section-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.section-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.section-progress .section-header {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+}
+
+.section-completed .section-header {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.section-title h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+  flex: 1;
+}
+
+.section-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: white;
+}
+
+.section-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: white;
+}
+
+.section-badge-progress {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+.section-badge-completed {
+  background: linear-gradient(135deg, #10b981, #047857);
+}
+
+.section-content {
+  padding: 0;
+}
+
+/* Animations */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.section-card {
+  animation: slideInUp 0.6s ease-out;
+  animation-fill-mode: both;
+}
+
+.section-card:nth-child(1) { animation-delay: 0.1s; }
+.section-card:nth-child(2) { animation-delay: 0.2s; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page-container {
+    padding: 1rem 0.5rem;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.5rem;
+    padding: 1.5rem;
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .header-actions {
+    align-self: stretch;
+  }
+
+  .create-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .section-header {
+    padding: 1rem 1.5rem;
+  }
+
+  .section-title h2 {
+    font-size: 1.125rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-title {
+    font-size: 1.25rem;
+  }
+
+  .title-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+}
+
+/* Styles pour les icônes de menu */
 :deep(.p-menuitem-icon) {
   margin-right: 0.5rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Amélioration des DataTables */
+:deep(.p-card) {
+  box-shadow: none !important;
+  border: none !important;
+}
+
+:deep(.p-card-content) {
+  padding: 0 !important;
 }
 </style>

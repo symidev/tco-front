@@ -83,15 +83,15 @@ const url = computed(() => {
 <template>
   <Menubar :model="filteredItems" class="bg-surface-50 shadow-sm px-4 py-2">
     <template #start v-if="isMobile">
-      <button
-          @click="emit('toggleMobileSidebar')"
-          class="p-2"
-      >
-        <MenuIcon class="w-5 h-5 text-surface-200" />
-      </button>
-      <div class="p-2 border-b border-logo-color">
-        <RouterLink to="/">
-          <img src="@/assets/images/logo.png" alt="Logo" class="h-12 mx-auto"/>
+      <div class="flex items-center gap-3">
+        <button
+            @click="emit('toggleMobileSidebar')"
+            class="p-2 hover:bg-surface-100 rounded-lg transition-colors"
+        >
+          <MenuIcon class="w-5 h-5 text-surface-600" />
+        </button>
+        <RouterLink to="/" class="flex items-center">
+          <img src="@/assets/images/logo.png" alt="Logo" class="h-8"/>
         </RouterLink>
       </div>
     </template>
