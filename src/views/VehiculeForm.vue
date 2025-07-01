@@ -138,7 +138,7 @@ const updateFormDataFromModele = (selectedModele) => {
     if (selectedModele.conso_thermique) {
       formData.value.conso_carburant = selectedModele.conso_thermique.toString();
     }
-    
+
     // Récupérer l'énergie du modèle et la sélectionner
     if (selectedModele.energie) {
       const selectedEnergie = energies.value.find(e => e.key === selectedModele.energie);
@@ -164,12 +164,12 @@ watch(() => formData.value.modele, (newModele, oldModele) => {
   if (oldModele && newModele?.id !== oldModele?.id) {
     resetEnergieAndConsommation();
   }
-  
+
   // Puis appliquer les nouvelles valeurs du modèle sélectionné
   if (newModele) {
     updateFormDataFromModele(newModele);
   }
-  
+
   // Si le modèle est supprimé/null, réinitialiser les champs
   if (!newModele && oldModele) {
     resetEnergieAndConsommation();
@@ -485,23 +485,50 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="gap-3 w-full flex justify-center">
-    <div class="w-full max-w-[1200px] flex flex-1 flex-col my-8">
-      <h1 class="text-xl sm:text-2xl font-bold pb-6">{{ pageTitle }} <span v-if="comparoName">pour le comparo <span class="text-primary">{{ comparoName }}</span></span></h1>
-
-      <div v-if="loading" class="flex justify-center items-center py-8">
-        <ProgressSpinner />
+  <div class="page-container">
+    <div class="page-content">
+      <!-- Header avec titre -->
+      <div class="page-header">
+        <div class="header-content">
+          <div class="title-section">
+            <h1 class="page-title">
+              <Car class="title-icon" />
+              {{ pageTitle }}
+            </h1>
+            <p class="page-subtitle">
+              <span v-if="comparoName">Pour le comparo {{ comparoName }}</span>
+              <span v-else>{{ props.mode === 'edit' ? 'Modifiez les caractéristiques de votre véhicule' : 'Ajoutez un nouveau véhicule à votre comparo' }}</span>
+            </p>
+          </div>
+        </div>
       </div>
 
-      <form v-else @submit.prevent="saveVehicule" class="w-full">
-        <Card class="shadow-sm mb-4">
-          <template #title>Informations générales</template>
-          <template #content>
-            <div class="grid gap-6 mb-4">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Marque -->
-                <div class="grid gap-2">
-                  <FloatLabel variant="in">
+      <!-- Loading state -->
+      <div v-if="loading" class="loading-container">
+        <div class="loading-card">
+          <ProgressSpinner class="loading-spinner" />
+          <p class="loading-text">Chargement du véhicule...</p>
+        </div>
+      </div>
+
+      <!-- Formulaire -->
+      <div v-else class="content-grid animate-slide-in-up">
+        <form @submit.prevent="saveVehicule">
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-title">
+              <Car class="section-icon" />
+              <h2>Informations générales</h2>
+            </div>
+          </div>
+
+          <div class="section-content">
+            <div class="p-6">
+              <div class="grid gap-6 mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <!-- Marque -->
+                  <div class="form-field">
+                    <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
                         <Car class="h-4 w-4"/>
@@ -517,13 +544,13 @@ onMounted(() => {
                         required
                       />
                     </IconField>
-                    <label for="marque" class="text-primary">Marque *</label>
+                    <label for="marque" class="form-label">Marque *</label>
                   </FloatLabel>
                 </div>
 
-                <!-- Modèle -->
-                <div class="grid gap-2">
-                  <FloatLabel variant="in">
+                  <!-- Modèle -->
+                  <div class="form-field">
+                    <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
                         <Car class="h-4 w-4"/>
@@ -546,15 +573,15 @@ onMounted(() => {
                         </template>
                       </Select>
                     </IconField>
-                    <label for="modele" class="text-primary">Modèle *</label>
+                    <label for="modele" class="form-label">Modèle *</label>
                   </FloatLabel>
                 </div>
               </div>
 
               <!-- Finition -->
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div class="grid gap-2">
-                  <FloatLabel variant="in">
+                  <div class="form-field">
+                    <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
                         <Car class="h-4 w-4"/>
@@ -565,13 +592,13 @@ onMounted(() => {
                         fluid
                       />
                     </IconField>
-                    <label for="finition" class="text-primary">Finition</label>
+                    <label for="finition" class="form-label">Finition</label>
                   </FloatLabel>
                 </div>
 
-                <!-- Cylindrée -->
-                <div class="grid gap-2">
-                  <FloatLabel variant="in">
+                  <!-- Cylindrée -->
+                  <div class="form-field">
+                    <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
                         <Factory class="h-4 w-4"/>
@@ -583,13 +610,13 @@ onMounted(() => {
                           required
                       />
                     </IconField>
-                    <label for="cylindree" class="text-primary">Cylindrée *</label>
+                    <label for="cylindree" class="form-label">Cylindrée *</label>
                   </FloatLabel>
                 </div>
 
-                <!-- Puissance -->
-                <div class="grid gap-2">
-                  <FloatLabel variant="in">
+                  <!-- Puissance -->
+                  <div class="form-field">
+                    <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
                         <Gauge class="h-4 w-4"/>
@@ -601,16 +628,16 @@ onMounted(() => {
                         fluid
                       />
                     </IconField>
-                    <label for="puissance" class="text-primary">Puissance *</label>
+                    <label for="puissance" class="form-label">Puissance *</label>
                   </FloatLabel>
                 </div>
               </div>
 
               <!-- Énergie et consommations sur une même ligne -->
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- Énergie -->
-                <div class="grid gap-2">
-                  <FloatLabel variant="in">
+                  <!-- Énergie -->
+                  <div class="form-field">
+                    <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
                         <Fuel class="h-4 w-4"/>
@@ -624,13 +651,13 @@ onMounted(() => {
                         required
                       />
                     </IconField>
-                    <label for="energie" class="text-primary">Énergie *</label>
+                    <label for="energie" class="form-label">Énergie *</label>
                   </FloatLabel>
                 </div>
 
-                <!-- Conso carburant -->
-                <div class="grid gap-2">
-                  <FloatLabel variant="in">
+                  <!-- Conso carburant -->
+                  <div class="form-field">
+                    <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
                         <Droplets class="h-4 w-4"/>
@@ -642,13 +669,13 @@ onMounted(() => {
                         fluid
                       />
                     </IconField>
-                    <label for="conso_carburant" class="text-primary">Conso carburant *</label>
+                    <label for="conso_carburant" class="form-label">Conso carburant *</label>
                   </FloatLabel>
                 </div>
 
-                <!-- Conso électrique -->
-                <div class="grid gap-2">
-                  <FloatLabel variant="in">
+                  <!-- Conso électrique -->
+                  <div class="form-field">
+                    <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
                         <PlugZap class="h-4 w-4"/>
@@ -661,14 +688,14 @@ onMounted(() => {
                         fluid
                       />
                     </IconField>
-                    <label for="conso_electrique" class="text-primary">Conso électrique *</label>
+                    <label for="conso_electrique" class="form-label">Conso électrique *</label>
                   </FloatLabel>
                 </div>
               </div>
 
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div class="grid gap-2">
-                  <FloatLabel variant="in">
+                  <div class="form-field">
+                    <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
                         <Car class="h-4 w-4"/>
@@ -682,13 +709,13 @@ onMounted(() => {
                           required
                       />
                     </IconField>
-                    <label for="boite" class="text-primary">Boite *</label>
+                    <label for="boite" class="form-label">Boite *</label>
                   </FloatLabel>
                 </div>
 
-                <!-- Poids -->
-                <div class="grid gap-2">
-                  <FloatLabel variant="in">
+                  <!-- Poids -->
+                  <div class="form-field">
+                    <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
                         <Weight class="h-4 w-4"/>
@@ -700,13 +727,13 @@ onMounted(() => {
                         required
                       />
                     </IconField>
-                    <label for="poids" class="text-primary">Poids (PVOM) *</label>
+                    <label for="poids" class="form-label">Poids (PVOM) *</label>
                   </FloatLabel>
                 </div>
 
-                <!-- CO2 -->
-                <div class="grid gap-2">
-                  <FloatLabel variant="in">
+                  <!-- CO2 -->
+                  <div class="form-field">
+                    <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
                         <Fuel class="h-4 w-4"/>
@@ -718,16 +745,16 @@ onMounted(() => {
                         fluid
                       />
                     </IconField>
-                    <label for="co2" class="text-primary">CO2 *</label>
+                    <label for="co2" class="form-label">CO2 *</label>
                   </FloatLabel>
                 </div>
               </div>
 
               <!-- Prix, Prix options et Remise -->
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- Prix -->
-                <div class="grid gap-2">
-                  <FloatLabel variant="in">
+                  <!-- Prix -->
+                  <div class="form-field">
+                    <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
                         <Euro class="h-4 w-4"/>
@@ -739,13 +766,13 @@ onMounted(() => {
                         fluid
                       />
                     </IconField>
-                    <label for="prix" class="text-primary">Prix du véhicule *</label>
+                    <label for="prix" class="form-label">Prix du véhicule *</label>
                   </FloatLabel>
                 </div>
 
-                <!-- Prix options -->
-                <div class="grid gap-2">
-                  <FloatLabel variant="in">
+                  <!-- Prix options -->
+                  <div class="form-field">
+                    <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
                         <Euro class="h-4 w-4"/>
@@ -756,13 +783,13 @@ onMounted(() => {
                         fluid
                       />
                     </IconField>
-                    <label for="prix_options" class="text-primary">Prix des options</label>
+                    <label for="prix_options" class="form-label">Prix des options</label>
                   </FloatLabel>
                 </div>
 
-                <!-- Remise -->
-                <div class="grid gap-2">
-                  <FloatLabel variant="in">
+                  <!-- Remise -->
+                  <div class="form-field">
+                    <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
                         <Percent class="h-4 w-4"/>
@@ -773,22 +800,29 @@ onMounted(() => {
                         fluid
                       />
                     </IconField>
-                    <label for="remise" class="text-primary">Remise (%)</label>
+                    <label for="remise" class="form-label">Remise (%)</label>
                   </FloatLabel>
                 </div>
               </div>
             </div>
-          </template>
-        </Card>
+          </div>
+        </div>
 
-        <Card class="shadow-sm mb-4">
-          <template #title>Financement (coût mensuel)</template>
-          <template #content>
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-title">
+              <Euro class="section-icon" />
+              <h2>Financement (coût mensuel)</h2>
+            </div>
+          </div>
+
+          <div class="section-content">
+            <div class="p-6">
             <div class="grid gap-6 mb-4">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Loueur -->
-                <div class="grid gap-2">
-                  <FloatLabel variant="in">
+                  <!-- Loueur -->
+                  <div class="form-field">
+                    <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
                         <Car class="h-4 w-4"/>
@@ -804,13 +838,13 @@ onMounted(() => {
                         required
                       />
                     </IconField>
-                    <label for="loueur" class="text-primary">Loueur *</label>
+                    <label for="loueur" class="form-label">Loueur *</label>
                   </FloatLabel>
                 </div>
 
-                <!-- Loyer -->
-                <div class="grid gap-2">
-                  <FloatLabel variant="in">
+                  <!-- Loyer -->
+                  <div class="form-field">
+                    <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
                         <Euro class="h-4 w-4"/>
@@ -822,15 +856,15 @@ onMounted(() => {
                         fluid
                       />
                     </IconField>
-                    <label for="loyer" class="text-primary">Loyer *</label>
+                    <label for="loyer" class="form-label">Loyer *</label>
                   </FloatLabel>
                 </div>
               </div>
 
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- Entretien -->
-                <div class="grid gap-2">
-                  <FloatLabel variant="in">
+                  <!-- Entretien -->
+                  <div class="form-field">
+                    <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
                         <Euro class="h-4 w-4"/>
@@ -841,13 +875,13 @@ onMounted(() => {
                         fluid
                       />
                     </IconField>
-                    <label for="entretien" class="text-primary">Entretien</label>
+                    <label for="entretien" class="form-label">Entretien</label>
                   </FloatLabel>
                 </div>
 
-                <!-- Pneumatique -->
-                <div class="grid gap-2">
-                  <FloatLabel variant="in">
+                  <!-- Pneumatique -->
+                  <div class="form-field">
+                    <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
                         <Euro class="h-4 w-4"/>
@@ -858,13 +892,13 @@ onMounted(() => {
                         fluid
                       />
                     </IconField>
-                    <label for="pneumatique" class="text-primary">Pneumatique</label>
+                    <label for="pneumatique" class="form-label">Pneumatique</label>
                   </FloatLabel>
                 </div>
 
-                <!-- Gardiennage pneus -->
-                <div class="grid gap-2">
-                  <FloatLabel variant="in">
+                  <!-- Gardiennage pneus -->
+                  <div class="form-field">
+                    <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
                         <Euro class="h-4 w-4"/>
@@ -875,15 +909,15 @@ onMounted(() => {
                         fluid
                       />
                     </IconField>
-                    <label for="gardiennage_pneus" class="text-primary">Gardiennage pneus</label>
+                    <label for="gardiennage_pneus" class="form-label">Gardiennage pneus</label>
                   </FloatLabel>
                 </div>
               </div>
 
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- Véhicule relais -->
-                <div class="grid gap-2">
-                  <FloatLabel variant="in">
+                  <!-- Véhicule relais -->
+                  <div class="form-field">
+                    <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
                         <Euro class="h-4 w-4"/>
@@ -894,13 +928,13 @@ onMounted(() => {
                         fluid
                       />
                     </IconField>
-                    <label for="vehicule_relais" class="text-primary">Véhicule relais</label>
+                    <label for="vehicule_relais" class="form-label">Véhicule relais</label>
                   </FloatLabel>
                 </div>
 
-                <!-- Assurance RC -->
-                <div class="grid gap-2">
-                  <FloatLabel variant="in">
+                  <!-- Assurance RC -->
+                  <div class="form-field">
+                    <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
                         <Euro class="h-4 w-4"/>
@@ -911,13 +945,13 @@ onMounted(() => {
                         fluid
                       />
                     </IconField>
-                    <label for="assu_rc" class="text-primary">Assurance RC</label>
+                    <label for="assu_rc" class="form-label">Assurance RC</label>
                   </FloatLabel>
                 </div>
 
-                <!-- Assurance dommages -->
-                <div class="grid gap-2">
-                  <FloatLabel variant="in">
+                  <!-- Assurance dommages -->
+                  <div class="form-field">
+                    <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
                         <Euro class="h-4 w-4"/>
@@ -928,15 +962,15 @@ onMounted(() => {
                         fluid
                       />
                     </IconField>
-                    <label for="assu_dommages" class="text-primary">Assurance dommages</label>
+                    <label for="assu_dommages" class="form-label">Assurance dommages</label>
                   </FloatLabel>
                 </div>
               </div>
 
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- Perte financière -->
-                <div class="grid gap-2">
-                  <FloatLabel variant="in">
+                  <!-- Perte financière -->
+                  <div class="form-field">
+                    <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
                         <Euro class="h-4 w-4"/>
@@ -947,13 +981,13 @@ onMounted(() => {
                         fluid
                       />
                     </IconField>
-                    <label for="perte_fi" class="text-primary">Perte financière</label>
+                    <label for="perte_fi" class="form-label">Perte financière</label>
                   </FloatLabel>
                 </div>
 
-                <!-- Carte carburant -->
-                <div class="grid gap-2">
-                  <FloatLabel variant="in">
+                  <!-- Carte carburant -->
+                  <div class="form-field">
+                    <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
                         <Euro class="h-4 w-4"/>
@@ -964,13 +998,13 @@ onMounted(() => {
                         fluid
                       />
                     </IconField>
-                    <label for="carte_carb" class="text-primary">Carte carburant</label>
+                    <label for="carte_carb" class="form-label">Carte carburant</label>
                   </FloatLabel>
                 </div>
 
-                <!-- Carte électrique -->
-                <div class="grid gap-2">
-                  <FloatLabel variant="in">
+                  <!-- Carte électrique -->
+                  <div class="form-field">
+                    <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
                         <Euro class="h-4 w-4"/>
@@ -981,15 +1015,15 @@ onMounted(() => {
                         fluid
                       />
                     </IconField>
-                    <label for="carte_elec" class="text-primary">Carte électrique</label>
+                    <label for="carte_elec" class="form-label">Carte électrique</label>
                   </FloatLabel>
                 </div>
               </div>
 
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- Badge Télépéage -->
-                <div class="grid gap-2">
-                  <FloatLabel variant="in">
+                  <!-- Badge Télépéage -->
+                  <div class="form-field">
+                    <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
                         <Euro class="h-4 w-4"/>
@@ -1000,13 +1034,13 @@ onMounted(() => {
                         fluid
                       />
                     </IconField>
-                    <label for="badge_telepeage" class="text-primary">Badge Télépéage</label>
+                    <label for="badge_telepeage" class="form-label">Badge Télépéage</label>
                   </FloatLabel>
                 </div>
 
-                <!-- Vignette Critair -->
-                <div class="grid gap-2">
-                  <FloatLabel variant="in">
+                  <!-- Vignette Critair -->
+                  <div class="form-field">
+                    <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
                         <Euro class="h-4 w-4"/>
@@ -1017,13 +1051,13 @@ onMounted(() => {
                         fluid
                       />
                     </IconField>
-                    <label for="vignette_critair" class="text-primary">Vignette Critair</label>
+                    <label for="vignette_critair" class="form-label">Vignette Critair</label>
                   </FloatLabel>
                 </div>
 
-                <!-- Autre coût -->
-                <div class="grid gap-2">
-                  <FloatLabel variant="in">
+                  <!-- Autre coût -->
+                  <div class="form-field">
+                    <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
                         <Euro class="h-4 w-4"/>
@@ -1034,49 +1068,52 @@ onMounted(() => {
                         fluid
                       />
                     </IconField>
-                    <label for="autre_cout" class="text-primary">Autre coût</label>
+                    <label for="autre_cout" class="form-label">Autre coût</label>
                   </FloatLabel>
                 </div>
               </div>
             </div>
-          </template>
-        </Card>
+              </div>
 
-        <!-- Boutons d'action -->
-        <div class="flex flex-row flex-wrap items-center justify-center sm:justify-between gap-4">
-          <Button
-              type="button"
-              outlined
-              @click="router.push(`/comparo/${props.comparoUuid}/vehicules`)"
-              class="w-[200px] min-w-[200px]"
-          >
-            Retour Véhicules
-          </Button>
+              <!-- Boutons d'action -->
+              <div class="flex flex-row flex-wrap items-center justify-center sm:justify-between gap-4 mb-6 mx-6">
+                <Button
+                    type="button"
+                    outlined
+                    @click="router.push(`/comparo/${props.comparoUuid}/vehicules`)"
+                    class="btn-primary w-[200px] min-w-[200px]"
+                >
+                  Retour Véhicules
+                </Button>
 
-          <Button
-              v-if="props.mode === 'edit'"
-              type="button"
-              outlined
-              severity="secondary"
-              @click="resetForm"
-              class="w-[200px] min-w-[200px]"
-          >
-            <RefreshCw class="h-4 w-4 mr-2"/>
-            Réinitialiser
-          </Button>
+                <Button
+                    v-if="props.mode === 'edit'"
+                    type="button"
+                    outlined
+                    severity="secondary"
+                    @click="resetForm"
+                    class="btn-primary w-[200px] min-w-[200px]"
+                >
+                  <RefreshCw class="h-4 w-4 mr-2"/>
+                  Réinitialiser
+                </Button>
 
-          <Button
-              type="submit"
-              severity="primary"
-              :disabled="saving"
-              class="w-[200px] min-w-[200px]"
-          >
-            <ProgressSpinner v-if="saving" style="width:16px;height:16px" strokeWidth="8" class="mr-2"/>
-            <Save v-else class="h-4 w-4 mr-2"/>
-            {{ saving ? 'Enregistrement...' : 'Sauvegarder' }}
-          </Button>
+                <Button
+                    type="submit"
+                    severity="primary"
+                    :disabled="saving"
+                    class="btn-primary w-[200px] min-w-[200px]"
+                >
+                  <ProgressSpinner v-if="saving" style="width:16px;height:16px" strokeWidth="8" class="mr-2"/>
+                  <Save v-else class="h-4 w-4 mr-2"/>
+                  {{ saving ? 'Enregistrement...' : 'Sauvegarder' }}
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
-      </form>
+        </form>
+      </div>
     </div>
   </div>
 </template>

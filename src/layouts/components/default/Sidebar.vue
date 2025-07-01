@@ -30,6 +30,10 @@ const toggleSidebar = () => {
 
 // Vérifier si un lien est actif
 const isActive = (path) => {
+  // Pour les comparatifs, considérer comme actif toutes les routes /comparo*
+  if (path === '/comparos') {
+    return route.path === '/comparos' || route.path.startsWith('/comparo')
+  }
   return route.path === path
 }
 

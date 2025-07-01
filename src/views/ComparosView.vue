@@ -315,7 +315,7 @@ onMounted(() => {
         <div class="header-actions">
           <Button
               severity="primary"
-              class="create-btn"
+              class="btn-primary"
               v-if="(comparos?.progress.length + comparos?.completed.length < maxComparos || maxComparos === -1) && !loading"
               @click="router.push('/comparo/add')"
               outlined
@@ -370,7 +370,7 @@ onMounted(() => {
       </div>
 
       <!-- Content -->
-      <div v-else class="content-grid">
+      <div v-else class="content-grid animate-slide-in-up">
         <!-- Section En cours -->
         <div class="section-card section-progress">
           <div class="section-header">
@@ -428,269 +428,14 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* Container principal */
-.page-container {
-  min-height: 100vh;
-  padding: 2rem 1rem;
-  display: flex;
-  justify-content: center;
-}
 
-.page-content {
-  width: 100%;
-  max-width: 1200px;
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
 
-/* Header */
-.page-header {
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-  border-radius: 1rem;
-  padding: 2rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 2rem;
-}
 
-.header-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.title-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.page-title {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: 2rem;
-  font-weight: 700;
-  color: white;
-  margin: 0;
-}
-
-.title-icon {
-  width: 2rem;
-  height: 2rem;
-  color: #f59e0b;
-}
-
-.page-subtitle {
-  color: #94a3b8;
-  font-size: 1rem;
-  margin: 0;
-}
-
-/* Conteneur des statistiques */
-.stats-container {
-  width: 100%;
-}
-
-/* Statistiques */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-  width: 100%;
-}
-
-.stat-card {
-  background: linear-gradient(135deg, var(--p-surface-800) 0%, var(--p-surface-700) 100%);
-  border-radius: 0.75rem;
-  padding: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  border: 1px solid #e2e8f0;
-  transition: all 0.3s ease;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1);
-}
-
-.stat-icon {
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 0.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-}
-
-.stat-icon-progress {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-}
-
-.stat-icon-completed {
-  background: linear-gradient(135deg, #10b981, #047857);
-}
-
-.stat-icon-total {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-}
-
-.stat-content {
-  display: flex;
-  flex-direction: column;
-}
-
-.stat-number {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--p-surface-50);
-  line-height: 1;
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  color: var(--p-surface-200);
-  font-weight: 500;
-}
-
-/* Actions */
-.header-actions {
-  display: flex;
-  align-items: flex-start;
-}
-
-.create-btn {
-  padding: 0.75rem 1.5rem;
-  font-weight: 600;
-  border-radius: 0.5rem;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.create-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-/* Loading */
-.loading-container {
-  display: flex;
-  justify-content: center;
-  padding: 4rem 0;
-}
-
-.loading-card {
-  background: white;
-  border-radius: 1rem;
-  padding: 3rem;
-  text-align: center;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e2e8f0;
-}
 
 .loading-spinner {
   margin-bottom: 1rem;
 }
 
-.loading-text {
-  color: #64748b;
-  font-weight: 500;
-  margin: 0;
-}
-
-/* Content grid */
-.content-grid {
-  display: grid;
-  gap: 2rem;
-}
-
-/* Section cards */
-.section-card {
-  background: white;
-  border-radius: 1rem;
-  overflow: hidden;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-}
-
-.section-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-.section-header {
-  padding: 1.5rem 2rem;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.section-progress .section-header {
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-}
-
-.section-completed .section-header {
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-}
-
-.section-title {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.section-title h2 {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: white;
-  margin: 0;
-  flex: 1;
-}
-
-.section-icon {
-  width: 1.5rem;
-  height: 1.5rem;
-  color: white;
-}
-
-.section-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: white;
-}
-
-.section-badge-progress {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-}
-
-.section-badge-completed {
-  background: linear-gradient(135deg, #10b981, #047857);
-}
-
-.section-content {
-  padding: 0;
-}
-
-/* Animations */
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
 .section-card {
   animation: slideInUp 0.6s ease-out;
@@ -700,59 +445,6 @@ onMounted(() => {
 .section-card:nth-child(1) { animation-delay: 0.1s; }
 .section-card:nth-child(2) { animation-delay: 0.2s; }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .page-container {
-    padding: 1rem 0.5rem;
-  }
-
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1.5rem;
-    padding: 1.5rem;
-  }
-
-  .page-title {
-    font-size: 1.5rem;
-  }
-
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .header-actions {
-    align-self: stretch;
-  }
-
-  .create-btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .section-header {
-    padding: 1rem 1.5rem;
-  }
-
-  .section-title h2 {
-    font-size: 1.125rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .page-title {
-    font-size: 1.25rem;
-  }
-
-  .title-icon {
-    width: 1.5rem;
-    height: 1.5rem;
-  }
-}
 
 /* Styles pour les icônes de menu */
 :deep(.p-menuitem-icon) {

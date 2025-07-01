@@ -10,7 +10,7 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Menu from 'primevue/menu';
 import ProgressSpinner from 'primevue/progressspinner';
-import {MoreVertical, Edit, Trash2, Plus} from 'lucide-vue-next';
+import {MoreVertical, Edit, Trash2, Plus, Car} from 'lucide-vue-next';
 
 import {comparoService} from '@/services/api/comparoService';
 
@@ -220,48 +220,51 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="gap-3 w-full flex justify-center">
-    <div class="w-full max-w-[1200px] flex flex-1 flex-col my-8">
-      <div v-if="loading" class="flex justify-center items-center py-8">
-        <ProgressSpinner/>
+  <div class="page-container">
+    <div class="page-content">
+      <!-- Header avec titre -->
+      <div class="page-header">
+        <div class="header-content">
+          <div class="title-section">
+            <h1 class="page-title">
+              <Car class="title-icon" />
+              Véhicules
+              <span v-if="comparo && maxVehicule !== -1" class="ml-2 text-3xl">{{ comparo.vehicules?.length || 0 }}/{{ maxVehicule }}</span>
+            </h1>
+            <p class="page-subtitle">Gérez les véhicules de votre comparo</p>
+          </div>
+        </div>
       </div>
 
-      <div v-else-if="comparo" class="w-full flex flex-1 flex-col">
-        <div class="w-full justify-between flex flex-row mb-6">
-          <h1 class="text-xl sm:text-2xl font-bold">Véhicules
-            <span v-if="maxVehicule !== -1" class="ml-2 text-3xl">{{ comparo.vehicules.length }}/{{
-                maxVehicule
-              }}</span>
-          </h1>
-          <!--<Button
-              v-if="canAddVehicule"
-              severity="primary"
-              size="medium"
-              @click="router.push(`/comparo/${comparo.uuid}/vehicules/add`)"
-          >
-            <Plus class="w-4 h-4 mr-2"/>
-            Ajouter un véhicule
-          </Button>-->
+      <!-- Loading state -->
+      <div v-if="loading" class="loading-container">
+        <div class="loading-card">
+          <ProgressSpinner class="loading-spinner" />
+          <p class="loading-text">Chargement des véhicules...</p>
         </div>
+      </div>
 
-        <Card class="shadow-sm mb-6">
-          <template #title>
-            <div class="flex items-center gap-2 text-primary">
-              <h2 class="text-lg font-semibold">{{ comparo.title }}</h2>
+      <!-- Contenu principal -->
+      <div v-else-if="comparo" class="content-grid animate-slide-in-up">
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-title">
+              <Car class="section-icon" />
+              <h2>{{ comparo.title }}</h2>
             </div>
-          </template>
-          <template #subtitle v-if="comparo.description">
-            <div class="mb-4">
-              <p class="text-gray-500">{{ comparo.description }}</p>
-            </div>
-          </template>
-          <template #content>
-            <DataTable
-                :value="comparo.vehicules"
-                responsiveLayout="scroll"
-                :scrollable="true"
-                class="p-datatable-sm"
-            >
+          </div>
+          
+          <div class="section-content">
+            <div class="p-6">
+              <div v-if="comparo.description" class="mb-4">
+                <p class="text-surface-200 font-inter">{{ comparo.description }}</p>
+              </div>
+              <DataTable
+                  :value="comparo.vehicules"
+                  responsiveLayout="scroll"
+                  :scrollable="true"
+                  class="p-datatable-sm"
+              >
               <Column field="title" header="Titre" sortable></Column>
               <Column field="marque.name" header="Marque" sortable></Column>
               <Column field="modele.title" header="Modèle" sortable></Column>
@@ -280,73 +283,74 @@ onMounted(() => {
                 </template>
               </Column>
 
-              <template #empty>
-                <div class="p-4 text-center text-gray-500">
-                  Aucun véhicule dans ce comparo
-                </div>
-              </template>
+                <template #empty>
+                  <div class="p-4 text-center text-gray-500 font-medium">
+                    Aucun véhicule dans ce comparo
+                  </div>
+                </template>
 
-              <template #footer>
-                <tr>
-                  <td :colspan="5" class="text-center py-4">
-                    <Button
-                        v-if="canAddVehicule"
-                        severity="secondary"
-                        outlined
-                        class="mx-auto text-primary"
-                        @click="router.push(`/comparo/${comparo.uuid}/vehicules/add`)"
-                    >
-                      <Plus class="w-4 h-4 mr-2"/>
-                      <span class="text-primary">Ajouter un véhicule</span>
-                    </Button>
-                    <p v-else class="text-gray-500">
-                      Nombre maximum de véhicules atteint ({{ maxVehicule }})
-                    </p>
-                  </td>
-                </tr>
-              </template>
-            </DataTable>
+                <template #footer>
+                  <tr>
+                    <td :colspan="5" class="text-center py-4">
+                      <Button
+                          v-if="canAddVehicule"
+                          severity="secondary"
+                          outlined
+                          class="mx-auto btn-primary"
+                          @click="router.push(`/comparo/${comparo.uuid}/vehicules/add`)"
+                      >
+                        <Plus class="w-4 h-4 mr-2"/>
+                        <span>Ajouter un véhicule</span>
+                      </Button>
+                      <p v-else class="text-surface-200 font-inter font-medium">
+                        Nombre maximum de véhicules atteint ({{ maxVehicule }})
+                      </p>
+                    </td>
+                  </tr>
+                </template>
+              </DataTable>
 
-            <Menu ref="menu" :model="menuItems" :popup="true">
-              <template #item="{ item }">
-                <a class="p-menuitem-link flex items-center cursor-pointer text-sm">
-                  <component :is="item.icon" v-if="item.icon" class="w-4 h-4 mr-2 text-primary-500"/>
-                  <span class="p-menuitem-text">{{ item.label }}</span>
-                </a>
-              </template>
-            </Menu>
-          </template>
-        </Card>
+              <Menu ref="menu" :model="menuItems" :popup="true">
+                <template #item="{ item }">
+                  <a class="p-menuitem-link flex items-center cursor-pointer text-sm">
+                    <component :is="item.icon" v-if="item.icon" class="w-4 h-4 mr-2 text-primary-500"/>
+                    <span class="p-menuitem-text font-medium">{{ item.label }}</span>
+                  </a>
+                </template>
+              </Menu>
 
-        <div class="flex flex-row flex-wrap items-center justify-center sm:justify-between gap-4">
-          <Button
-              type="button"
-              outlined
-              @click="router.push(`/comparos`)"
-              class="w-[200px] min-w-[200px]"
-          >
-            Retour Comparos
-          </Button>
+              <!-- Boutons d'action -->
+              <div class="flex flex-row flex-wrap items-center justify-center sm:justify-between gap-4 mt-6">
+                <Button
+                    type="button"
+                    outlined
+                    @click="router.push('/comparos')"
+                    class="btn-primary w-[200px] min-w-[200px]"
+                >
+                  Retour Comparos
+                </Button>
 
-          <Button
-              severity="danger"
-              outlined
-              @click="deleteComparo"
-          >
-            <Trash2 class="w-4 h-4 mr-2"/>
-            Supprimer le comparo
-          </Button>
+                <Button
+                    severity="danger"
+                    outlined
+                    @click="deleteComparo"
+                    class="btn-primary"
+                >
+                  <Trash2 class="w-4 h-4 mr-2"/>
+                  Supprimer le comparo
+                </Button>
 
-          <Button
-              severity="primary"
-              :disabled="!canAnalyze"
-              @click="analyzeComparo"
-          >
-            Analyser ce comparo
-          </Button>
-        </div>
-
-        <div class="flex justify-between mt-4">
+                <Button
+                    severity="primary"
+                    :disabled="!canAnalyze"
+                    @click="analyzeComparo"
+                    class="btn-primary"
+                >
+                  Analyser ce comparo
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

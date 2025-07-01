@@ -142,20 +142,44 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="gap-3 w-full flex justify-center">
-    <div class="w-full max-w-[1200px] flex flex-1 flex-col my-8">
-      <h1 class="text-xl sm:text-2xl font-bold pb-6">{{ pageTitle }}</h1>
-
-      <div v-if="loading" class="flex justify-center items-center py-8">
-        <ProgressSpinner />
+  <div class="page-container">
+    <div class="page-content">
+      <!-- Header avec titre -->
+      <div class="page-header">
+        <div class="header-content">
+          <div class="title-section">
+            <h1 class="page-title">
+              <Save class="title-icon" />
+              {{ pageTitle }}
+            </h1>
+            <p class="page-subtitle">{{ props.mode === 'edit' ? 'Modifiez les paramètres de votre comparo' : 'Créez un nouveau comparo pour comparer vos véhicules' }}</p>
+          </div>
+        </div>
       </div>
 
-      <form v-else @submit.prevent="saveComparo" class="w-full">
-        <Card class="shadow-sm mb-4">
-          <template #content>
-            <div class="grid gap-6 mb-4">
+      <!-- Loading state -->
+      <div v-if="loading" class="loading-container">
+        <div class="loading-card">
+          <ProgressSpinner class="loading-spinner" />
+          <p class="loading-text">Chargement du comparo...</p>
+        </div>
+      </div>
+
+      <!-- Formulaire -->
+      <div v-else class="content-grid animate-slide-in-up">
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-title">
+              <Type class="section-icon" />
+              <h2>Informations du comparo</h2>
+            </div>
+          </div>
+          
+          <div class="section-content">
+            <form @submit.prevent="saveComparo" class="p-6">
+              <div class="grid gap-6 mb-4">
               <!-- Titre -->
-              <div class="grid gap-2">
+              <div class="form-field">
                 <FloatLabel variant="in">
                   <IconField>
                     <InputIcon>
@@ -168,12 +192,12 @@ onMounted(() => {
                       required
                     />
                   </IconField>
-                  <label for="title" class="text-primary">Titre *</label>
+                  <label for="title" class="form-label">Titre *</label>
                 </FloatLabel>
               </div>
 
               <!-- Description -->
-              <div class="grid gap-2">
+              <div class="form-field">
                 <FloatLabel variant="in">
                   <IconField>
                     <InputIcon>
@@ -187,13 +211,13 @@ onMounted(() => {
                       fluid
                     />
                   </IconField>
-                  <label for="description" class="text-primary">Description</label>
+                  <label for="description" class="form-label">Description</label>
                 </FloatLabel>
               </div>
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- KM -->
-                <div class="grid gap-2">
+                <div class="form-field">
                   <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
@@ -208,12 +232,12 @@ onMounted(() => {
                         required
                       />
                     </IconField>
-                    <label for="km" class="text-primary">Kilométrage *</label>
+                    <label for="km" class="form-label">Kilométrage *</label>
                   </FloatLabel>
                 </div>
 
                 <!-- Durée -->
-                <div class="grid gap-2">
+                <div class="form-field">
                   <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
@@ -228,14 +252,14 @@ onMounted(() => {
                         required
                       />
                     </IconField>
-                    <label for="duree" class="text-primary">Durée (mois) *</label>
+                    <label for="duree" class="form-label">Durée (mois) *</label>
                   </FloatLabel>
                 </div>
               </div>
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- Impôt sur les sociétés -->
-                <div class="grid gap-2">
+                <div class="form-field">
                   <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
@@ -251,12 +275,12 @@ onMounted(() => {
                         required
                       />
                     </IconField>
-                    <label for="is" class="text-primary">Impôt sur les sociétés (%) *</label>
+                    <label for="is" class="form-label">Impôt sur les sociétés (%) *</label>
                   </FloatLabel>
                 </div>
 
                 <!-- Charges patronales -->
-                <div class="grid gap-2">
+                <div class="form-field">
                   <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
@@ -272,15 +296,15 @@ onMounted(() => {
                         required
                       />
                     </IconField>
-                    <label for="charge_patronale" class="text-primary">Charges patronales (%) *</label>
+                    <label for="charge_patronale" class="form-label">Charges patronales (%) *</label>
                   </FloatLabel>
                 </div>
               </div>
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- AEN Répartition -->
-                <div class="grid gap-2">
-                  <label class="text-primary font-medium">Répartition AEN *</label>
+                <div class="form-field">
+                  <label class="form-label">Répartition AEN *</label>
                   <div class="flex gap-4 p-2">
                     <div class="flex items-center">
                       <RadioButton
@@ -289,7 +313,7 @@ onMounted(() => {
                         name="aen_repartition"
                         value="pro"
                       />
-                      <label for="aen-pro" class="ml-2">Pro</label>
+                      <label for="aen-pro" class="ml-2 font-inter">Pro</label>
                     </div>
                     <div class="flex items-center">
                       <RadioButton
@@ -298,14 +322,14 @@ onMounted(() => {
                         name="aen_repartition"
                         value="perso_pro"
                       />
-                      <label for="aen-perso-pro" class="ml-2">Perso/Pro</label>
+                      <label for="aen-perso-pro" class="ml-2 font-inter">Perso/Pro</label>
                     </div>
                   </div>
                 </div>
 
                 <!-- AEN Type -->
-                <div class="grid gap-2">
-                  <label class="text-primary font-medium">Type AEN *</label>
+                <div class="form-field">
+                  <label class="form-label">Type AEN *</label>
                   <div class="flex gap-4 p-2">
                     <div class="flex items-center">
                       <RadioButton
@@ -314,7 +338,7 @@ onMounted(() => {
                         name="aen_type"
                         value="loyer"
                       />
-                      <label for="aen-loyer" class="ml-2">Loyer</label>
+                      <label for="aen-loyer" class="ml-2 font-inter">Loyer</label>
                     </div>
                     <div class="flex items-center">
                       <RadioButton
@@ -323,63 +347,64 @@ onMounted(() => {
                         name="aen_type"
                         value="prix"
                       />
-                      <label for="aen-prix" class="ml-2">Prix (remisé)</label>
+                      <label for="aen-prix" class="ml-2 font-inter">Prix (remisé)</label>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </template>
-        </Card>
+              </div>
+              
+              <!-- Boutons d'action -->
+              <div class="flex flex-row flex-wrap items-center justify-center sm:justify-between gap-4 mt-6">
+                <Button
+                    type="button"
+                    outlined
+                    @click="router.push('/comparos')"
+                    class="btn-primary w-[200px] min-w-[200px]"
+                >
+                  Retour Comparos
+                </Button>
 
-        <!-- Boutons d'action -->
-        <div class="flex flex-row flex-wrap items-center justify-center sm:justify-between gap-4">
-          <Button
-              type="button"
-              outlined
-              @click="router.push('/comparos')"
-              class="w-[200px] min-w-[200px]"
-          >
-            Retour Comparos
-          </Button>
+                <Button
+                    v-if="props.mode === 'edit'"
+                    type="button"
+                    outlined
+                    severity="secondary"
+                    @click="resetForm"
+                    class="btn-primary w-[200px] min-w-[200px]"
+                >
+                  <RefreshCw class="h-4 w-4 mr-2"/>
+                  Réinitialiser
+                </Button>
 
-          <Button
-              v-if="props.mode === 'edit'"
-              type="button"
-              outlined
-              severity="secondary"
-              @click="resetForm"
-              class="w-[200px] min-w-[200px]"
-          >
-            <RefreshCw class="h-4 w-4 mr-2"/>
-            Réinitialiser
-          </Button>
-
-          <Button
-              type="submit"
-              severity="primary"
-              :disabled="saving"
-              class="w-[200px] min-w-[200px]"
-          >
-            <ProgressSpinner v-if="saving" style="width:16px;height:16px" strokeWidth="8" class="mr-2"/>
-            <Save v-else class="h-4 w-4 mr-2"/>
-            {{ saving ? 'Enregistrement...' : 'Sauvegarder' }}
-          </Button>
+                <Button
+                    type="submit"
+                    severity="primary"
+                    :disabled="saving"
+                    class="btn-primary w-[200px] min-w-[200px]"
+                >
+                  <ProgressSpinner v-if="saving" style="width:16px;height:16px" strokeWidth="8" class="mr-2"/>
+                  <Save v-else class="h-4 w-4 mr-2"/>
+                  {{ saving ? 'Enregistrement...' : 'Sauvegarder' }}
+                </Button>
+              </div>
+            </form>
+          </div>
         </div>
-      </form>
+      </div>
     </div>
   </div>
 </template>
 
-    <style scoped>
-    :deep(.p-inputtext),
-    :deep(.p-password),
-    :deep(.p-password-input) {
-      width: 100%;
-    }
+<style scoped>
+:deep(.p-inputtext),
+:deep(.p-password),
+:deep(.p-password-input) {
+  width: 100%;
+}
 
-    :deep([invalid="true"]),
-    :deep(.p-invalid) {
-      border-color: var(--red-500) !important;
-    }
-    </style>
+:deep([invalid="true"]),
+:deep(.p-invalid) {
+  border-color: var(--red-500) !important;
+}
+</style>

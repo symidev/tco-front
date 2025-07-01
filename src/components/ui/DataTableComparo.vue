@@ -152,7 +152,7 @@ const menuModelItems = computed(() => {
     </Column>
 
     <template #empty>
-      <div class="p-4 text-center text-gray-500">
+      <div class="p-4 text-center text-gray-500 font-medium">
         {{ emptyMessage }}
       </div>
     </template>
@@ -162,7 +162,7 @@ const menuModelItems = computed(() => {
     <template #item="{ item }">
       <a class="p-menuitem-link flex items-center cursor-pointer text-sm">
         <component :is="item.icon" v-if="item.icon" class="w-4 h-4 mr-2 text-primary-500" />
-        <span class="p-menuitem-text">{{ item.label }}</span>
+        <span class="p-menuitem-text font-medium">{{ item.label }}</span>
       </a>
     </template>
   </Menu>
@@ -213,6 +213,10 @@ const menuModelItems = computed(() => {
   align-items: center;
   padding: 0.5rem 1rem;
   cursor: pointer;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 400;
+  font-size: 0.875rem;
+  letter-spacing: -0.005em;
 }
 
 :deep(.p-menuitem-link:hover) {
