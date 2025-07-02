@@ -178,13 +178,16 @@ const changePassword = async () => {
 </script>
 
 <template>
-  <div class="w-full max-w-2xl mx-auto px-2 sm:px-0">
-    <Card>
-      <template #content>
-        <div class="flex items-center gap-2 mb-4">
-          <h2 class="text-xl font-semibold">Changer mon mot de passe</h2>
+  <div class="animate-slide-in-up">
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-title">
+          <Lock class="section-icon" />
+          <h2>Changer mon mot de passe</h2>
         </div>
+      </div>
 
+      <div class="section-content m-6">
         <!-- Success message -->
         <Message v-if="isSuccess" severity="success" class="mb-4">
           <div class="flex items-center gap-2">
@@ -268,13 +271,13 @@ const changePassword = async () => {
                 :label="isLoading ? 'En cours...' : 'Changer le mot de passe'"
                 :loading="isLoading"
                 :disabled="isLoading"
-                class="sm:w-auto w-full"
+                class="btn-primary sm:w-auto w-full"
               />
             </div>
           </div>
         </form>
-      </template>
-    </Card>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -282,5 +285,20 @@ const changePassword = async () => {
 :deep([invalid="true"]),
 :deep(.p-invalid) {
   border-color: var(--red-500) !important;
+}
+
+.section-card {
+  animation: slideInUp 0.6s ease-out;
+  animation-fill-mode: both;
+}
+
+/* Amélioration des composants de formulaire */
+:deep(.p-card) {
+  box-shadow: none !important;
+  border: none !important;
+}
+
+:deep(.p-card-content) {
+  padding: 0 !important;
 }
 </style>

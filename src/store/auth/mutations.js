@@ -30,6 +30,13 @@ export default {
         state.isAutoConnect = isAutoConnect
         localStorage.setItem('isAutoConnect', isAutoConnect)
     },
+    updateTokenDrupalDefaults(state, { field_is, field_charge_patronale }) {
+        if (state.tokenInfo?.drupal) {
+            state.tokenInfo.drupal.isDefault = field_is
+            state.tokenInfo.drupal.chargePatronaleDefault = field_charge_patronale
+            localStorage.setItem('tokenInfo', JSON.stringify(state.tokenInfo))
+        }
+    },
     clearAuth(state) {
         state.token = null
         state.refreshToken = null

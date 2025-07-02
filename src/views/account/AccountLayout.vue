@@ -4,6 +4,7 @@ import {useRoute, RouterLink} from 'vue-router'
 import Tabs from 'primevue/tabs';
 import TabList from 'primevue/tablist';
 import Tab from 'primevue/tab';
+import { User } from 'lucide-vue-next';
 
 const route = useRoute()
 
@@ -28,22 +29,67 @@ const activeIndex = computed(() => {
 </script>
 
 <template>
-  <div class="gap-3 w-full flex justify-center">
-    <div class="w-full max-w-[1200px] flex flex-1 flex-col my-8">
-      <h1 class="text-xl sm:text-2xl font-bold pb-6">Mon compte</h1>
-      <Tabs :value="activeIndex" class="py-6">
-        <TabList>
-          <Tab v-for="tab in items" :key="tab.label" :value="tab.route">
-            <RouterLink v-if="tab.route" v-slot="{ href, navigate }" :to="tab.route" custom>
-              <a :href="href" @click="navigate" class="flex items-center gap-2 text-inherit">
-                <i :class="tab.icon"/>
-                <span>{{ tab.label }}</span>
-              </a>
-            </RouterLink>
-          </Tab>
-        </TabList>
-      </Tabs>
-      <RouterView/>
+  <div class="page-container">
+    <div class="page-content">
+      <!-- Header avec titre -->
+      <div class="page-header">
+        <div class="header-content">
+          <div class="title-section">
+            <h1 class="page-title">
+              <User class="title-icon" />
+              Mon compte
+            </h1>
+            <p class="page-subtitle">Gérez vos informations personnelles et préférences</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation tabs -->
+      <div class="content-grid animate-slide-in-up">
+        <div class="section-card">
+          <div class="section-content">
+            <Tabs :value="activeIndex" class="py-6">
+              <TabList>
+                <Tab v-for="tab in items" :key="tab.label" :value="tab.route">
+                  <RouterLink v-if="tab.route" v-slot="{ href, navigate }" :to="tab.route" custom>
+                    <a :href="href" @click="navigate" class="flex items-center gap-2 text-inherit">
+                      <i :class="tab.icon"/>
+                      <span>{{ tab.label }}</span>
+                    </a>
+                  </RouterLink>
+                </Tab>
+              </TabList>
+            </Tabs>
+            <RouterView/>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Styles pour les icônes de navigation */
+:deep(.p-tablist-tab-list) {
+  margin-bottom: 1.5rem;
+}
+
+:deep(.p-tab) {
+  padding: 0.75rem 1.5rem;
+}
+
+:deep(.p-tab a) {
+  text-decoration: none;
+  color: inherit;
+  font-weight: 500;
+}
+
+:deep(.p-tab[aria-selected="true"]) {
+  background-color: var(--p-primary-color);
+  color: white;
+}
+
+:deep(.p-tab[aria-selected="true"] a) {
+  color: white;
+}
+</style>

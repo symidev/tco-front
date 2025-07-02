@@ -288,6 +288,13 @@ export function useUserProfile(toast) {
             const result = await store.dispatch('user/updateUserProfile', apiData)
 
             if (result.success) {
+                // Mise à jour des valeurs par défaut dans le token après succès de l'API
+                if (formData.value.user_is !== undefined && formData.value.user_charge_patronale !== undefined) {
+                    store.commit('auth/updateTokenDrupalDefaults', {
+                        field_is: formData.value.user_is,
+                        field_charge_patronale: formData.value.user_charge_patronale
+                    });
+                }
                 toast.add({
                     severity: 'success',
                     summary: 'Profil mis à jour',

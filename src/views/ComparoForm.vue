@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import Card from 'primevue/card';
 import InputText from 'primevue/inputtext';
+import InputNumber from 'primevue/inputnumber';
 import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
 import ProgressSpinner from 'primevue/progressspinner';
@@ -55,8 +56,8 @@ const formData = ref({
   field_aen_type: 'loyer',
   field_km: 120000,
   field_duree: 36,
-  field_charge_patronale: chargePatronaleUser,
-  field_is: isUser
+  field_charge_patronale: chargePatronaleUser.value,
+  field_is: isUser.value
 });
 
 const pageTitle = computed(() => {
@@ -174,7 +175,7 @@ onMounted(() => {
               <h2>Informations du comparo</h2>
             </div>
           </div>
-          
+
           <div class="section-content">
             <form @submit.prevent="saveComparo" class="p-6">
               <div class="grid gap-6 mb-4">
@@ -223,11 +224,12 @@ onMounted(() => {
                       <InputIcon>
                         <Car class="h-4 w-4"/>
                       </InputIcon>
-                      <InputText
+                      <InputNumber
                         id="km"
-                        v-model.number="formData.field_km"
-                        type="number"
-                        min="0"
+                        v-model="formData.field_km"
+                        :min="0"
+                        :step="1000"
+                        showButtons
                         fluid
                         required
                       />
@@ -243,11 +245,13 @@ onMounted(() => {
                       <InputIcon>
                         <Clock class="h-4 w-4"/>
                       </InputIcon>
-                      <InputText
+                      <InputNumber
                         id="duree"
-                        v-model.number="formData.field_duree"
-                        type="number"
-                        min="1"
+                        v-model="formData.field_duree"
+                        :min="1"
+                        :max="72"
+                        :step="1"
+                        showButtons
                         fluid
                         required
                       />
@@ -265,12 +269,13 @@ onMounted(() => {
                       <InputIcon>
                         <Percent class="h-4 w-4"/>
                       </InputIcon>
-                      <InputText
+                      <InputNumber
                         id="is"
-                        v-model.number="formData.field_is"
-                        type="number"
-                        min="0"
-                        max="100"
+                        v-model="formData.field_is"
+                        :min="0"
+                        :max="100"
+                        :step="1"
+                        showButtons
                         fluid
                         required
                       />
@@ -286,12 +291,13 @@ onMounted(() => {
                       <InputIcon>
                         <Percent class="h-4 w-4"/>
                       </InputIcon>
-                      <InputText
+                      <InputNumber
                         id="charge_patronale"
-                        v-model.number="formData.field_charge_patronale"
-                        type="number"
-                        min="0"
-                        max="100"
+                        v-model="formData.field_charge_patronale"
+                        :min="0"
+                        :max="100"
+                        :step="1"
+                        showButtons
                         fluid
                         required
                       />
@@ -353,7 +359,7 @@ onMounted(() => {
                 </div>
               </div>
               </div>
-              
+
               <!-- Boutons d'action -->
               <div class="flex flex-row flex-wrap items-center justify-center sm:justify-between gap-4 mt-6">
                 <Button

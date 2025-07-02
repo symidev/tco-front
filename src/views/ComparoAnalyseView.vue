@@ -10,6 +10,7 @@ import Column from 'primevue/column';
 import Panel from 'primevue/panel';
 
 import { comparoService } from '@/services/api/comparoService';
+import { BarChart3 } from 'lucide-vue-next';
 
 const route = useRoute();
 const router = useRouter();
@@ -372,71 +373,82 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="gap-3 w-full flex justify-center">
-    <div class="w-full max-w-[1200px] flex flex-1 flex-col my-8">
-      <div v-if="loading" class="flex justify-center items-center py-8">
-        <ProgressSpinner />
+  <div class="page-container">
+    <div class="page-content">
+      <!-- Header avec titre -->
+      <div class="page-header">
+        <div class="header-content">
+          <div class="title-section">
+            <h1 class="page-title">
+              <BarChart3 class="title-icon" />
+              Analyse du comparo
+            </h1>
+            <p class="page-subtitle">Résultats détaillés de votre comparaison de véhicules</p>
+          </div>
+        </div>
       </div>
 
-      <div v-else-if="comparo" class="w-full flex flex-1 flex-col">
-        <div class="w-full justify-between flex flex-row mb-6">
-          <h1 class="text-xl sm:text-2xl font-bold">Analyse du comparo</h1>
+      <!-- Loading state -->
+      <div v-if="loading" class="loading-container">
+        <div class="loading-card">
+          <ProgressSpinner class="loading-spinner" />
+          <p class="loading-text">Chargement de l'analyse...</p>
         </div>
+      </div>
 
-        <!-- En-tête avec badges des véhicules -->
-        <Card class="shadow-lg mb-6 border-0 rounded-lg card-no-overflow">
-          <template #title>
-            <div class="flex items-center justify-between bg-surface-900 text-white p-6 -m-6 mb-6">
-              <div class="flex items-center gap-3">
-                <h2 class="text-xl font-bold">{{ comparo.title }}</h2>
-              </div>
+      <!-- Contenu principal -->
+      <div v-else-if="comparo" class="content-grid animate-slide-in-up">
+        <!-- Section d'analyse complète -->
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-title">
+              <BarChart3 class="section-icon" />
+              <h2>{{ comparo.title }}</h2>
             </div>
-          </template>
-          <template #content>
-            <div class="space-y-1 content-no-overflow">
-              <!-- Tableau d'en-tête avec les véhicules - Sticky Header -->
-              <div class="sticky-header-container">
-                <div class="header-sticky bg-white border-b border-gray-200 shadow-lg mb-4 rounded-t-lg">
-                  <div class="header-grid gap-0" :style="`--total-columns: ${comparo.vehicules.length + 1}`">
-                    <div class="header-criteria bg-surface-900 p-4 font-semibold text-white border-r border-gray-200">
-                      Critères de comparaison
-                    </div>
-                    <div
-                      v-for="(vehicule, index) in comparo.vehicules"
-                      :key="'header_'+vehicule.id"
-                      class="bg-surface-900 text-center p-4 border-r border-gray-200 last:border-r-0 hover:bg-surface-800 transition-all duration-300"
-                    >
-                      <div class="font-bold text-white text-sm">{{ vehicule?.marque?.name }}</div>
-                      <div class="text-xs text-gray-300 mt-1">{{ vehicule?.modele?.title }}</div>
-                      <div class="text-xs text-blue-400 font-medium mt-1">{{ vehicule?.modele?.moteur ? vehicule?.modele?.moteur : vehicule?.finition }}</div>
-                    </div>
+          </div>
+
+          <div class="section-content">
+            <div class="p-3">
+              <!-- En-tête avec véhicules -->
+              <div class="comparison-header-sticky border-0 shadow-sm mb-3 rounded-lg">
+                <div class="comparison-header-grid gap-0" :style="`--total-columns: ${comparo.vehicules.length + 1}`">
+                  <div class="header-criteria bg-surface-900 p-2 font-medium text-white border-0 text-sm flex items-center">
+                    Critères de comparaison
+                  </div>
+                  <div
+                    v-for="(vehicule, index) in comparo.vehicules"
+                    :key="'header_'+vehicule.id"
+                    class="bg-surface-900 text-center p-2 border-0 hover:bg-surface-800 transition-all duration-200 flex flex-col justify-center items-center"
+                  >
+                    <div class="font-medium text-white text-xs">{{ vehicule?.marque?.name }}</div>
+                    <div class="text-xs text-gray-300">{{ vehicule?.modele?.title }}</div>
+                    <div class="text-xs text-blue-400 font-medium">{{ vehicule?.modele?.moteur ? vehicule?.modele?.moteur : vehicule?.finition }}</div>
                   </div>
                 </div>
               </div>
 
-              <!-- Sections repliables -->
-              <div class="space-y-4 sections-container">
+              <!-- Sections d'analyse -->
+              <div class="space-y-1 sections-container">
                 <Panel
                   v-for="section in sectionsConfig"
                   :key="section.id"
                   :collapsed="!expandedSections.has(section.id)"
                   @toggle="toggleSection(section.id)"
-                  class="section-panel border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300"
+                  class="p-panel-compact comparison-animate-slide border-0 shadow-sm hover:shadow-md transition-all duration-200"
                   :toggleable="true"
                 >
                   <template #header>
-                    <div class="flex items-center gap-3 w-full">
-                      <span class="font-bold text-white cursor-pointer" @click="toggleSection(section.id)">{{ section.title }}</span>
+                    <div class="flex items-center gap-2 w-full">
+                      <span class="font-medium text-white cursor-pointer text-lg" @click="toggleSection(section.id)">{{ section.title }}</span>
                     </div>
                   </template>
 
-                  <div v-if="expandedSections.has(section.id)" class="overflow-hidden">
+                  <div v-if="expandedSections.has(section.id)" class="overflow-hidden comparison-animate-content">
                     <DataTable
                       :value="sectionsData[section.id]"
-                      class="comparison-table-section"
+                      class="comparison-table comparison-animate-load"
                       size="small"
                       :showHeaders="false"
-                      stripedRows
                       :rowHover="true"
                       :style="`--total-columns: ${comparo.vehicules.length + 1}`"
                     >
@@ -446,7 +458,7 @@ onMounted(() => {
                         class="property-column"
                       >
                         <template #body="{ data }">
-                          <div class="font-medium text-white py-2">
+                          <div class="font-medium text-white py-1 text-sm flex items-center h-10">
                             {{ data.label }}
                           </div>
                         </template>
@@ -461,7 +473,7 @@ onMounted(() => {
                       >
                         <template #body="{ data }">
                           <div
-                            class="text-center py-2 font-medium transition-all duration-200 rounded px-2"
+                            class="text-center py-1 font-medium transition-all duration-200 rounded px-2 text-sm flex items-center justify-center h-10"
                             :class="[
                               data[`vehicule_${index}`]?.class || ''
                             ]"
@@ -474,34 +486,35 @@ onMounted(() => {
                   </div>
                 </Panel>
               </div>
-            </div>
-          </template>
-        </Card>
 
-        <div class="flex flex-row flex-wrap items-center justify-center sm:justify-between gap-4">
-          <Button
-            type="button"
-            outlined
-            @click="router.push(`/comparos`)"
-            class="w-[200px] min-w-[200px]"
-          >
-            Retour Comparos
-          </Button>
-          <div class="flex gap-2">
-            <Button
-              severity="success"
-              @click="downloadExcel"
-              class="w-[200px] min-w-[200px]"
-            >
-              Exporter les données
-            </Button>
-            <Button
-              severity="info"
-              @click="downloadPDF"
-              class="w-[200px] min-w-[200px]"
-            >
-              Télécharger l'analyse
-            </Button>
+              <!-- Boutons d'action -->
+              <div class="flex flex-row flex-wrap items-center justify-center sm:justify-between gap-3 mt-3">
+                <Button
+                  type="button"
+                  outlined
+                  @click="router.push('/comparos')"
+                  class="btn-primary w-[200px] min-w-[200px]"
+                >
+                  Retour Comparos
+                </Button>
+                <div class="flex gap-2">
+                  <Button
+                    severity="success"
+                    @click="downloadExcel"
+                    class="btn-primary w-[200px] min-w-[200px]"
+                  >
+                    Exporter les données
+                  </Button>
+                  <Button
+                    severity="info"
+                    @click="downloadPDF"
+                    class="btn-primary w-[200px] min-w-[200px]"
+                  >
+                    Télécharger l'analyse
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -510,162 +523,13 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* Animations et transitions */
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+/* Styles spécifiques à la page d'analyse */
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-/* Style pour les panneaux de section */
-:deep(.section-panel) {
-  animation: slideIn 0.3s ease-out;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-:deep(.section-panel:hover) {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-/* Style pour les DataTables des sections */
-:deep(.comparison-table-section) {
-  border-collapse: collapse;
-  border-radius: 0px;
-  overflow: hidden;
-  table-layout: fixed;
-  width: 100%;
-}
-
-:deep(.comparison-table-section .p-datatable-wrapper) {
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-:deep(.comparison-table-section .p-datatable-table) {
-  table-layout: fixed;
-  width: 100%;
-}
-
-:deep(.comparison-table-section .property-column) {
-  width: calc(100% / var(--total-columns)) !important;
-}
-
-:deep(.comparison-table-section .value-column) {
-  width: calc(100% / var(--total-columns)) !important;
-}
-
-:deep(.comparison-table-section .p-datatable-tbody > tr) {
-  transition: all 0.2s ease;
-  border-bottom: 1px solid #f3f4f6;
-}
-
-:deep(.comparison-table-section .p-datatable-tbody > tr:last-child) {
-  border-bottom: none;
-}
-
-:deep(.comparison-table-section .p-datatable-tbody > tr:hover) {
-  background-color: #f3f4f6 !important;
-}
-
-:deep(.comparison-table-section .p-datatable-tbody > tr:nth-child(even)) {
-  background-color: #f9fafb;
-}
-
-:deep(.comparison-table-section .p-datatable-tbody > tr:nth-child(even):hover) {
-  background-color: #f1f5f9 !important;
-}
-
-/* Style pour les cellules */
-:deep(.comparison-table-section .p-datatable-tbody > tr > td) {
-  padding: 12px 16px;
-  border-right: 1px solid #e5e7eb;
-  vertical-align: middle;
-}
-
-:deep(.comparison-table-section .p-datatable-tbody > tr > td:last-child) {
-  border-right: none;
-}
-
-/* Style pour la colonne des propriétés */
-:deep(.property-column) {
-  background-color: var(--surface-900) !important;
-  font-weight: 600;
-  color: white;
-  border-right: 2px solid #e5e7eb !important;
-}
-
-/* Style pour les cellules de valeurs avec mise en évidence */
-:deep(.value-column .text-green-400) {
-  color: #10b981 !important;
-  font-weight: 700;
-  position: relative;
-}
-
-:deep(.value-column .text-orange-400) {
-  color: #f59e0b !important;
-  font-weight: 700;
-  position: relative;
-}
-
-/* Icônes pour les meilleures/pires valeurs */
-:deep(.text-green-400::before) {
-  content: '▼';
-  color: #10b981;
-  font-size: 0.75rem;
-  margin-right: 4px;
-  opacity: 0.7;
-}
-
-:deep(.text-orange-400::before) {
-  content: '▲';
-  color: #f59e0b;
-  font-size: 0.75rem;
-  margin-right: 4px;
-  opacity: 0.7;
-}
-
-/* Style pour l'en-tête principal */
-:deep(.p-card-title) {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* Style pour les badges */
-:deep(.p-badge) {
-  font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 9999px;
-  font-weight: 600;
-}
-
-/* Style pour les panneaux repliables */
-:deep(.section-panel) {
-  border-radius: 8px;
-  overflow: hidden;
-}
-
+/* Panel headers personnalisés pour cette page */
 :deep(.p-panel .p-panel-header) {
   background: var(--surface-900) !important;
   border: none;
   border-radius: 0;
-  padding: 1rem 1.5rem;
   transition: all 0.3s ease;
 }
 
@@ -675,9 +539,7 @@ onMounted(() => {
 
 :deep(.p-panel .p-panel-content) {
   border: none;
-  border-radius: 0;
   padding: 0;
-  background-color: white;
 }
 
 :deep(.p-panel.p-panel-toggleable .p-panel-header .p-panel-header-icon) {
@@ -690,39 +552,8 @@ onMounted(() => {
   transform: scale(1.1);
 }
 
-/* Animation pour le contenu des panneaux */
-:deep(.p-panel .p-panel-content .p-toggleable-content) {
-  animation: fadeIn 0.3s ease-out;
-}
-
-/* Style pour l'en-tête sticky dans le conteneur */
-.sticky-header-container {
-  position: relative;
-}
-
-.header-sticky {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
 /* Corrections pour les overflow qui cassent le sticky/fixed */
-.card-no-overflow :deep(.p-card-content) {
-  overflow: visible !important;
-}
-
-.content-no-overflow {
-  overflow: visible !important;
-}
-
 .sections-container {
-  overflow: visible !important;
-}
-
-:deep(.section-panel) {
   overflow: visible !important;
 }
 
@@ -734,38 +565,38 @@ onMounted(() => {
   overflow: visible !important;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  :deep(.comparison-table-section) {
-    font-size: 0.875rem;
-  }
-
-  :deep(.comparison-table-section .p-datatable-tbody > tr > td) {
-    padding: 8px 12px;
-  }
-
-  :deep(.section-panel:hover) {
-    transform: none;
-  }
-}
-
-/* Style pour le conteneur principal */
-.space-y-1 > * + * {
-  margin-top: 0.25rem;
-}
-
-.space-y-4 > * + * {
-  margin-top: 1rem;
-}
-
-/* Animation au chargement */
-.comparison-table-section {
-  animation: fadeIn 0.5s ease-out;
-}
-
-/* Style pour l'en-tête avec colonnes égales */
-.header-grid {
+/* CSS pour uniformiser la largeur des colonnes */
+.comparison-header-grid {
   display: grid;
-  grid-template-columns: repeat(var(--total-columns), 1fr);
+  grid-template-columns: repeat(var(--total-columns, 2), 1fr);
+}
+
+:deep(.comparison-table .p-datatable-table) {
+  table-layout: fixed !important;
+  width: 100% !important;
+}
+
+:deep(.comparison-table .p-datatable-thead > tr > th) {
+  width: calc(100% / var(--total-columns, 2)) !important;
+  min-width: 0 !important;
+  padding: 0.5rem !important;
+}
+
+:deep(.comparison-table .p-datatable-tbody > tr > td) {
+  width: calc(100% / var(--total-columns, 2)) !important;
+  min-width: 0 !important;
+  padding: 0.5rem !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+:deep(.comparison-table .property-column) {
+  width: calc(100% / var(--total-columns, 2)) !important;
+  min-width: 0 !important;
+}
+
+:deep(.comparison-table .value-column) {
+  width: calc(100% / var(--total-columns, 2)) !important;
+  min-width: 0 !important;
 }
 </style>
