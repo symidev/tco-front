@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed, watch, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import ProgressSpinner from 'primevue/progressspinner';
@@ -20,7 +20,20 @@ const loading = ref(true);
 const comparo = ref(null);
 const expandedSections = ref(new Set());
 const headerScrollContainer = ref(null);
+const stickyHeaderContainer = ref(null);
 const isScrollSyncing = ref(false);
+const showStickyHeader = ref(false);
+
+// Gestion de la sidebar (comme dans DefaultLayout)
+const isSidebarOpen = ref(true); // Sidebar ouverte par défaut
+const isMobile = ref(false);
+
+// Fonction pour vérifier si l'écran est en mode mobile
+const checkScreenSize = () => {
+  isMobile.value = window.innerWidth < 768; // Point de rupture pour mobile (md)
+  // Fermer la sidebar par défaut en mode mobile, l'ouvrir par défaut en mode desktop
+  isSidebarOpen.value = !isMobile.value;
+};
 
 // Structure de données pour le tableau
 const sectionsData = ref([]);
@@ -451,14 +464,19 @@ const loadComparoData = async () => {
 // Fonction pour synchroniser le scroll de tous les conteneurs
 const syncScrollPosition = (sourceElement, scrollLeft) => {
   if (isScrollSyncing.value) return;
-  
+
   isScrollSyncing.value = true;
-  
-  // Synchroniser l'en-tête
+
+  // Synchroniser l'en-tête original
   if (headerScrollContainer.value && sourceElement !== headerScrollContainer.value) {
     headerScrollContainer.value.scrollLeft = scrollLeft;
   }
-  
+
+  // Synchroniser l'en-tête sticky
+  if (stickyHeaderContainer.value && sourceElement !== stickyHeaderContainer.value) {
+    stickyHeaderContainer.value.scrollLeft = scrollLeft;
+  }
+
   // Synchroniser toutes les sections
   const allSectionContainers = document.querySelectorAll('.section-scroll-container');
   allSectionContainers.forEach(container => {
@@ -466,34 +484,64 @@ const syncScrollPosition = (sourceElement, scrollLeft) => {
       container.scrollLeft = scrollLeft;
     }
   });
-  
+
   // Reset flag après un court délai pour éviter les boucles infinies
   setTimeout(() => {
     isScrollSyncing.value = false;
   }, 10);
 };
 
+// Fonction pour gérer la visibilité de l'en-tête sticky
+const setupStickyHeader = () => {
+  if (!headerScrollContainer.value) return;
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      // Si l'en-tête original n'est plus visible, afficher le sticky
+      showStickyHeader.value = !entry.isIntersecting;
+    });
+  }, {
+    threshold: 0.1,
+    rootMargin: '-60px 0px 0px 0px' // Offset pour la navbar
+  });
+
+  observer.observe(headerScrollContainer.value);
+};
+
 // Fonction pour attacher les événements de scroll
 const attachScrollListeners = () => {
-  // Écouteur pour l'en-tête
+  // Écouteur pour l'en-tête original
   if (headerScrollContainer.value) {
     headerScrollContainer.value.addEventListener('scroll', (e) => {
       syncScrollPosition(e.target, e.target.scrollLeft);
     });
   }
-  
+
+  // Écouteur pour l'en-tête sticky (sera attaché quand il apparaît)
+  // Note: Le sticky header sera géré par le watch showStickyHeader
+
   // Écouteurs pour toutes les sections
   const allSectionContainers = document.querySelectorAll('.section-scroll-container');
-  
+
   allSectionContainers.forEach((container) => {
     container.addEventListener('scroll', (e) => {
       syncScrollPosition(e.target, e.target.scrollLeft);
     });
   });
+
+  // Setup du sticky header
+  setupStickyHeader();
 };
 
 onMounted(() => {
   loadComparoData();
+  checkScreenSize();
+  window.addEventListener('resize', checkScreenSize);
+});
+
+// Nettoyer les écouteurs d'événements
+onUnmounted(() => {
+  window.removeEventListener('resize', checkScreenSize);
 });
 
 // Attacher les écouteurs après le rendu des données
@@ -507,10 +555,55 @@ watch(comparo, (newComparo) => {
     });
   }
 });
+
+// Re-attacher les écouteurs quand le sticky header apparaît/disparaît
+watch(showStickyHeader, (newValue) => {
+  if (newValue) {
+    nextTick(() => {
+      setTimeout(() => {
+        // Re-attacher spécifiquement le sticky header
+        if (stickyHeaderContainer.value) {
+          stickyHeaderContainer.value.addEventListener('scroll', (e) => {
+            syncScrollPosition(e.target, e.target.scrollLeft);
+          });
+        }
+      }, 50);
+    });
+  }
+});
 </script>
 
 <template>
   <div class="page-container">
+    <!-- En-tête sticky - En dehors du flux principal -->
+    <div
+      v-if="showStickyHeader && comparo"
+      class="sticky-header-container fixed top-16 left-0 right-0 z-30 shadow-lg border-b py-2"
+      :class="{
+        'ml-0': isMobile || !isSidebarOpen,
+        'ml-64': !isMobile && isSidebarOpen
+      }"
+    >
+      <div class="sticky-header-content">
+        <div class="overflow-x-auto sticky-header-scroll-container" ref="stickyHeaderContainer">
+          <div class="comparison-header-grid gap-0" :style="`--total-columns: ${comparo.vehicules.length + 1}`">
+            <div class="header-criteria bg-surface-900 p-2 font-medium text-white border-0 text-sm flex items-center">
+              Critères de comparaison
+            </div>
+            <div
+              v-for="(vehicule, index) in comparo.vehicules"
+              :key="'sticky_header_'+vehicule.id"
+              class="bg-surface-900 text-center p-2 border-0 hover:bg-surface-800 transition-all duration-200 flex flex-col justify-center items-center"
+            >
+              <div class="font-medium text-white text-xs">{{ vehicule?.marque?.name }}</div>
+              <div class="text-xs text-gray-300">{{ vehicule?.modele?.title }}</div>
+              <div class="text-xs text-blue-400 font-medium">{{ vehicule?.modele?.moteur ? vehicule?.modele?.moteur : vehicule?.finition }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="page-content">
       <!-- Header avec titre -->
       <div class="page-header">
@@ -532,6 +625,7 @@ watch(comparo, (newComparo) => {
           <p class="loading-text">Chargement de l'analyse...</p>
         </div>
       </div>
+
 
       <!-- Contenu principal -->
       <div v-else-if="comparo" class="content-grid animate-slide-in-up">
@@ -789,15 +883,14 @@ watch(comparo, (newComparo) => {
 /* CSS pour uniformiser la largeur des colonnes */
 .comparison-header-grid {
   display: grid;
-  grid-template-columns: repeat(var(--total-columns, 2), 1fr);
+  grid-template-columns: repeat(var(--total-columns, 2), minmax(140px, 1fr));
   min-width: calc(140px * var(--total-columns, 2));
-  width: max(100%, calc(140px * var(--total-columns, 2)));
+  width: 100%;
 }
 
 /* Largeur minimale pour les colonnes d'en-tête */
 .comparison-header-grid > div {
   min-width: 140px;
-  width: max(calc(100% / var(--total-columns, 2)), 140px);
 }
 
 :deep(.comparison-table .p-datatable-table) {
@@ -870,38 +963,97 @@ watch(comparo, (newComparo) => {
 :deep(.comparison-table .p-datatable-table) {
   table-layout: fixed !important;
   min-width: calc(140px * var(--total-columns, 2)) !important;
-  width: calc(140px * var(--total-columns, 2)) !important;
+  width: 100% !important;
 }
 
 /* Force aussi la div wrapper du DataTable */
 :deep(.comparison-table .p-datatable-wrapper) {
   min-width: calc(140px * var(--total-columns, 2)) !important;
-  width: calc(140px * var(--total-columns, 2)) !important;
+  width: 100% !important;
 }
 
 :deep(.comparison-table) {
   min-width: calc(140px * var(--total-columns, 2)) !important;
-  width: calc(140px * var(--total-columns, 2)) !important;
+  width: 100% !important;
 }
 
 /* Largeur minimale pour chaque colonne */
 :deep(.comparison-table .p-datatable-thead > tr > th) {
   min-width: 140px !important;
-  width: max(calc(100% / var(--total-columns, 2)), 140px) !important;
+  width: calc(100% / var(--total-columns, 2)) !important;
 }
 
 :deep(.comparison-table .p-datatable-tbody > tr > td) {
   min-width: 140px !important;
-  width: max(calc(100% / var(--total-columns, 2)), 140px) !important;
+  width: calc(100% / var(--total-columns, 2)) !important;
 }
 
 :deep(.comparison-table .property-column) {
   min-width: 140px !important;
-  width: max(calc(100% / var(--total-columns, 2)), 140px) !important;
+  width: calc(100% / var(--total-columns, 2)) !important;
 }
 
 :deep(.comparison-table .value-column) {
   min-width: 140px !important;
-  width: max(calc(100% / var(--total-columns, 2)), 140px) !important;
+  width: calc(100% / var(--total-columns, 2)) !important;
+}
+
+/* Styles pour l'en-tête sticky */
+.sticky-header-container {
+  height: auto;
+  max-height: 80px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(8px);
+  overflow: visible;
+  display: flex;
+  justify-content: center;
+  padding: 0 1rem;
+}
+
+/* Ajustement de la largeur quand la sidebar est ouverte */
+.sticky-header-container.ml-64 {
+  width: calc(100% - 16rem);
+}
+
+/* Ajustement des paddings pour correspondre au parent du page-container */
+@media (min-width: 768px) {
+  .sticky-header-container {
+    padding: 0 2rem; /* md:px-8 */
+  }
+}
+
+/* Ajustement mobile pour correspondre au page-container */
+@media (max-width: 768px) {
+  .sticky-header-container {
+    padding: 0 0.5rem; /* Même padding que page-container en mobile */
+  }
+}
+
+.sticky-header-content {
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sticky-header-scroll-container {
+  width: 100%;
+  max-width: 100%;
+}
+
+.sticky-header-container .comparison-header-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--total-columns, 2), minmax(140px, 1fr));
+  min-width: calc(140px * var(--total-columns, 2));
+  width: 100%;
+}
+
+.sticky-header-container .comparison-header-grid > div {
+  min-width: 140px;
+}
+
+/* Ajuster le padding du contenu quand le sticky header est visible */
+.page-content {
+  transition: padding-top 0.3s ease;
 }
 </style>
