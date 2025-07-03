@@ -69,14 +69,56 @@ const formData = ref({
 
 // Liste des marques et modèles
 const marques = computed(() => {
-  return store.getters['siteData/getNestedData']('marques') || [];
+  const allMarques = store.getters['siteData/getNestedData']('marques') || [];
+
+  // Si aucune énergie sélectionnée, retourner toutes les marques
+  if (!formData.value.energie) {
+    return allMarques;
+  }
+
+  // Filtrer les marques selon l'énergie sélectionnée
+  const energieKey = formData.value.energie.key;
+  const thermalEnergies = ['essence', 'diesel', 'e85', 'mhev'];
+
+  return allMarques.filter(marque => {
+    if (!marque.modeles || marque.modeles.length === 0) return false;
+
+    return marque.modeles.some(modele => {
+      if (thermalEnergies.includes(energieKey)) {
+        // Pour les énergies thermiques, inclure les modèles avec energie null ou correspondante
+        return !modele.energie || modele.energie === energieKey;
+      } else {
+        // Pour les autres énergies, chercher la correspondance exacte
+        return modele.energie === energieKey;
+      }
+    });
+  });
 });
 
 // Liste des modèles filtrée selon la marque sélectionnée
 const modeles = computed(() => {
   if (!formData.value.marque) return [];
+
   const selectedMarque = marques.value.find(m => m.id === formData.value.marque.id);
-  return selectedMarque?.modeles || [];
+  let availableModeles = selectedMarque?.modeles || [];
+
+  // Si une énergie est sélectionnée, filtrer les modèles
+  if (formData.value.energie) {
+    const energieKey = formData.value.energie.key;
+    const thermalEnergies = ['essence', 'diesel', 'e85', 'mhev'];
+
+    availableModeles = availableModeles.filter(modele => {
+      if (thermalEnergies.includes(energieKey)) {
+        // Pour les énergies thermiques, inclure les modèles avec energie null ou correspondante
+        return !modele.energie || modele.energie === energieKey;
+      } else {
+        // Pour les autres énergies, chercher la correspondance exacte
+        return modele.energie === energieKey;
+      }
+    });
+  }
+
+  return availableModeles;
 });
 
 // Fonction pour formater l'affichage des modèles (title + moteur)
@@ -103,16 +145,22 @@ const loueurs = computed(() => {
   return store.getters['siteData/getNestedData']('loueur') || [];
 });
 
-// Gestion de la désactivation des champs de consommation en fonction de l'énergie
-const isConsoCarburantDisabled = computed(() => {
+// Gestion de la visibilité des champs en fonction de l'énergie
+const shouldHideMotorFields = computed(() => {
+  if (!formData.value.energie) return false;
+  const electricTypes = ['bev', 'phev', 'hev', 'hydrogen'];
+  return electricTypes.includes(formData.value.energie.key);
+});
+
+const shouldHideConsoCarburant = computed(() => {
   if (!formData.value.energie) return false;
   return formData.value.energie.key === 'bev';
 });
 
-const isConsoElectriqueDisabled = computed(() => {
+const shouldHideConsoElectrique = computed(() => {
   if (!formData.value.energie) return false;
-  const nonElectricTypes = ['e85', 'diesel', 'essence'];
-  return nonElectricTypes.includes(formData.value.energie.key);
+  const thermalTypes = ['essence', 'diesel', 'e85', 'mhev'];
+  return thermalTypes.includes(formData.value.energie.key);
 });
 
 const pageTitle = computed(() => {
@@ -149,12 +197,53 @@ const updateFormDataFromModele = (selectedModele) => {
   }
 };
 
-// Watcher pour le changement de marque - réinitialise modèle et champs associés
+// Watcher pour le changement d'énergie - réinitialise marque et modèle
+watch(() => formData.value.energie, (newEnergie, oldEnergie) => {
+  // Si l'énergie change, réinitialiser marque et modèle
+  if (oldEnergie && newEnergie?.key !== oldEnergie?.key) {
+    formData.value.marque = null;
+    formData.value.modele = null;
+    formData.value.conso_electrique = '';
+    formData.value.conso_carburant = '';
+  }
+
+  // Vider les champs de consommation qui deviennent désactivés
+  if (newEnergie) {
+    if (newEnergie.key === 'bev') {
+      formData.value.conso_carburant = '';
+    }
+    if (['e85', 'diesel', 'essence'].includes(newEnergie.key)) {
+      formData.value.conso_electrique = '';
+    }
+  }
+}, { deep: true });
+
+// Watcher pour vider les champs masqués
+watch(() => shouldHideMotorFields.value, (shouldHide) => {
+  if (shouldHide) {
+    formData.value.finition = '';
+    formData.value.cylindree = '';
+    formData.value.puissance = '';
+  }
+});
+
+watch(() => shouldHideConsoCarburant.value, (shouldHide) => {
+  if (shouldHide) {
+    formData.value.conso_carburant = '';
+  }
+});
+
+watch(() => shouldHideConsoElectrique.value, (shouldHide) => {
+  if (shouldHide) {
+    formData.value.conso_electrique = '';
+  }
+});
+
+// Watcher pour le changement de marque - réinitialise modèle
 watch(() => formData.value.marque, (newMarque, oldMarque) => {
-  // Si la marque change, réinitialiser le modèle et les champs associés
+  // Si la marque change, réinitialiser le modèle
   if (oldMarque && newMarque?.id !== oldMarque?.id) {
     formData.value.modele = null;
-    resetEnergieAndConsommation();
   }
 }, { deep: true });
 
@@ -176,17 +265,6 @@ watch(() => formData.value.modele, (newModele, oldModele) => {
   }
 }, { deep: true });
 
-// Réinitialiser les valeurs des champs de consommation en fonction de l'énergie
-watch(() => formData.value.energie, (newValue) => {
-  if (newValue) {
-    if (newValue.key === 'bev') {
-      formData.value.conso_carburant = '';
-    }
-    if (['e85', 'diesel', 'essence'].includes(newValue.key)) {
-      formData.value.conso_electrique = '';
-    }
-  }
-}, { deep: true });
 
 const loadVehiculeData = async () => {
   if (props.mode !== 'edit' || !props.vehiculeUuid) return;
@@ -263,7 +341,7 @@ const validateForm = () => {
   }
 
   // Vérifier les champs de consommation en fonction de l'énergie
-  if (!isConsoCarburantDisabled.value && formData.value.conso_carburant === '') {
+  if (!shouldHideConsoCarburant.value && formData.value.conso_carburant === '') {
     toast.add({
       severity: 'error',
       summary: 'Erreur',
@@ -273,7 +351,7 @@ const validateForm = () => {
     return false;
   }
 
-  if (!isConsoElectriqueDisabled.value && formData.value.conso_electrique === '') {
+  if (!shouldHideConsoElectrique.value && formData.value.conso_electrique === '') {
     toast.add({
       severity: 'error',
       summary: 'Erreur',
@@ -304,7 +382,7 @@ const validateForm = () => {
     return false;
   }
 
-  if (!isConsoCarburantDisabled.value && formData.value.conso_carburant && !/^[0-9]+(\.[0-9]+)?$/.test(formData.value.conso_carburant)) {
+  if (!shouldHideConsoCarburant.value && formData.value.conso_carburant && !/^[0-9]+(\.[0-9]+)?$/.test(formData.value.conso_carburant)) {
     toast.add({
       severity: 'error',
       summary: 'Erreur',
@@ -314,7 +392,7 @@ const validateForm = () => {
     return false;
   }
 
-  if (!isConsoElectriqueDisabled.value && formData.value.conso_electrique && !/^[0-9]+(\.[0-9]+)?$/.test(formData.value.conso_electrique)) {
+  if (!shouldHideConsoElectrique.value && formData.value.conso_electrique && !/^[0-9]+(\.[0-9]+)?$/.test(formData.value.conso_electrique)) {
     toast.add({
       severity: 'error',
       summary: 'Erreur',
@@ -525,6 +603,27 @@ onMounted(() => {
           <div class="section-content">
             <div class="p-6">
               <div class="grid gap-6 mb-4">
+                <!-- Énergie en premier, sur 1 colonne -->
+                <div class="form-field">
+                  <FloatLabel variant="in">
+                  <IconField>
+                    <InputIcon>
+                      <Fuel class="h-4 w-4"/>
+                    </InputIcon>
+                    <Select
+                      id="energie"
+                      v-model="formData.energie"
+                      :options="energies"
+                      optionLabel="label"
+                      class="w-full"
+                      required
+                    />
+                  </IconField>
+                  <label for="energie" class="form-label">Énergie *</label>
+                </FloatLabel>
+              </div>
+
+                <!-- Marque et Modèle sur une nouvelle ligne -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <!-- Marque -->
                   <div class="form-field">
@@ -542,6 +641,7 @@ onMounted(() => {
                         :filter="true"
                         class="w-full"
                         required
+                        :disabled="!formData.energie"
                       />
                     </IconField>
                     <label for="marque" class="form-label">Marque *</label>
@@ -564,6 +664,7 @@ onMounted(() => {
                         class="w-full"
                         :autoFilterFocus="true"
                         required
+                        :disabled="!formData.marque"
                       >
                         <template #option="{ option }">
                           <div>{{ getModeleDisplayName(option) }}</div>
@@ -578,8 +679,9 @@ onMounted(() => {
                 </div>
               </div>
 
-              <!-- Finition -->
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <!-- Champs moteur (masqués pour bev, phev, hev, hydrogen) -->
+              <div v-if="!shouldHideMotorFields" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <!-- Finition -->
                   <div class="form-field">
                     <FloatLabel variant="in">
                     <IconField>
@@ -633,30 +735,11 @@ onMounted(() => {
                 </div>
               </div>
 
-              <!-- Énergie et consommations sur une même ligne -->
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <!-- Énergie -->
-                  <div class="form-field">
-                    <FloatLabel variant="in">
-                    <IconField>
-                      <InputIcon>
-                        <Fuel class="h-4 w-4"/>
-                      </InputIcon>
-                      <Select
-                        id="energie"
-                        v-model="formData.energie"
-                        :options="energies"
-                        optionLabel="label"
-                        class="w-full"
-                        required
-                      />
-                    </IconField>
-                    <label for="energie" class="form-label">Énergie *</label>
-                  </FloatLabel>
-                </div>
-
-                  <!-- Conso carburant -->
-                  <div class="form-field">
+              <!-- Consommations (masquage conditionnel) -->
+              <div class="grid gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <!-- Conso carburant (masqué pour bev) -->
+                  <div v-if="!shouldHideConsoCarburant" class="form-field">
                     <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
@@ -665,16 +748,15 @@ onMounted(() => {
                       <InputText
                         id="conso_carburant"
                         v-model="formData.conso_carburant"
-                        :disabled="isConsoCarburantDisabled"
                         fluid
                       />
                     </IconField>
-                    <label for="conso_carburant" class="form-label">Conso carburant *</label>
+                    <label for="conso_carburant" class="form-label">Conso carburant (L/100km)*</label>
                   </FloatLabel>
                 </div>
 
-                  <!-- Conso électrique -->
-                  <div class="form-field">
+                  <!-- Conso électrique (masqué pour essence, diesel, e85, mhev) -->
+                  <div v-if="!shouldHideConsoElectrique" class="form-field">
                     <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
@@ -683,13 +765,13 @@ onMounted(() => {
                       <InputText
                         id="conso_electrique"
                         v-model="formData.conso_electrique"
-                        :disabled="isConsoElectriqueDisabled"
                         @input="e => formData.conso_electrique = e.target.value.replace(/[^0-9.]/g, '')"
                         fluid
                       />
                     </IconField>
-                    <label for="conso_electrique" class="form-label">Conso électrique *</label>
+                    <label for="conso_electrique" class="form-label">Conso électrique (kWh)*</label>
                   </FloatLabel>
+                </div>
                 </div>
               </div>
 

@@ -18,7 +18,7 @@ const toast = useToast();
 
 const loading = ref(true);
 const comparo = ref(null);
-const expandedSections = ref(new Set(['infos_vehicule', 'contrat', 'fiscalite', 'energie', 'tco', 'ventilation_tco']));
+const expandedSections = ref(new Set());
 
 // Structure de données pour le tableau
 const sectionsData = ref([]);
@@ -60,13 +60,19 @@ const getTCOVentilation = (vehicule, type) => {
 
   if (type === 'loyer') {
     const loyerTotal = vehicule.calcul?.loyer_total || 0;
-    return Math.round((loyerTotal / tcoMensuel) * 100);
+    return Number((loyerTotal / tcoMensuel) * 100).toFixed(2);
   } else if (type === 'fiscalite') {
     const fiscalite = vehicule.calcul?.fiscalite_mensuel || 0;
-    return Math.round((fiscalite / tcoMensuel) * 100);
+    return Number((fiscalite / tcoMensuel) * 100).toFixed(2);
   } else if (type === 'carburant') {
     const carburant = vehicule.calcul?.budget_mensuel_total_energie || 0;
-    return Math.round((carburant / tcoMensuel) * 100);
+    return Number((carburant / tcoMensuel) * 100).toFixed(2);
+  } else if (type == 'aenCharge') {
+    const aenCharge = vehicule.calcul?.aenChargePatronale || 0;
+    return Number((aenCharge / tcoMensuel) * 100).toFixed(2);
+  } else if (type == 'isAnd') {
+    const isAnd = vehicule.calcul?.isAnd || 0;
+    return Number((isAnd / tcoMensuel) * 100).toFixed(2);
   }
   return 0;
 };
@@ -95,6 +101,9 @@ const getMinValue = (field) => {
       case 'carburant': return vehicule.calcul?.budget_mensuel_total_energie || 0;
       case 'tco': return vehicule.calcul?.tcoMensuel || 0;
       case 'prk': return getPRK(vehicule);
+      case 'prk_contrat': return vehicule.calcul?.prk || 0;
+      case 'is_and': return vehicule.calcul?.isAnd || 0;
+      case 'charges_patronales_aen': return vehicule.calcul?.aenChargePatronale || 0;
       default: return 0;
     }
   });
@@ -114,6 +123,9 @@ const getMaxValue = (field) => {
       case 'carburant': return vehicule.calcul?.budget_mensuel_total_energie || 0;
       case 'tco': return vehicule.calcul?.tcoMensuel || 0;
       case 'prk': return getPRK(vehicule);
+      case 'prk_contrat': return vehicule.calcul?.prk || 0;
+      case 'is_and': return vehicule.calcul?.isAnd || 0;
+      case 'charges_patronales_aen': return vehicule.calcul?.aenChargePatronale || 0;
       default: return 0;
     }
   });
@@ -168,20 +180,23 @@ const prepareTableData = () => {
       id: 'infos_vehicule',
       title: 'Infos véhicule',
       rows: [
-        { id: 'loueur', name: 'Loueur', getValue: (v) => v.loueur?.name || '' },
-        { id: 'marque', name: 'Marque', getValue: (v) => v.marque?.name || '' },
-        { id: 'modele', name: 'Modèle', getValue: (v) => v.modele?.title || '' },
-        { id: 'moteur_finition', name: 'Moteur/Finition', getValue: (v) => v.modele?.moteur ? v.modele?.moteur : v.finition || '' },
-        {id: 'type_fisc', name: 'Type fiscal', getValue: (v) => v.type_fisc?.toUpperCase() || ''},
-        { id: 'energie', name: 'Carburant', getValue: (v) => v.energie?.toUpperCase() || '' },
-        { id: 'puissance', name: 'Puissance', getValue: (v) => v.puissance ? `${v.puissance} ch` : '' },
-        { id: 'puissance_kw', name: 'Puissance KW', getValue: (v) => getPuissanceKW(v.puissance) ? `${getPuissanceKW(v.puissance)} kW` : '' },
-        { id: 'conso_carb', name: 'Consommation carburant', getValue: (v) => v.conso_carb ? `${formatNumber(v.conso_carb, 1)} L/100km` : '' },
-        { id: 'conso_kwh', name: 'Consommation kwh', getValue: (v) => v.conso_kwh ? `${formatNumber(v.conso_kwh, 1)} kWh/100km` : '' },
-        { id: 'co2', name: 'Émission CO2 WLTP', getValue: (v) => v.co2 ? `${v.co2} g/km` : '' },
+        { id: 'loueur', name: 'Loueur', getValue: (v) => v.loueur?.name || '-' },
+        { id: 'marque', name: 'Marque', getValue: (v) => v.marque?.name || '-' },
+        { id: 'modele', name: 'Modèle', getValue: (v) => v.modele?.title || '-' },
+        { id: 'moteur_finition', name: 'Moteur/Finition', getValue: (v) => v.modele?.moteur ? v.modele?.moteur : v.finition || '-' },
+        {id: 'type_fisc', name: 'Type fiscal', getValue: (v) => v.type_fisc?.toUpperCase() || '-'},
+        { id: 'energie', name: 'Énergie', getValue: (v) => v.energie?.toUpperCase() || '-' },
+        //{ id: 'puissance', name: 'Puissance', getValue: (v) => v.puissance ? `${v.puissance} ch` : '-' },
+        //{ id: 'puissance_kw', name: 'Puissance KW', getValue: (v) => getPuissanceKW(v.puissance) ? `${getPuissanceKW(v.puissance)} kW` : '-' },
+        { id: 'autonomie', name: 'Autonomie batterie (WLTP)', getValue: (v) => v.modele?.autonomie ? `${v.modele?.autonomie} km` : '-' },
+        { id: 'conso_carb', name: 'Consommation carburant', getValue: (v) => v.conso_carb ? `${formatNumber(v.conso_carb, 1)} L/100km` : '-' },
+        { id: 'conso_kwh', name: 'Consommation kwh', getValue: (v) => v.conso_kwh ? `${formatNumber(v.conso_kwh, 1)} kWh/100km` : '-' },
+        { id: 'co2', name: 'Émission CO2 WLTP', getValue: (v) => v.co2 ? `${v.co2} g/km` : '-' },
+        { id: 'poids', name: 'Poids véhicule (PVOM)', getValue: (v) => v.pvom ? `${v.pvom} kg` : '-' },
+        { id: 'capacite_batterie', name: 'Capacité de la batterie', getValue: (v) => v.capacite_batterie ? `${v.capacite_batterie} kWh` : '-' },
+        { id: 'vitesse_recharge', name: 'Capacité de recharge de la batterie', getValue: (v) => v.vitesse_recharge_batterie ? `${v.vitesse_recharge_batterie} kW` : '-' },
         { id: 'prix', name: 'Prix du véhicule non remisé', getValue: (v) => formatCurrency(v.prix) },
         { id: 'prix_options', name: 'Montant option(s) non remisé', getValue: (v) => formatCurrency(v.prix_options) },
-        { id: 'accessoires', name: 'Total accessoires', getValue: (v) => formatCurrency(0) },
         { id: 'prix_total', name: 'Prix total avec options',
           getValue: (v) => formatCurrency(getPrixTotal(v)),
           field: 'prix',
@@ -197,16 +212,37 @@ const prepareTableData = () => {
       id: 'contrat',
       title: 'Contrat',
       rows: [
+        { id: 'loyer_financier', name: 'Loyer Financier', getValue: (v) => formatCurrency(v.loyer_financier) },
+        { id: 'entretien', name: 'Entretien', getValue: (v) => formatCurrency(v.entretien) },
+        { id: 'pneumatiques', name: 'Pneumatiques', getValue: (v) => formatCurrency(v.pneumatique) },
+        { id: 'gardiennage_pneumatiques', name: 'Gardiennage des pneumatiques', getValue: (v) => formatCurrency(v.pneumatique_garde) },
+        { id: 'vehicule_relais', name: 'Véhicule Relais', getValue: (v) => formatCurrency(v.vehicule_relais) },
+        { id: 'assurance_rc', name: 'Assurance RC', getValue: (v) => formatCurrency(v.assurance_rc) },
+        { id: 'assurance_dommages', name: 'Assurance Dommages', getValue: (v) => formatCurrency(v.assurance_dommage) },
+        { id: 'perte_financiere', name: 'Perte Financière', getValue: (v) => formatCurrency(v.perte_fi) },
+        { id: 'carte_carburant', name: 'Carte (s) Carburant', getValue: (v) => formatCurrency(v.carte_carb) },
+        { id: 'carte_electrique', name: 'Carte électrique', getValue: (v) => formatCurrency(v.carte_elec) },
+        { id: 'badge_telepeage', name: 'Badge Télépéage', getValue: (v) => formatCurrency(v.badge_telepeage) },
+        { id: 'pastille_critair', name: 'Pastille Crit\'Air', getValue: (v) => formatCurrency(v.vignette_critair) },
+        { id: 'autre_cout', name: 'Autre coût', getValue: (v) => formatCurrency(v.autre_cout) },
         { id: 'loyer_total', name: 'Loyer total',
           getValue: (v) => formatCurrency(v.calcul?.loyer_total),
           field: 'loyer',
-          getClass: (v) => getCellClass(v.calcul?.loyer_total, 'loyer') }
+          getClass: (v) => getCellClass(v.calcul?.loyer_total, 'loyer') },
+        { id: 'prk_contrat', name: 'PRK /km',
+          getValue: (v) => formatCurrency(v.calcul?.prk),
+          field: 'prk_contrat',
+          getClass: (v) => getCellClass(v.calcul?.prk, 'prk_contrat') }
       ]
     },
     {
       id: 'fiscalite',
       title: 'Fiscalité',
       rows: [
+        { id: 'malus_co2', name: 'Malus CO² (une fois)', getValue: (v) => formatCurrency(v.calcul?.malus_co2) },
+        { id: 'taxe_co2', name: 'Taxe C0² (annuelle)', getValue: (v) => formatCurrency(v.calcul?.taxe_co2) },
+        { id: 'taxe_polluant', name: 'Taxe polluants (annuelle)', getValue: (v) => formatCurrency(v.calcul?.taxe_polluant) },
+        { id: 'taxe_masse', name: 'Taxe à la masse (une fois)', getValue: (v) => formatCurrency(v.calcul?.taxe_masse) },
         { id: 'fiscalite_mensuelle', name: 'Fiscalité mensuelle',
           getValue: (v) => formatCurrency(v.calcul?.fiscalite_mensuel),
           field: 'fiscalite',
@@ -217,10 +253,38 @@ const prepareTableData = () => {
       id: 'energie',
       title: 'Énergie',
       rows: [
-        { id: 'carburant_mensuel', name: 'Carburant mensuel',
+        { id: 'energie_thermique', name: 'Prix de l\'énergie Thermique €', getValue: (v) => v.calcul?.prix_energie_thermique ? formatCurrency(v.calcul.prix_energie_thermique) : '-' },
+        { id: 'energie_electrique', name: 'Prix de l\'énergie Electrique €', getValue: (v) => v.calcul?.prix_energie_electrique ? formatCurrency(v.calcul.prix_energie_electrique) : '-' },
+        { id: 'carburant_mensuel', name: 'Budget énergie mensuel',
           getValue: (v) => formatCurrency(v.calcul?.budget_mensuel_total_energie),
           field: 'carburant',
           getClass: (v) => getCellClass(v.calcul?.budget_mensuel_total_energie, 'carburant') }
+      ]
+    },
+    {
+      id: 'is_and',
+      title: 'IS sur AND',
+      rows: [
+        { id: 'pct_imposition_client', name: '% d\'imposition Client (IS)', getValue: (v) => formatPercent(comparo.value?.is) },
+        { id: 'plafond_and', name: 'Plafond d\'AND', getValue: (v) => formatCurrency(v.calcul?.plafondAnd) },
+        { id: 'calcul_and_mensuel', name: 'Calcul AND Mensuel', getValue: (v) => formatCurrency(v.calcul?.andMensuel) },
+        { id: 'is_and_value', name: 'IS sur AND',
+          getValue: (v) => formatCurrency(v.calcul?.isAnd),
+          field: 'is_and',
+          getClass: (v) => getCellClass(v.calcul?.isAnd, 'is_and') }
+      ]
+    },
+    {
+      id: 'aen_details',
+      title: 'AEN',
+      rows: [
+        { id: 'taux_aen', name: 'Taux AEN', getValue: (v) => formatPercent(v.aen) },
+        { id: 'aen_mensuel_detail', name: 'AEN Mensuel', getValue: (v) => formatCurrency(v.calcul?.aenMensuel) },
+        { id: 'taux_charges_patronales', name: 'Taux charges patronales', getValue: (v) => formatPercent(v.chargePatronale) },
+        { id: 'charges_patronales_aen', name: 'Charges patronales sur AEN',
+          getValue: (v) => formatCurrency(v.calcul?.aenChargePatronale),
+          field: 'charges_patronales_aen',
+          getClass: (v) => getCellClass(v.calcul?.aenChargePatronale, 'charges_patronales_aen') }
       ]
     },
     {
@@ -245,7 +309,9 @@ const prepareTableData = () => {
       rows: [
         { id: 'tco_loyer', name: 'Loyer et services (en %)', getValue: (v) => formatPercent(getTCOVentilation(v, 'loyer')) },
         { id: 'tco_fiscalite', name: 'Fiscalité (en %)', getValue: (v) => formatPercent(getTCOVentilation(v, 'fiscalite')) },
-        { id: 'tco_carburant', name: 'Carburant (en %)', getValue: (v) => formatPercent(getTCOVentilation(v, 'carburant')) }
+        { id: 'tco_carburant', name: 'Carburant (en %)', getValue: (v) => formatPercent(getTCOVentilation(v, 'carburant')) },
+        { id: 'aen_charge', name: 'Charges sur AEN (en %)', getValue: (v) => formatPercent(getTCOVentilation(v, 'aenCharge')) },
+        { id: 'is_and', name: 'IS sur AND (en %)', getValue: (v) => formatPercent(getTCOVentilation(v, 'isAnd')) }
       ]
     }
   ];
@@ -259,7 +325,8 @@ const prepareTableData = () => {
   const sectionDataMap = {};
 
   sections.forEach(section => {
-    const sectionData = [];
+    const coloredRows = [];
+    const nonColoredRows = [];
 
     section.rows.forEach(row => {
       const rowData = {
@@ -267,6 +334,7 @@ const prepareTableData = () => {
         type: 'data',
         label: row.name,
         field: row.field || null,
+        hasColor: !!row.field && !!row.getClass
       };
 
       // Ajouter une colonne pour chaque véhicule
@@ -277,10 +345,21 @@ const prepareTableData = () => {
         };
       });
 
-      sectionData.push(rowData);
+      // Séparer les lignes avec et sans couleur
+      if (rowData.hasColor) {
+        coloredRows.push(rowData);
+      } else {
+        nonColoredRows.push(rowData);
+      }
     });
 
-    sectionDataMap[section.id] = sectionData;
+    sectionDataMap[section.id] = {
+      coloredRows,
+      nonColoredRows,
+      hasColoredRows: coloredRows.length > 0,
+      hasNonColoredRows: nonColoredRows.length > 0,
+      allRows: [...coloredRows, ...nonColoredRows]
+    };
   });
 
   sectionsData.value = sectionDataMap;
@@ -403,7 +482,23 @@ onMounted(() => {
           <div class="section-header">
             <div class="section-title">
               <BarChart3 class="section-icon" />
-              <h2>{{ comparo.title }}</h2>
+              <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                <h2 class="text-2xl font-bold">{{ comparo.title }}</h2>
+                <div class="flex flex-wrap gap-2">
+                  <div class="inline-flex items-center gap-1.5 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    {{ comparo.duree || 0 }} mois
+                  </div>
+                  <div class="inline-flex items-center gap-1.5 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    {{ comparo.km ? (comparo.km / 1000).toLocaleString('fr-FR') + ' 000 km' : '0 km' }}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -428,24 +523,92 @@ onMounted(() => {
               </div>
 
               <!-- Sections d'analyse -->
-              <div class="space-y-1 sections-container">
-                <Panel
-                  v-for="section in sectionsConfig"
-                  :key="section.id"
-                  :collapsed="!expandedSections.has(section.id)"
-                  @toggle="toggleSection(section.id)"
-                  class="p-panel-compact comparison-animate-slide border-0 shadow-sm hover:shadow-md transition-all duration-200"
-                  :toggleable="true"
-                >
-                  <template #header>
+              <div class="space-y-4 sections-container">
+                <div v-for="section in sectionsConfig" :key="section.id" class="section-wrapper mb-4">
+                  <!-- Header de section -->
+                  <div class="section-header-custom bg-surface-900 p-3 border-0 shadow-sm hover:shadow-md transition-all duration-200 rounded-t-lg"
+                       :class="{ 'cursor-pointer': sectionsData[section.id]?.hasNonColoredRows }"
+                       @click="sectionsData[section.id]?.hasNonColoredRows && toggleSection(section.id)">
                     <div class="flex items-center gap-2 w-full">
-                      <span class="font-medium text-white cursor-pointer text-lg" @click="toggleSection(section.id)">{{ section.title }}</span>
+                      <span class="font-medium text-white text-lg">{{ section.title }}</span>
+                      <div v-if="sectionsData[section.id]?.hasNonColoredRows" class="ml-auto flex items-center gap-2">
+                        <span class="text-xs text-gray-300 hidden sm:inline">
+                          {{ expandedSections.has(section.id) ? 'Cliquez ici pour masquer' : 'Cliquez ici pour voir plus' }}
+                        </span>
+                        <div class="bg-orange-400 hover:bg-orange-300 rounded-full p-2 transition-all duration-200 transform hover:scale-110 shadow-lg">
+                          <svg
+                            class="w-4 h-4 text-white transition-transform duration-300"
+                            :class="{ 'rotate-180': expandedSections.has(section.id) }"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            stroke-width="2.5"
+                          >
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                      </div>
                     </div>
-                  </template>
+                  </div>
 
-                  <div v-if="expandedSections.has(section.id)" class="overflow-hidden comparison-animate-content">
+                  <!-- Contenu de section -->
+                  <div class="bg-transparent rounded-b-lg shadow-sm">
+                    <!-- Lignes non colorées (affichées seulement si section ouverte) -->
+                    <transition
+                      name="collapse"
+                      enter-active-class="collapse-enter-active"
+                      leave-active-class="collapse-leave-active"
+                      enter-from-class="collapse-enter-from"
+                      enter-to-class="collapse-enter-to"
+                      leave-from-class="collapse-leave-from"
+                      leave-to-class="collapse-leave-to"
+                    >
+                      <DataTable
+                        v-if="sectionsData[section.id]?.hasNonColoredRows && expandedSections.has(section.id)"
+                        :value="sectionsData[section.id].nonColoredRows"
+                        class="comparison-table comparison-animate-load"
+                        size="small"
+                        :showHeaders="false"
+                        :rowHover="true"
+                        :style="`--total-columns: ${comparo.vehicules.length + 1}`"
+                      >
+                        <!-- Colonne pour le nom des propriétés -->
+                        <Column
+                          field="label"
+                          class="property-column"
+                        >
+                          <template #body="{ data }">
+                            <div class="font-medium text-white py-1 text-sm flex items-center h-10">
+                              {{ data.label }}
+                            </div>
+                          </template>
+                        </Column>
+
+                        <!-- Colonne dynamique pour chaque véhicule -->
+                        <Column
+                          v-for="(vehicule, index) in comparo.vehicules"
+                          :key="'non_colored_'+vehicule.id+section.id"
+                          :field="`vehicule_${index}.value`"
+                          class="value-column"
+                        >
+                          <template #body="{ data }">
+                            <div
+                              class="text-center py-1 font-medium transition-all duration-200 rounded px-2 text-sm flex items-center justify-center h-10"
+                              :class="[
+                                data[`vehicule_${index}`]?.class || ''
+                              ]"
+                            >
+                              {{ data[`vehicule_${index}`]?.value }}
+                            </div>
+                          </template>
+                        </Column>
+                      </DataTable>
+                    </transition>
+
+                    <!-- Lignes colorées (toujours affichées) -->
                     <DataTable
-                      :value="sectionsData[section.id]"
+                      v-if="sectionsData[section.id]?.hasColoredRows"
+                      :value="sectionsData[section.id].coloredRows"
                       class="comparison-table comparison-animate-load"
                       size="small"
                       :showHeaders="false"
@@ -467,7 +630,7 @@ onMounted(() => {
                       <!-- Colonne dynamique pour chaque véhicule -->
                       <Column
                         v-for="(vehicule, index) in comparo.vehicules"
-                        :key="'value_'+vehicule.id+section.id"
+                        :key="'colored_'+vehicule.id+section.id"
                         :field="`vehicule_${index}.value`"
                         class="value-column"
                       >
@@ -484,7 +647,7 @@ onMounted(() => {
                       </Column>
                     </DataTable>
                   </div>
-                </Panel>
+                </div>
               </div>
 
               <!-- Boutons d'action -->
@@ -598,5 +761,36 @@ onMounted(() => {
 :deep(.comparison-table .value-column) {
   width: calc(100% / var(--total-columns, 2)) !important;
   min-width: 0 !important;
+}
+
+/* Transitions pour le collapse/expand */
+.collapse-enter-active,
+.collapse-leave-active {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.collapse-enter-from {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.collapse-enter-to {
+  max-height: 1000px;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.collapse-leave-from {
+  max-height: 1000px;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.collapse-leave-to {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-10px);
 }
 </style>
