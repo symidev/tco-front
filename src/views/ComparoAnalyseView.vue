@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import ProgressSpinner from 'primevue/progressspinner';
@@ -19,6 +19,8 @@ const toast = useToast();
 const loading = ref(true);
 const comparo = ref(null);
 const expandedSections = ref(new Set());
+const headerScrollContainer = ref(null);
+const isScrollSyncing = ref(false);
 
 // Structure de données pour le tableau
 const sectionsData = ref([]);
@@ -446,8 +448,64 @@ const loadComparoData = async () => {
   }
 };
 
+// Fonction pour synchroniser le scroll de tous les conteneurs
+const syncScrollPosition = (sourceElement, scrollLeft) => {
+  if (isScrollSyncing.value) return;
+  
+  isScrollSyncing.value = true;
+  
+  // Synchroniser l'en-tête
+  if (headerScrollContainer.value && sourceElement !== headerScrollContainer.value) {
+    headerScrollContainer.value.scrollLeft = scrollLeft;
+  }
+  
+  // Synchroniser toutes les sections
+  const allSectionContainers = document.querySelectorAll('.section-scroll-container');
+  allSectionContainers.forEach(container => {
+    if (container !== sourceElement) {
+      container.scrollLeft = scrollLeft;
+    }
+  });
+  
+  // Reset flag après un court délai pour éviter les boucles infinies
+  setTimeout(() => {
+    isScrollSyncing.value = false;
+  }, 10);
+};
+
+// Fonction pour attacher les événements de scroll
+const attachScrollListeners = () => {
+  // Écouteur pour l'en-tête
+  if (headerScrollContainer.value) {
+    headerScrollContainer.value.addEventListener('scroll', (e) => {
+      syncScrollPosition(e.target, e.target.scrollLeft);
+    });
+  }
+  
+  // Écouteurs pour toutes les sections
+  const allSectionContainers = document.querySelectorAll('.section-scroll-container');
+  
+  allSectionContainers.forEach((container) => {
+    container.addEventListener('scroll', (e) => {
+      syncScrollPosition(e.target, e.target.scrollLeft);
+    });
+  });
+};
+
 onMounted(() => {
   loadComparoData();
+});
+
+// Attacher les écouteurs après le rendu des données
+watch(comparo, (newComparo) => {
+  if (newComparo) {
+    nextTick(() => {
+      // Délai supplémentaire pour être sûr que tout est rendu
+      setTimeout(() => {
+        attachScrollListeners();
+      }, 100);
+    });
+  }
 });
 </script>
 
@@ -505,7 +563,7 @@ onMounted(() => {
           <div class="section-content">
             <div class="p-3">
               <!-- En-tête avec véhicules -->
-              <div class="comparison-header-sticky border-0 shadow-sm mb-3 rounded-lg">
+              <div class="comparison-header-sticky border-0 shadow-sm mb-3 rounded-lg overflow-x-auto header-scroll-container" ref="headerScrollContainer">
                 <div class="comparison-header-grid gap-0" :style="`--total-columns: ${comparo.vehicules.length + 1}`">
                   <div class="header-criteria bg-surface-900 p-2 font-medium text-white border-0 text-sm flex items-center">
                     Critères de comparaison
@@ -552,7 +610,7 @@ onMounted(() => {
                   </div>
 
                   <!-- Contenu de section -->
-                  <div class="bg-transparent rounded-b-lg shadow-sm">
+                  <div class="bg-transparent rounded-b-lg shadow-sm overflow-x-auto section-content-wrapper section-scroll-container" :data-section-id="section.id">
                     <!-- Lignes non colorées (affichées seulement si section ouverte) -->
                     <transition
                       name="collapse"
@@ -732,6 +790,14 @@ onMounted(() => {
 .comparison-header-grid {
   display: grid;
   grid-template-columns: repeat(var(--total-columns, 2), 1fr);
+  min-width: calc(140px * var(--total-columns, 2));
+  width: max(100%, calc(140px * var(--total-columns, 2)));
+}
+
+/* Largeur minimale pour les colonnes d'en-tête */
+.comparison-header-grid > div {
+  min-width: 140px;
+  width: max(calc(100% / var(--total-columns, 2)), 140px);
 }
 
 :deep(.comparison-table .p-datatable-table) {
@@ -792,5 +858,50 @@ onMounted(() => {
   max-height: 0;
   opacity: 0;
   transform: translateY(-10px);
+}
+
+/* Gestion du scroll horizontal et tailles de colonnes */
+.section-content-wrapper {
+  width: 100%;
+  max-width: 100vw;
+}
+
+/* Forcer une largeur minimale pour les tableaux */
+:deep(.comparison-table .p-datatable-table) {
+  table-layout: fixed !important;
+  min-width: calc(140px * var(--total-columns, 2)) !important;
+  width: calc(140px * var(--total-columns, 2)) !important;
+}
+
+/* Force aussi la div wrapper du DataTable */
+:deep(.comparison-table .p-datatable-wrapper) {
+  min-width: calc(140px * var(--total-columns, 2)) !important;
+  width: calc(140px * var(--total-columns, 2)) !important;
+}
+
+:deep(.comparison-table) {
+  min-width: calc(140px * var(--total-columns, 2)) !important;
+  width: calc(140px * var(--total-columns, 2)) !important;
+}
+
+/* Largeur minimale pour chaque colonne */
+:deep(.comparison-table .p-datatable-thead > tr > th) {
+  min-width: 140px !important;
+  width: max(calc(100% / var(--total-columns, 2)), 140px) !important;
+}
+
+:deep(.comparison-table .p-datatable-tbody > tr > td) {
+  min-width: 140px !important;
+  width: max(calc(100% / var(--total-columns, 2)), 140px) !important;
+}
+
+:deep(.comparison-table .property-column) {
+  min-width: 140px !important;
+  width: max(calc(100% / var(--total-columns, 2)), 140px) !important;
+}
+
+:deep(.comparison-table .value-column) {
+  min-width: 140px !important;
+  width: max(calc(100% / var(--total-columns, 2)), 140px) !important;
 }
 </style>
