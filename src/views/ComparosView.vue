@@ -9,6 +9,9 @@ import {Edit, Trash2, Eye, FileSpreadsheet, FileText, Car, Plus, TrendingUp, Clo
 import {useToast} from 'primevue/usetoast';
 import {useConfirm} from "primevue/useconfirm";
 import Button from 'primevue/button';
+import Dialog from 'primevue/dialog';
+import Select from 'primevue/select';
+import Slider from 'primevue/slider';
 
 import {comparoService} from '@/services/api/comparoService';
 import {formatShortDate} from '@/lib/date.js'
@@ -26,6 +29,25 @@ const comparos = ref({
   completed: []
 });
 const loading = ref(false);
+
+// Variables pour le dialog d'analyse
+const showAnalyzeDialog = ref(false);
+const selectedComparo = ref(null);
+const typeRecharge = ref(null);
+const plageElec = ref([10, 80]);
+
+// Options pour le type de recharge
+const typeRechargeOptions = [
+  { label: '2.3 kW', value: 2.3 },
+  { label: '3.7 kW', value: 3.7 },
+  { label: '7.4 kW', value: 7.4 },
+  { label: '11 kW', value: 11 },
+  { label: '22 kW', value: 22 },
+  { label: '50 kW', value: 50 },
+  { label: '100 kW', value: 100 },
+  { label: '150 kW', value: 150 },
+  { label: '200 kW', value: 200 }
+];
 
 const maxVehicule = computed(() => {
   if (store.state.auth?.tokenInfo?.drupal && store.state.auth?.tokenInfo?.drupal?.nbMaxVehicules) {
@@ -145,38 +167,7 @@ const getProgressMenuItems = (comparo) => {
       condition: comparo.countVehicule > 1,
       icon: Car,
       command: () => {
-        confirm.require({
-          message: 'Une fois l\'analyse lancée, plus aucune modification de ce comparo ne pourra être effectuée. Souhaitez-vous continuer ?',
-          header: 'Confirmation d\'analyse',
-          icon: 'pi pi-info-circle',
-          acceptLabel: 'Oui, lancer l\'analyse',
-          rejectLabel: 'Annuler',
-          acceptClass: 'p-button-primary',
-          accept: async () => {
-            loading.value = true;
-            try {
-              const response = await comparoService.analyzeComparo(comparo.uuid);
-              toast.add({
-                severity: 'success',
-                summary: 'Analyse lancée',
-                detail: 'L\'analyse du comparo a été lancée avec succès',
-                life: 3000
-              });
-              console.log('Véhicules analysés:', response.data.vehicules);
-              router.push(`/comparo/${comparo.uuid}/analyse`);
-            } catch (error) {
-              console.error('Erreur lors de l\'analyse:', error);
-              toast.add({
-                severity: 'error',
-                summary: 'Erreur',
-                detail: 'Une erreur est survenue lors de l\'analyse',
-                life: 3000
-              });
-            } finally {
-              loading.value = false;
-            }
-          }
-        });
+        openAnalyzeDialog(comparo);
       }
     },
     {
@@ -288,6 +279,67 @@ const getCompletedMenuItems = (comparo) => {
       }
     }*/
   ];
+};
+
+// Fonction pour ouvrir le dialog d'analyse
+const openAnalyzeDialog = (comparo) => {
+  selectedComparo.value = comparo;
+  typeRecharge.value = null;
+  plageElec.value = [10, 80];
+  showAnalyzeDialog.value = true;
+};
+
+// Fonction pour fermer le dialog d'analyse
+const closeAnalyzeDialog = () => {
+  showAnalyzeDialog.value = false;
+  selectedComparo.value = null;
+  typeRecharge.value = null;
+  plageElec.value = [10, 80];
+};
+
+// Fonction pour confirmer l'analyse
+const confirmAnalyze = async () => {
+  if (selectedComparo.value?.hasBattery && !typeRecharge.value) {
+    toast.add({
+      severity: 'warn',
+      summary: 'Champ requis',
+      detail: 'Veuillez sélectionner un type de recharge',
+      life: 3000
+    });
+    return;
+  }
+
+  loading.value = true;
+  try {
+    const payload = {};
+
+    if (selectedComparo.value?.hasBattery) {
+      payload.typeRecharge = typeRecharge.value;
+      payload.plageElecMin = plageElec.value[0];
+      payload.plageElecMax = plageElec.value[1];
+    }
+
+    const response = await comparoService.analyzeComparo(selectedComparo.value.uuid, payload);
+    toast.add({
+      severity: 'success',
+      summary: 'Analyse lancée',
+      detail: 'L\'analyse du comparo a été lancée avec succès',
+      life: 3000
+    });
+    console.log('Véhicules analysés:', response.data.vehicules);
+    router.push(`/comparo/${selectedComparo.value.uuid}/analyse`);
+    closeAnalyzeDialog();
+  } catch (error) {
+    console.error('Erreur lors de l\'analyse:', error);
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Une erreur est survenue lors de l\'analyse',
+      life: 3000
+    });
+  } finally {
+    loading.value = false;
+  }
 };
 
 // Équivalent à mounted dans l'option API
@@ -424,6 +476,92 @@ onMounted(() => {
         </div>
       </div>
     </div>
+
+    <!-- Dialog d'analyse -->
+    <Dialog
+      v-model:visible="showAnalyzeDialog"
+      modal
+      :header="'Confirmation d\'analyse'"
+      :style="{ width: '450px' }"
+      :closable="false"
+    >
+      <template #header>
+        <div class="flex items-center gap-2">
+          <i class="pi pi-info-circle text-blue-500"></i>
+          <span class="font-semibold">Confirmation d'analyse</span>
+        </div>
+      </template>
+
+      <div class="space-y-4">
+        <p class="text-surface-600 dark:text-surface-400">
+          Une fois l'analyse lancée, plus aucune modification de ce comparo ne pourra être effectuée. Souhaitez-vous continuer ?
+        </p>
+
+        <!-- Champs conditionnels pour les véhicules électriques -->
+        <div v-if="selectedComparo?.hasBattery" class="space-y-4 p-4 bg-surface-50 dark:bg-surface-800/20 rounded-lg border border-blue-200 dark:border-surface-700">
+          <div class="flex items-center gap-2 text-surface-700 dark:text-surface-300 font-medium">
+            <i class="pi pi-bolt"></i>
+            <span>Configuration électrique</span>
+          </div>
+
+          <!-- Type de recharge -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-surface-700 dark:text-surface-300">
+              Type de recharge <span class="text-red-500">*</span>
+            </label>
+            <Select
+              v-model="typeRecharge"
+              :options="typeRechargeOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Sélectionnez une puissance"
+              class="w-full"
+            />
+          </div>
+
+          <!-- Plage d'autonomie -->
+          <div class="space-y-3">
+            <label class="block text-sm font-medium text-surface-700 dark:text-surface-300">
+              Plage d'autonomie (%)
+            </label>
+            <div class="flex items-center gap-3">
+              <span class="text-sm font-medium text-surface-600 dark:text-surface-400 min-w-[2rem]">
+                {{ plageElec[0] }}%
+              </span>
+              <Slider
+                v-model="plageElec"
+                range
+                :min="0"
+                :max="100"
+                :step="10"
+                class="flex-1"
+              />
+              <span class="text-sm font-medium text-surface-600 dark:text-surface-400 min-w-[2rem]">
+                {{ plageElec[1] }}%
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <Button
+            label="Annuler"
+            severity="secondary"
+            outlined
+            @click="closeAnalyzeDialog"
+            :disabled="loading"
+          />
+          <Button
+            label="Oui, lancer l'analyse"
+            severity="primary"
+            @click="confirmAnalyze"
+            :loading="loading"
+          />
+        </div>
+      </template>
+    </Dialog>
   </div>
 </template>
 

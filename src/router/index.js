@@ -60,10 +60,10 @@ const router = createRouter({
             path: '/comparo/:uuidComparo/vehicules/:uuidVehicule',
             name: 'VehiculeEdit',
             component: () => import('../views/VehiculeForm.vue'),
-            props: route => ({ 
-                mode: 'edit', 
+            props: route => ({
+                mode: 'edit',
                 comparoUuid: route.params.uuidComparo,
-                vehiculeUuid: route.params.uuidVehicule 
+                vehiculeUuid: route.params.uuidVehicule
             }),
             meta: { layout: 'DefaultLayout', requiresAuth: true }
         },
@@ -82,9 +82,9 @@ const router = createRouter({
             meta: { layout: 'DefaultLayout', requiresAuth: true }
         },
         {
-            path: '/calc-aen',
-            name: 'calc-aen',
-            component: () => import('../views/CalcAenView.vue'),
+            path: '/calculateur',
+            name: 'calculateur',
+            component: () => import('../views/CalculateurView.vue'),
             meta: { layout: 'DefaultLayout', requiresAuth: true }
         },
         {

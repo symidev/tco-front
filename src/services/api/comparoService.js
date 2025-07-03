@@ -64,10 +64,11 @@ export const comparoService = {
   /**
    * Lance l'analyse d'un comparo
    * @param {string} uuid - L'identifiant unique du comparo
+   * @param {Object} [data] - Les données optionnelles pour l'analyse (typeRecharge, plageElecMin, plageElecMax)
    * @returns {Promise<Object>} Les données de réponse de l'API
    */
-  analyzeComparo(uuid) {
-    return apiService.post(`/api/tco/comparo/${uuid}/analyse`);
+  analyzeComparo(uuid, data = {}) {
+    return apiService.post(`/api/tco/comparo/${uuid}/analyse`, data);
   },
 
   /**

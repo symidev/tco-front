@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
+import { ref, onMounted, computed, watch, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import ProgressSpinner from 'primevue/progressspinner';
@@ -20,20 +20,7 @@ const loading = ref(true);
 const comparo = ref(null);
 const expandedSections = ref(new Set());
 const headerScrollContainer = ref(null);
-const stickyHeaderContainer = ref(null);
 const isScrollSyncing = ref(false);
-const showStickyHeader = ref(false);
-
-// Gestion de la sidebar (comme dans DefaultLayout)
-const isSidebarOpen = ref(true); // Sidebar ouverte par défaut
-const isMobile = ref(false);
-
-// Fonction pour vérifier si l'écran est en mode mobile
-const checkScreenSize = () => {
-  isMobile.value = window.innerWidth < 768; // Point de rupture pour mobile (md)
-  // Fermer la sidebar par défaut en mode mobile, l'ouvrir par défaut en mode desktop
-  isSidebarOpen.value = !isMobile.value;
-};
 
 // Structure de données pour le tableau
 const sectionsData = ref([]);
@@ -472,11 +459,6 @@ const syncScrollPosition = (sourceElement, scrollLeft) => {
     headerScrollContainer.value.scrollLeft = scrollLeft;
   }
 
-  // Synchroniser l'en-tête sticky
-  if (stickyHeaderContainer.value && sourceElement !== stickyHeaderContainer.value) {
-    stickyHeaderContainer.value.scrollLeft = scrollLeft;
-  }
-
   // Synchroniser toutes les sections
   const allSectionContainers = document.querySelectorAll('.section-scroll-container');
   allSectionContainers.forEach(container => {
@@ -491,22 +473,6 @@ const syncScrollPosition = (sourceElement, scrollLeft) => {
   }, 10);
 };
 
-// Fonction pour gérer la visibilité de l'en-tête sticky
-const setupStickyHeader = () => {
-  if (!headerScrollContainer.value) return;
-
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      // Si l'en-tête original n'est plus visible, afficher le sticky
-      showStickyHeader.value = !entry.isIntersecting;
-    });
-  }, {
-    threshold: 0.1,
-    rootMargin: '-60px 0px 0px 0px' // Offset pour la navbar
-  });
-
-  observer.observe(headerScrollContainer.value);
-};
 
 // Fonction pour attacher les événements de scroll
 const attachScrollListeners = () => {
@@ -517,9 +483,6 @@ const attachScrollListeners = () => {
     });
   }
 
-  // Écouteur pour l'en-tête sticky (sera attaché quand il apparaît)
-  // Note: Le sticky header sera géré par le watch showStickyHeader
-
   // Écouteurs pour toutes les sections
   const allSectionContainers = document.querySelectorAll('.section-scroll-container');
 
@@ -528,20 +491,10 @@ const attachScrollListeners = () => {
       syncScrollPosition(e.target, e.target.scrollLeft);
     });
   });
-
-  // Setup du sticky header
-  setupStickyHeader();
 };
 
 onMounted(() => {
   loadComparoData();
-  checkScreenSize();
-  window.addEventListener('resize', checkScreenSize);
-});
-
-// Nettoyer les écouteurs d'événements
-onUnmounted(() => {
-  window.removeEventListener('resize', checkScreenSize);
 });
 
 // Attacher les écouteurs après le rendu des données
@@ -556,53 +509,10 @@ watch(comparo, (newComparo) => {
   }
 });
 
-// Re-attacher les écouteurs quand le sticky header apparaît/disparaît
-watch(showStickyHeader, (newValue) => {
-  if (newValue) {
-    nextTick(() => {
-      setTimeout(() => {
-        // Re-attacher spécifiquement le sticky header
-        if (stickyHeaderContainer.value) {
-          stickyHeaderContainer.value.addEventListener('scroll', (e) => {
-            syncScrollPosition(e.target, e.target.scrollLeft);
-          });
-        }
-      }, 50);
-    });
-  }
-});
 </script>
 
 <template>
   <div class="page-container">
-    <!-- En-tête sticky - En dehors du flux principal -->
-    <div
-      v-if="showStickyHeader && comparo"
-      class="sticky-header-container fixed top-16 left-0 right-0 z-30 shadow-lg border-b py-2"
-      :class="{
-        'ml-0': isMobile || !isSidebarOpen,
-        'ml-64': !isMobile && isSidebarOpen
-      }"
-    >
-      <div class="sticky-header-content">
-        <div class="overflow-x-auto sticky-header-scroll-container" ref="stickyHeaderContainer">
-          <div class="comparison-header-grid gap-0" :style="`--total-columns: ${comparo.vehicules.length + 1}`">
-            <div class="header-criteria bg-surface-900 p-2 font-medium text-white border-0 text-sm flex items-center">
-              Critères de comparaison
-            </div>
-            <div
-              v-for="(vehicule, index) in comparo.vehicules"
-              :key="'sticky_header_'+vehicule.id"
-              class="bg-surface-900 text-center p-2 border-0 hover:bg-surface-800 transition-all duration-200 flex flex-col justify-center items-center"
-            >
-              <div class="font-medium text-white text-xs">{{ vehicule?.marque?.name }}</div>
-              <div class="text-xs text-gray-300">{{ vehicule?.modele?.title }}</div>
-              <div class="text-xs text-blue-400 font-medium">{{ vehicule?.modele?.moteur ? vehicule?.modele?.moteur : vehicule?.finition }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <div class="page-content">
       <!-- Header avec titre -->
@@ -634,20 +544,43 @@ watch(showStickyHeader, (newValue) => {
           <div class="section-header">
             <div class="section-title">
               <BarChart3 class="section-icon" />
-              <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-                <h2 class="text-2xl font-bold">{{ comparo.title }}</h2>
-                <div class="flex flex-wrap gap-2">
-                  <div class="inline-flex items-center gap-1.5 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    {{ comparo.duree || 0 }} mois
+              <div class="flex flex-col gap-3 flex-1">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <h2 class="text-2xl font-bold">{{ comparo.title }}</h2>
+                    <div class="flex flex-wrap gap-2">
+                      <div class="inline-flex items-center gap-1.5 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        {{ comparo.duree || 0 }} mois
+                      </div>
+                      <div class="inline-flex items-center gap-1.5 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        {{ comparo.km ? (comparo.km / 1000).toLocaleString('fr-FR') + ' 000 km' : '0 km' }}
+                      </div>
+                    </div>
                   </div>
-                  <div class="inline-flex items-center gap-1.5 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                    </svg>
-                    {{ comparo.km ? (comparo.km / 1000).toLocaleString('fr-FR') + ' 000 km' : '0 km' }}
+                  <!-- Boutons d'action alignés à droite -->
+                  <div class="flex gap-2">
+                    <Button
+                      severity="success"
+                      @click="downloadExcel"
+                      class="btn-primary"
+                      size="small"
+                    >
+                      Exporter les données
+                    </Button>
+                    <Button
+                      severity="info"
+                      @click="downloadPDF"
+                      class="btn-primary"
+                      size="small"
+                    >
+                      Télécharger l'analyse
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -660,7 +593,7 @@ watch(showStickyHeader, (newValue) => {
               <div class="comparison-header-sticky border-0 shadow-sm mb-3 rounded-lg overflow-x-auto header-scroll-container" ref="headerScrollContainer">
                 <div class="comparison-header-grid gap-0" :style="`--total-columns: ${comparo.vehicules.length + 1}`">
                   <div class="header-criteria bg-surface-900 p-2 font-medium text-white border-0 text-sm flex items-center">
-                    Critères de comparaison
+
                   </div>
                   <div
                     v-for="(vehicule, index) in comparo.vehicules"
@@ -802,8 +735,8 @@ watch(showStickyHeader, (newValue) => {
                 </div>
               </div>
 
-              <!-- Boutons d'action -->
-              <div class="flex flex-row flex-wrap items-center justify-center sm:justify-between gap-3 mt-3">
+              <!-- Bouton de retour uniquement -->
+              <div class="flex justify-center mt-3">
                 <Button
                   type="button"
                   outlined
@@ -812,22 +745,6 @@ watch(showStickyHeader, (newValue) => {
                 >
                   Retour Comparos
                 </Button>
-                <div class="flex gap-2">
-                  <Button
-                    severity="success"
-                    @click="downloadExcel"
-                    class="btn-primary w-[200px] min-w-[200px]"
-                  >
-                    Exporter les données
-                  </Button>
-                  <Button
-                    severity="info"
-                    @click="downloadPDF"
-                    class="btn-primary w-[200px] min-w-[200px]"
-                  >
-                    Télécharger l'analyse
-                  </Button>
-                </div>
               </div>
             </div>
           </div>
@@ -998,62 +915,4 @@ watch(showStickyHeader, (newValue) => {
   width: calc(100% / var(--total-columns, 2)) !important;
 }
 
-/* Styles pour l'en-tête sticky */
-.sticky-header-container {
-  height: auto;
-  max-height: 80px;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(8px);
-  overflow: visible;
-  display: flex;
-  justify-content: center;
-  padding: 0 1rem;
-}
-
-/* Ajustement de la largeur quand la sidebar est ouverte */
-.sticky-header-container.ml-64 {
-  width: calc(100% - 16rem);
-}
-
-/* Ajustement des paddings pour correspondre au parent du page-container */
-@media (min-width: 768px) {
-  .sticky-header-container {
-    padding: 0 2rem; /* md:px-8 */
-  }
-}
-
-/* Ajustement mobile pour correspondre au page-container */
-@media (max-width: 768px) {
-  .sticky-header-container {
-    padding: 0 0.5rem; /* Même padding que page-container en mobile */
-  }
-}
-
-.sticky-header-content {
-  width: 100%;
-  max-width: 1200px;
-  display: flex;
-  flex-direction: column;
-}
-
-.sticky-header-scroll-container {
-  width: 100%;
-  max-width: 100%;
-}
-
-.sticky-header-container .comparison-header-grid {
-  display: grid;
-  grid-template-columns: repeat(var(--total-columns, 2), minmax(140px, 1fr));
-  min-width: calc(140px * var(--total-columns, 2));
-  width: 100%;
-}
-
-.sticky-header-container .comparison-header-grid > div {
-  min-width: 140px;
-}
-
-/* Ajuster le padding du contenu quand le sticky header est visible */
-.page-content {
-  transition: padding-top 0.3s ease;
-}
 </style>

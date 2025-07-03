@@ -75,8 +75,7 @@ const menuGroups = [
     items: [
       { path: '/comparos', icon: BarChart3, label: 'Comparatifs', permissions: ['comparo', 'catalogue'] },
       { path: '/catalogues', icon: Book, label: 'Catalogues', permissions: ['catalogue'] },
-      { path: '/vehicules', icon: Car, label: 'Véhicules', permissions: ['catalogue'] },
-      { path: '/calc-aen', icon: Calculator, label: 'Calculateur AEN', permissions: ['catalogue'] }
+      { path: '/calculateur', icon: Calculator, label: 'Calculateur', permissions: ['catalogue'] }
     ]
   }
 ]
@@ -86,8 +85,7 @@ const allMenuItems = [
   { path: '/', icon: Home, label: 'Tableau de bord' },
   { path: '/comparos', icon: BarChart3, label: 'Comparatifs', permissions: ['comparo', 'catalogue'] },
   { path: '/catalogues', icon: Book, label: 'Catalogues', permissions: ['catalogue'] },
-  { path: '/vehicules', icon: Car, label: 'Véhicules', permissions: ['catalogue'] },
-  { path: '/calc-aen', icon: Calculator, label: 'Calculateur AEN', permissions: ['catalogue'] }
+  { path: '/calculateur', icon: Calculator, label: 'Calculateur', permissions: ['catalogue'] }
 ]
 
 // Filtrer les éléments du menu selon les permissions de l'utilisateur
@@ -113,7 +111,7 @@ const filteredMenuGroups = computed(() => {
     ]"
   >
     <!-- Header avec logo -->
-    <div class="sidebar-header p-4 border-b border-surface-700/50">
+    <div class="sidebar-header p-3 border-b border-surface-700/50">
       <RouterLink to="/" @click="closeSidebarOnMobile" class="block transition-transform hover:scale-105">
         <img src="@/assets/images/logo.png" alt="Logo" class="h-10 mx-auto filter brightness-110"/>
       </RouterLink>
@@ -125,7 +123,7 @@ const filteredMenuGroups = computed(() => {
         <h3 class="group-title px-4 py-3 text-xs font-semibold text-surface-400 uppercase tracking-wider border-b border-surface-800/30">
           {{ group.title }}
         </h3>
-        
+
         <ul class="group-items py-2">
           <li v-for="item in group.items" :key="item.path" class="menu-item">
             <RouterLink
@@ -133,26 +131,26 @@ const filteredMenuGroups = computed(() => {
                 @click="closeSidebarOnMobile"
                 :class="[
                   'menu-link flex items-center px-4 py-3 mx-2 rounded-lg transition-all duration-200 group relative',
-                  isActive(item.path) 
-                    ? 'bg-primary/10 text-primary border-l-4 border-primary shadow-lg transform scale-[1.02]' 
+                  isActive(item.path)
+                    ? 'bg-primary/10 text-primary border-l-4 border-primary shadow-lg transform scale-[1.02]'
                     : 'text-surface-200 hover:bg-surface-800/50 hover:text-white hover:transform hover:translate-x-1'
                 ]"
             >
               <!-- Icône avec animation -->
-              <component 
-                :is="item.icon" 
+              <component
+                :is="item.icon"
                 :class="[
                   'w-5 h-5 mr-3 transition-all duration-200',
                   isActive(item.path) ? 'text-primary scale-110' : 'text-surface-400 group-hover:text-white group-hover:scale-105'
-                ]" 
+                ]"
               />
-              
+
               <!-- Label -->
               <span class="font-medium text-sm">{{ item.label }}</span>
-              
+
               <!-- Indicateur actif -->
-              <div 
-                v-if="isActive(item.path)" 
+              <div
+                v-if="isActive(item.path)"
                 class="absolute right-2 w-2 h-2 bg-primary rounded-full animate-pulse"
               ></div>
             </RouterLink>
@@ -161,14 +159,14 @@ const filteredMenuGroups = computed(() => {
       </div>
     </nav>
 
-    <!-- Footer de la sidebar -->
+    <!-- Footer de la sidebar
     <div class="sidebar-footer p-4 border-t border-surface-700/50">
       <div class="text-center">
         <div class="text-xs text-surface-500">
           Version 1.0.0
         </div>
       </div>
-    </div>
+    </div>-->
   </aside>
 </template>
 
@@ -283,17 +281,17 @@ const filteredMenuGroups = computed(() => {
     overflow-y: visible;
     height: auto;
   }
-  
+
   .menu-link {
     padding: 0.75rem 1rem;
     margin: 0 0.5rem;
   }
-  
+
   .group-title {
     padding: 0.75rem 1rem;
     font-size: 0.625rem;
   }
-  
+
   .sidebar-footer {
     display: none;
   }
