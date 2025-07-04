@@ -501,7 +501,7 @@ a.animate:hover {
     position: relative;
 }
 
-.comparison-table :deep(.text-orange-400) {
+.comparison-table :deep(.text-amber-500) {
     color: #f59e0b !important;
     font-weight: 700;
     position: relative;
@@ -515,7 +515,7 @@ a.animate:hover {
     opacity: 0.7;
 }
 
-.comparison-table :deep(.text-orange-400::before) {
+.comparison-table :deep(.text-amber-500::before) {
     content: '▲';
     color: #f59e0b;
     font-size: 0.75rem;
