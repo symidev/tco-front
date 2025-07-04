@@ -48,6 +48,27 @@ const getTCOTotal = (vehicule) => {
   return (vehicule.calcul?.tcoMensuel || 0) * (vehicule.duree || 36);
 };
 
+// Fonction pour convertir les heures décimales en format heures:minutes (ex: 2.5 => "2h30")
+const formatHeuresMinutes = (heuresDecimales) => {
+  if (!heuresDecimales || !Number.isFinite(heuresDecimales)) {
+    return '-';
+  }
+
+  const heures = Math.floor(heuresDecimales);
+  const minutes = Math.round((heuresDecimales - heures) * 60);
+
+  // Gérer le cas où les minutes arrondies donnent 60
+  if (minutes === 60) {
+    return `${heures + 1}h`;
+  }
+
+  if (minutes === 0) {
+    return `${heures}h`;
+  } else {
+    return `${heures}h${minutes.toString().padStart(2, '0')}`;
+  }
+};
+
 // Fonction pour calculer le PRK
 const getPRK = (vehicule) => {
   const kmMensuel = vehicule.calcul?.km_mensuel || 0;
@@ -177,6 +198,10 @@ const toggleSection = (sectionId) => {
 const prepareTableData = () => {
   if (!comparo.value?.vehicules?.length) return;
 
+  let labelPlage = '';
+  if (comparo.value.plageElecMin || comparo.value.plageElecMax) {
+    labelPlage = comparo.value.plageElecMin + '% - ' + comparo.value.plageElecMax + '%';
+  }
   const sections = [
     {
       id: 'infos_vehicule',
@@ -190,13 +215,16 @@ const prepareTableData = () => {
         { id: 'energie', name: 'Énergie', getValue: (v) => v.energie?.toUpperCase() || '-' },
         //{ id: 'puissance', name: 'Puissance', getValue: (v) => v.puissance ? `${v.puissance} ch` : '-' },
         //{ id: 'puissance_kw', name: 'Puissance KW', getValue: (v) => getPuissanceKW(v.puissance) ? `${getPuissanceKW(v.puissance)} kW` : '-' },
-        { id: 'autonomie', name: 'Autonomie batterie (WLTP)', getValue: (v) => v.modele?.autonomie ? `${v.modele?.autonomie} km` : '-' },
         { id: 'conso_carb', name: 'Consommation carburant', getValue: (v) => v.conso_carb ? `${formatNumber(v.conso_carb, 1)} L/100km` : '-' },
         { id: 'conso_kwh', name: 'Consommation kwh', getValue: (v) => v.conso_kwh ? `${formatNumber(v.conso_kwh, 1)} kWh/100km` : '-' },
         { id: 'co2', name: 'Émission CO2 WLTP', getValue: (v) => v.co2 ? `${v.co2} g/km` : '-' },
         { id: 'poids', name: 'Poids véhicule (PVOM)', getValue: (v) => v.pvom ? `${v.pvom} kg` : '-' },
+        { id: 'autonomie', name: 'Autonomie batterie (WLTP)', getValue: (v) => v.modele?.autonomie ? `${v.modele?.autonomie} km` : '-' },
         { id: 'capacite_batterie', name: 'Capacité de la batterie', getValue: (v) => v.capacite_batterie ? `${v.capacite_batterie} kWh` : '-' },
         { id: 'vitesse_recharge', name: 'Capacité de recharge de la batterie', getValue: (v) => v.vitesse_recharge_batterie ? `${v.vitesse_recharge_batterie} kW` : '-' },
+        { id: 'temps_recharge_plage', name: 'Temps recharge batterie ' + labelPlage, getValue: (v) => v.calcul?.vitesse_recharge_plage ? formatHeuresMinutes(v.calcul.vitesse_recharge_plage) : '-' },
+        { id: 'temps_recharge_100km', name: 'Temps recharge batterie 100km', getValue: (v) => v.calcul?.vitesse_recharge_100 ? formatHeuresMinutes(v.calcul.vitesse_recharge_100) : '-' },
+
         { id: 'prix', name: 'Prix du véhicule non remisé', getValue: (v) => formatCurrency(v.prix) },
         { id: 'prix_options', name: 'Montant option(s) non remisé', getValue: (v) => formatCurrency(v.prix_options) },
         { id: 'prix_total', name: 'Prix total avec options',
