@@ -25,7 +25,9 @@ import {
   Legend,
   Filler,
   BarController,
-  LineController
+  LineController,
+  ArcElement,
+  PieController
 } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
@@ -41,6 +43,8 @@ ChartJS.register(
   Filler,
   BarController,
   LineController,
+  ArcElement,
+  PieController,
   ChartDataLabels
 );
 
@@ -58,6 +62,7 @@ const scrollListeners = ref([]);
 const displayMode = ref(false); // false for data, true for graphics
 const chartCanvas = ref(null);
 const chartInstance = ref(null);
+const pieChartInstances = ref([]);
 
 // Structure de données pour le tableau
 const sectionsData = ref([]);
@@ -723,17 +728,35 @@ watch(displayMode, (newMode) => {
   nextTick(() => {
     setTimeout(() => {
       attachScrollListeners();
-      // Créer le graphique quand on passe en mode graphique
+      // Créer les graphiques quand on passe en mode graphique
       if (newMode && chartCanvas.value) {
         createChart();
+        createPieCharts();
       }
     }, 50);
   });
 });
 
+// Fonction pour générer le nom d'un véhicule
+const getVehicleLabel = (vehicule) => {
+  const marque = vehicule.marque?.name || '';
+  const modele = vehicule.modele?.title || '';
+  const moteur = vehicule.modele?.moteur || '';
+  const finition = vehicule.finition || '';
+
+  let label = `${marque} ${modele}`;
+  if (moteur) {
+    label += ` ${moteur}`;
+  } else if (finition) {
+    label += ` ${finition}`;
+  }
+
+  return label.trim();
+};
+
 // Fonction pour créer/mettre à jour le graphique
 const createChart = () => {
-  if (!chartCanvas.value) return;
+  if (!chartCanvas.value || !comparo.value?.vehicules?.length) return;
 
   // Détruire l'instance existante si elle existe
   if (chartInstance.value) {
@@ -742,23 +765,38 @@ const createChart = () => {
 
   const ctx = chartCanvas.value.getContext('2d');
 
-  // Configuration du graphique avec les données d'exemple
+  // Préparer les données dynamiques
+  const labels = comparo.value.vehicules.map(vehicule => getVehicleLabel(vehicule));
+
+  const loyerTotalData = comparo.value.vehicules.map(v => v.calcul?.loyer_total || 0);
+  const fiscaliteMensuelleData = comparo.value.vehicules.map(v => v.calcul?.fiscalite_mensuel || 0);
+  const budgetEnergieData = comparo.value.vehicules.map(v => v.calcul?.budget_mensuel_total_energie || 0);
+  const isAndData = comparo.value.vehicules.map(v => v.calcul?.isAnd || 0);
+  const chargesPatronalesData = comparo.value.vehicules.map(v => v.calcul?.aenChargePatronale || 0);
+  const tcoMensuelData = comparo.value.vehicules.map(v => v.calcul?.tcoMensuel || 0);
+
+  // TCO moyen
+  const tcoMoyen = getTCOMoyen.value;
+  const tcoMoyenData = comparo.value.vehicules.map(() => tcoMoyen);
+
+  // Calculer le max pour l'axe Y
+  const maxTco = Math.max(...tcoMensuelData, tcoMoyen);
+  const yAxisMax = Math.ceil(maxTco / 200) * 200 + 200;
+
+  // Titre dynamique
+  const dureeText = comparo.value.duree ? `${comparo.value.duree} mois` : '';
+  const kmText = comparo.value.km ? `${(comparo.value.km / 1000).toLocaleString('fr-FR')} 000 kms` : '';
+  const chartTitle = `${comparo.value.title} - ${dureeText} - ${kmText}`;
+
+  // Configuration du graphique avec les données dynamiques
   const chartConfig = {
     type: 'bar',
     data: {
-      labels: [
-        "xDrive30 Business Design",
-        "1.6 T GDI 265 PHEV HTRAC",
-        "xDrive25e xLine DKG7"
-      ],
+      labels: labels,
       datasets: [
         {
           label: "Loyer total",
-          data: [
-            1116.05,
-            1447.62,
-            1124.85
-          ],
+          data: loyerTotalData,
           backgroundColor: "#5B9BD5",
           stack: "stack1",
           order: 2,
@@ -768,27 +806,8 @@ const createChart = () => {
           }
         },
         {
-          label: "Carburant mensuel",
-          data: [
-            311.72,
-            138.5,
-            102.92
-          ],
-          backgroundColor: "#ED7D31",
-          stack: "stack1",
-          order: 2,
-          borderWidth: 0,
-          datalabels: {
-            display: false
-          }
-        },
-        {
-          label: "Fiscalité Mensuelle",
-          data: [
-            85.19,
-            156.98,
-            115.35
-          ],
+          label: "Fiscalité mensuelle",
+          data: fiscaliteMensuelleData,
           backgroundColor: "#A5A5A5",
           stack: "stack1",
           order: 2,
@@ -798,13 +817,42 @@ const createChart = () => {
           }
         },
         {
+          label: "Budget énergie mensuel",
+          data: budgetEnergieData,
+          backgroundColor: "#ED7D31",
+          stack: "stack1",
+          order: 2,
+          borderWidth: 0,
+          datalabels: {
+            display: false
+          }
+        },
+        {
+          label: "IS sur AND",
+          data: isAndData,
+          backgroundColor: "#70AD47",
+          stack: "stack1",
+          order: 2,
+          borderWidth: 0,
+          datalabels: {
+            display: false
+          }
+        },
+        {
+          label: "Charges patronales sur AEN",
+          data: chargesPatronalesData,
+          backgroundColor: "#264478",
+          stack: "stack1",
+          order: 2,
+          borderWidth: 0,
+          datalabels: {
+            display: false
+          }
+        },
+        {
           type: "line",
-          label: "TCO mensuel (TTC si VP ou Moto)",
-          data: [
-            1439.33,
-            1743.1,
-            1342.52
-          ],
+          label: "TCO mensuel",
+          data: tcoMensuelData,
           borderColor: "#FFC000",
           borderWidth: 2,
           backgroundColor: "transparent",
@@ -829,25 +877,22 @@ const createChart = () => {
             padding: 3,
             anchor: "end",
             align: "top",
-            offset: 6
+            offset: 6,
+            formatter: (value) => `${value.toLocaleString('fr-FR', {maximumFractionDigits: 0})}€`
           }
         },
         {
           type: "line",
-          label: "TCO Moyen mensuel du catalogue",
-          data: [
-            1439.33,
-            1439.33,
-            1439.33
-          ],
-          borderColor: "#70AD47",
+          label: "TCO moyen",
+          data: tcoMoyenData,
+          borderColor: "#C55A5A",
           borderWidth: 2,
           fill: false,
           borderDash: [],
           order: 1,
           pointRadius: 0,
-          pointBackgroundColor: "#70AD47",
-          pointBorderColor: "#70AD47",
+          pointBackgroundColor: "#C55A5A",
+          pointBorderColor: "#C55A5A",
           tension: 0,
           datalabels: {
             display: false
@@ -884,7 +929,7 @@ const createChart = () => {
         },
         title: {
           display: true,
-          text: "Comparatif Véhicules 36 mois - 100 000 kms",
+          text: chartTitle,
           color: "#CCCCCC",
           font: {
             size: 14,
@@ -910,7 +955,7 @@ const createChart = () => {
           }
         },
         y: {
-          max: 1900,
+          max: yAxisMax,
           grid: {
             color: "rgba(255, 255, 255, 0.08)",
             borderDash: [
@@ -939,8 +984,109 @@ const createChart = () => {
       }
     }
   };
-
+  // faire un console.log de chartConfig en json
   chartInstance.value = new ChartJS(ctx, chartConfig);
+};
+
+// Fonction pour créer les camemberts de ventilation TCO
+const createPieCharts = () => {
+  if (!comparo.value?.vehicules?.length) return;
+
+  // Nettoyer les instances existantes
+  pieChartInstances.value.forEach(instance => {
+    if (instance) instance.destroy();
+  });
+  pieChartInstances.value = [];
+
+  comparo.value.vehicules.forEach((vehicule, index) => {
+    const canvasId = `pieChart_${index}`;
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const tcoMensuel = vehicule.calcul?.tcoMensuel || 0;
+
+    if (tcoMensuel === 0) return;
+
+    // Calculer les pourcentages pour le camembert
+    const loyerTotal = vehicule.calcul?.loyer_total || 0;
+    const fiscaliteMensuelle = vehicule.calcul?.fiscalite_mensuel || 0;
+    const budgetEnergie = vehicule.calcul?.budget_mensuel_total_energie || 0;
+    const isAnd = vehicule.calcul?.isAnd || 0;
+    const chargesPatronales = vehicule.calcul?.aenChargePatronale || 0;
+
+    // Calculer les pourcentages
+    const loyerPct = tcoMensuel ? ((loyerTotal / tcoMensuel) * 100) : 0;
+    const fiscalitePct = tcoMensuel ? ((fiscaliteMensuelle / tcoMensuel) * 100) : 0;
+    const energiePct = tcoMensuel ? ((budgetEnergie / tcoMensuel) * 100) : 0;
+    const isAndPct = tcoMensuel ? ((isAnd / tcoMensuel) * 100) : 0;
+    const chargesPatronalesPct = tcoMensuel ? ((chargesPatronales / tcoMensuel) * 100) : 0;
+
+    const pieConfig = {
+      type: 'pie',
+      data: {
+        labels: [
+          'Loyer total',
+          'Fiscalité mensuelle',
+          'Budget énergie',
+          'IS sur AND',
+          'Charges patronales AEN'
+        ],
+        datasets: [{
+          data: [loyerPct, fiscalitePct, energiePct, isAndPct, chargesPatronalesPct],
+          backgroundColor: [
+            '#5B9BD5',
+            '#A5A5A5',
+            '#ED7D31',
+            '#70AD47',
+            '#264478'
+          ],
+          borderWidth: 2,
+          borderColor: '#2d3748'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          datalabels: {
+            display: false
+          },
+          legend: {
+            display: false
+          },
+          title: {
+            display: true,
+            text: getVehicleLabel(vehicule),
+            color: '#CCCCCC',
+            font: {
+              size: 12,
+              weight: 'bold'
+            },
+            padding: {
+              top: 5,
+              bottom: 10
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const label = context.label || '';
+                const percentage = context.parsed;
+                return `${label}: ${percentage.toFixed(1)}%`;
+              }
+            }
+          }
+        },
+        layout: {
+          padding: 10
+        }
+      }
+    };
+    console.log(JSON.stringify(pieConfig));
+    const instance = new ChartJS(ctx, pieConfig);
+    pieChartInstances.value.push(instance);
+  });
 };
 
 // Nettoyer les écouteurs lors du démontage du composant
@@ -949,6 +1095,9 @@ onBeforeUnmount(() => {
   if (chartInstance.value) {
     chartInstance.value.destroy();
   }
+  pieChartInstances.value.forEach(instance => {
+    if (instance) instance.destroy();
+  });
 });
 
 </script>
@@ -1233,6 +1382,56 @@ onBeforeUnmount(() => {
 
                   <div class="chart-container bg-surface-900 rounded-lg p-4" style="height: 500px;">
                     <canvas ref="chartCanvas"></canvas>
+                  </div>
+                </div>
+
+                <!-- Bloc Ventilation TCO par véhicule -->
+                <div class="bg-surface-800 rounded-lg shadow-inner p-6 mt-6">
+                  <div class="mb-6">
+                    <h3 class="text-2xl font-bold text-white flex items-center gap-2">
+                      <AreaChart class="h-6 w-6 text-green-500"/>
+                      Ventilation TCO par véhicule
+                    </h3>
+                    <p class="text-surface-400 mt-2">Répartition des coûts par composant pour chaque véhicule</p>
+                  </div>
+
+                  <!-- Légende commune -->
+                  <div class="mb-6 bg-surface-900 rounded-lg p-4">
+                    <h4 class="text-lg font-semibold text-white mb-3">Légende</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+                      <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 rounded-full" style="background-color: #5B9BD5;"></div>
+                        <span class="text-sm text-gray-300">Loyer total</span>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 rounded-full" style="background-color: #A5A5A5;"></div>
+                        <span class="text-sm text-gray-300">Fiscalité mensuelle</span>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 rounded-full" style="background-color: #ED7D31;"></div>
+                        <span class="text-sm text-gray-300">Budget énergie</span>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 rounded-full" style="background-color: #70AD47;"></div>
+                        <span class="text-sm text-gray-300">IS sur AND</span>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 rounded-full" style="background-color: #264478;"></div>
+                        <span class="text-sm text-gray-300">Charges patronales AEN</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="pie-charts-grid">
+                    <div
+                      v-for="(vehicule, index) in comparo.vehicules"
+                      :key="`pie_${vehicule.id}`"
+                      class="pie-chart-item bg-surface-900 rounded-lg p-4"
+                    >
+                      <div class="pie-chart-container">
+                        <canvas :id="`pieChart_${index}`" width="200" height="200"></canvas>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1549,6 +1748,57 @@ onBeforeUnmount(() => {
 .chart-container canvas {
   width: 100% !important;
   height: 100% !important;
+}
+
+/* Styles pour les camemberts */
+.pie-charts-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 1024px) {
+  .pie-charts-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .pie-charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pie-chart-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pie-chart-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.pie-chart-container {
+  width: 200px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pie-chart-container canvas {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+@media (max-width: 640px) {
+  .pie-chart-container {
+    width: 150px;
+    height: 150px;
+  }
 }
 
 </style>
