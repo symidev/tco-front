@@ -281,6 +281,19 @@ const getCompletedMenuItems = (comparo) => {
   ];
 };
 
+// Fonctions de redirection pour les liens cliquables
+const handleProgressTitleClick = (comparo) => {
+  router.push(`/comparo/${comparo.uuid}`);
+};
+
+const handleProgressVehiculeCountClick = (comparo) => {
+  router.push(`/comparo/${comparo.uuid}/vehicules`);
+};
+
+const handleCompletedTitleClick = (comparo) => {
+  router.push(`/comparo/${comparo.uuid}/analyse`);
+};
+
 // Fonction pour ouvrir le dialog d'analyse
 const openAnalyzeDialog = (comparo) => {
   selectedComparo.value = comparo;
@@ -444,6 +457,10 @@ onMounted(() => {
                 :date-formatter="formatShortDate"
                 empty-message="Aucun comparo en cours"
                 :menu-items="getProgressMenuItems"
+                :on-title-click="handleProgressTitleClick"
+                :on-vehicule-count-click="handleProgressVehiculeCountClick"
+                :is-progress-section="true"
+                :max-vehicule="maxVehicule"
             />
           </div>
         </div>
@@ -471,6 +488,9 @@ onMounted(() => {
                 :menu-items="getCompletedMenuItems"
                 :show-analyse-column="true"
                 :show-created-column="false"
+                :on-title-click="handleCompletedTitleClick"
+                :is-progress-section="false"
+                :max-vehicule="maxVehicule"
             />
           </div>
         </div>

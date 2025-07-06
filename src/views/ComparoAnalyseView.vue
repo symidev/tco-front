@@ -1438,7 +1438,7 @@ onBeforeUnmount(() => {
 
 
               <!-- Bouton de retour uniquement -->
-              <div class="flex justify-center mt-3">
+              <div class="flex justify-start mt-3">
                 <Button
                     type="button"
                     outlined

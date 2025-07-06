@@ -82,9 +82,15 @@ const router = createRouter({
             meta: { layout: 'DefaultLayout', requiresAuth: true }
         },
         {
-            path: '/calculateur',
-            name: 'calculateur',
-            component: () => import('../views/CalculateurView.vue'),
+            path: '/calculette-aen',
+            name: 'calculette-aen',
+            component: () => import('../views/CalculetteAenView.vue'),
+            meta: { layout: 'DefaultLayout', requiresAuth: true }
+        },
+        {
+            path: '/calculateur-taxes',
+            name: 'calculateur-taxes',
+            component: () => import('../views/CalculateurTaxesView.vue'),
             meta: { layout: 'DefaultLayout', requiresAuth: true }
         },
         {

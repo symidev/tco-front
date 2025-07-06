@@ -156,6 +156,19 @@ onMounted(() => {
             <p class="page-subtitle">{{ props.mode === 'edit' ? 'Modifiez les paramètres de votre comparo' : 'Créez un nouveau comparo pour comparer vos véhicules' }}</p>
           </div>
         </div>
+
+        <!-- Bouton d'action pour le mode édition -->
+        <div class="header-actions" v-if="props.mode === 'edit' && props.uuid">
+          <Button
+              severity="primary"
+              class="btn-primary"
+              @click="router.push(`/comparo/${props.uuid}/vehicules`)"
+              outlined
+          >
+            <Car class="w-4 h-4 mr-2"/>
+            Gérer les véhicules
+          </Button>
+        </div>
       </div>
 
       <!-- Loading state -->

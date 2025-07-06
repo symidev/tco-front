@@ -75,7 +75,8 @@ const menuGroups = [
     items: [
       { path: '/comparos', icon: BarChart3, label: 'Comparatifs', permissions: ['comparo', 'catalogue'] },
       { path: '/catalogues', icon: Book, label: 'Catalogues', permissions: ['catalogue'] },
-      { path: '/calculateur', icon: Calculator, label: 'Calculateur', permissions: ['catalogue'] }
+      { path: '/calculette-aen', icon: Calculator, label: 'Calculette AEN', permissions: ['catalogue'] },
+      { path: '/calculateur-taxes', icon: Calculator, label: 'Calculateur de taxes', permissions: ['catalogue'] }
     ]
   }
 ]
@@ -85,7 +86,8 @@ const allMenuItems = [
   { path: '/', icon: Home, label: 'Tableau de bord' },
   { path: '/comparos', icon: BarChart3, label: 'Comparatifs', permissions: ['comparo', 'catalogue'] },
   { path: '/catalogues', icon: Book, label: 'Catalogues', permissions: ['catalogue'] },
-  { path: '/calculateur', icon: Calculator, label: 'Calculateur', permissions: ['catalogue'] }
+  { path: '/calculette-aen', icon: Calculator, label: 'Calculette AEN', permissions: ['catalogue'] },
+  { path: '/calculateur-taxes', icon: Calculator, label: 'Calculateur de taxes', permissions: ['catalogue'] }
 ]
 
 // Filtrer les éléments du menu selon les permissions de l'utilisateur

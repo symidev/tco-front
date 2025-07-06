@@ -43,6 +43,22 @@ const props = defineProps({
   menuItems: {
     type: Function,
     required: true
+  },
+  onTitleClick: {
+    type: Function,
+    default: null
+  },
+  onVehiculeCountClick: {
+    type: Function,
+    default: null
+  },
+  isProgressSection: {
+    type: Boolean,
+    default: false
+  },
+  maxVehicule: {
+    type: Number,
+    default: 3
   }
 });
 
@@ -57,6 +73,25 @@ const showMenu = (event, data) => {
 const menuModelItems = computed(() => {
   return selectedRow.value ? props.menuItems(selectedRow.value) : [];
 });
+
+const getVehiculeCountStyle = (comparo) => {
+  const baseStyle = props.countVehiculeGetter(comparo.countVehicule);
+
+  if (props.isProgressSection) {
+    return {
+      ...baseStyle,
+      class: 'text-primary-500 cursor-pointer',
+      clickable: true
+    };
+  } else {
+    // Section "Historique" - pas de lien ni de couleur spéciale
+    return {
+      ...baseStyle,
+      class: baseStyle.class,
+      clickable: false
+    };
+  }
+};
 
 </script>
 
@@ -80,7 +115,20 @@ const menuModelItems = computed(() => {
         field="title"
         header="Titre"
         style="min-width: 10rem; width: 100%"
-    ></Column>
+    >
+      <template #body="slotProps">
+        <span
+          v-if="onTitleClick"
+          class="cursor-pointer text-primary-500 transition-colors"
+          @click="onTitleClick(slotProps.data)"
+        >
+          {{ slotProps.data.title }}
+        </span>
+        <span v-else>
+          {{ slotProps.data.title }}
+        </span>
+      </template>
+    </Column>
 
     <Column
         field="description"
@@ -100,8 +148,15 @@ const menuModelItems = computed(() => {
         class="hidden sm:table-cell"
     >
       <template #body="slotProps">
-        <div :class="countVehiculeGetter(slotProps.data.countVehicule).class">
-          {{ countVehiculeGetter(slotProps.data.countVehicule).text }}
+        <div
+          v-if="onVehiculeCountClick && getVehiculeCountStyle(slotProps.data).clickable"
+          :class="[getVehiculeCountStyle(slotProps.data).class, 'transition-colors']"
+          @click="onVehiculeCountClick(slotProps.data)"
+        >
+          {{ getVehiculeCountStyle(slotProps.data).text }}
+        </div>
+        <div v-else :class="getVehiculeCountStyle(slotProps.data).class">
+          {{ getVehiculeCountStyle(slotProps.data).text }}
         </div>
       </template>
     </Column>
