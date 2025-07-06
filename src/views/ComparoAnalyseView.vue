@@ -617,9 +617,7 @@ const loadComparoData = async () => {
     const response = await comparoService.getComparoAnalyseByUuid(uuid);
     comparo.value = response.data;
     prepareTableData();
-    console.log('Véhicules du comparo:', response.data?.vehicules);
   } catch (error) {
-    console.error('Erreur lors du chargement du comparo:', error);
     toast.add({
       severity: 'error',
       summary: 'Erreur de chargement',
@@ -1083,7 +1081,6 @@ const createPieCharts = () => {
         }
       }
     };
-    console.log(JSON.stringify(pieConfig));
     const instance = new ChartJS(ctx, pieConfig);
     pieChartInstances.value.push(instance);
   });
@@ -1873,7 +1870,7 @@ onBeforeUnmount(() => {
     height: 32px;
     font-size: 0.8rem;
   }
-  
+
   .export-text {
     display: none;
   }
