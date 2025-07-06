@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "firstbuild": "vite build",
-    "build": "rm -rf bck/* && cp -r public_html/assets bck/assets && cp public_html/index.html bck/index.html && vite build && rm -rf public_html/assets &&  cp -r ./tmp/* ./public_html/",
+    "build": "rm -rf bck/* && cp -r public_html/assets bck/assets && cp public_html/index.html bck/index.html && vite build && rm -rf public_html/assets &&  cp -r ./dist/* ./public_html/",
     "preview": "vite preview"
   },
   "dependencies": {
