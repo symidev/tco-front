@@ -223,7 +223,6 @@ const downloadFile = async (fileInfo, errorMessage) => {
     document.body.removeChild(link);
     window.URL.revokeObjectURL(blobUrl);
   } catch (error) {
-    console.error('Erreur lors du téléchargement:', error);
     toast.add({
       severity: 'error',
       summary: 'Erreur de téléchargement',
@@ -339,11 +338,9 @@ const confirmAnalyze = async () => {
       detail: 'L\'analyse du comparo a été lancée avec succès',
       life: 3000
     });
-    console.log('Véhicules analysés:', response.data.vehicules);
     router.push(`/comparo/${selectedComparo.value.uuid}/analyse`);
     closeAnalyzeDialog();
   } catch (error) {
-    console.error('Erreur lors de l\'analyse:', error);
     toast.add({
       severity: 'error',
       summary: 'Erreur',
