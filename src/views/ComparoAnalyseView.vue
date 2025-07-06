@@ -11,7 +11,7 @@ import Column from 'primevue/column';
 import Panel from 'primevue/panel';
 
 import {comparoService} from '@/services/api/comparoService';
-import {BarChart3, AreaChart, Table} from 'lucide-vue-next';
+import {BarChart3, AreaChart, Table, FileSpreadsheet, FileText} from 'lucide-vue-next';
 
 import {
   Chart as ChartJS,
@@ -1184,22 +1184,22 @@ onBeforeUnmount(() => {
                     </div>
                   </div>
                   <!-- Boutons d'action alignés à droite -->
-                  <div class="flex gap-2">
+                  <div class="flex gap-3">
                     <Button
-                        severity="success"
                         @click="downloadExcel"
-                        class="btn-primary"
-                        size="small"
+                        class="export-btn export-excel"
+                        v-tooltip.bottom="'Télécharger au format Excel (.xlsx)'"
                     >
-                      Exporter les données
+                      <FileSpreadsheet class="w-4 h-4" />
+                      <span class="export-text">Excel</span>
                     </Button>
                     <Button
-                        severity="info"
                         @click="downloadPDF"
-                        class="btn-primary"
-                        size="small"
+                        class="export-btn export-pdf"
+                        v-tooltip.bottom="'Télécharger au format PDF'"
                     >
-                      Télécharger l'analyse
+                      <FileText class="w-4 h-4" />
+                      <span class="export-text">PDF</span>
                     </Button>
                   </div>
                 </div>
@@ -1798,6 +1798,84 @@ onBeforeUnmount(() => {
   .pie-chart-container {
     width: 150px;
     height: 150px;
+  }
+}
+
+/* Styles pour les boutons d'export */
+.export-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100px;
+  height: 36px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  border-radius: 8px;
+  border: none !important;
+  color: white !important;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.export-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.export-btn:active {
+  transform: translateY(0);
+}
+
+.export-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.export-btn:hover::before {
+  left: 100%;
+}
+
+/* Bouton Excel */
+.export-excel {
+  background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 50%, #81C784 100%) !important;
+}
+
+.export-excel:hover {
+  background: linear-gradient(135deg, #5CBF60 0%, #76CB7A 50%, #91D794 100%) !important;
+}
+
+/* Bouton PDF */
+.export-pdf {
+  background: linear-gradient(135deg, #E53E3E 0%, #F56565 50%, #FC8181 100%) !important;
+}
+
+.export-pdf:hover {
+  background: linear-gradient(135deg, #EF4E4E 0%, #F97171 50%, #FC8B8B 100%) !important;
+}
+
+.export-text {
+  color: white;
+  font-weight: 500;
+}
+
+@media (max-width: 640px) {
+  .export-btn {
+    width: 80px;
+    height: 32px;
+    font-size: 0.8rem;
+  }
+  
+  .export-text {
+    display: none;
   }
 }
 

@@ -153,6 +153,14 @@ const router = createRouter({
             meta: { layout: 'DefaultLayout', requiresAuth: false }
         }
     ],
+    scrollBehavior(to, from, savedPosition) {
+        // Si il y a une position sauvegardée (navigation avec boutons back/forward)
+        if (savedPosition) {
+            return savedPosition
+        }
+        // Sinon, remonter en haut de la page
+        return { top: 0 }
+    }
 })
 
 router.beforeEach((to, from, next) => {
