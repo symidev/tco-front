@@ -574,7 +574,7 @@ const downloadFile = (url, filename) => {
 // Fonction pour télécharger le PDF d'analyse
 const downloadPDF = () => {
   if (comparo.value?.export_pdf?.url) {
-    downloadFile(comparo.value.export_pdf.url, comparo.value.export_pdf.filename);
+    window.open(comparo.value.export_pdf.url, '_blank');
   } else {
     toast.add({
       severity: 'error',
