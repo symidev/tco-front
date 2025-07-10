@@ -30,6 +30,90 @@ const router = createRouter({
             meta: { layout: 'DefaultLayout', requiresAuth: true }
         },
         {
+            path: '/catalogue/add',
+            name: 'CatalogueAdd',
+            component: () => import('../views/CatalogueForm.vue'),
+            props: { mode: 'add' },
+            meta: { layout: 'DefaultLayout', requiresAuth: true }
+        },
+        {
+            path: '/catalogue/:uuid',
+            name: 'CatalogueEdit',
+            component: () => import('../views/CatalogueForm.vue'),
+            props: route => ({ mode: 'edit', uuid: route.params.uuid }),
+            meta: { layout: 'DefaultLayout', requiresAuth: true }
+        },
+        {
+            path: '/catalogue/:uuid/categories',
+            name: 'CatalogueCategories',
+            component: () => import('../views/CatalogueDetailView.vue'),
+            props: route => ({ uuid: route.params.uuid }),
+            meta: { layout: 'DefaultLayout', requiresAuth: true }
+        },
+        // Routes catalogues avancées (Étapes 7-8 activées)
+        {
+            path: '/catalogue/:catalogueUuid/categories/add',
+            name: 'CategorieAdd',
+            component: () => import('../views/CategorieForm.vue'),
+            props: route => ({ mode: 'add', catalogueUuid: route.params.catalogueUuid }),
+            meta: { layout: 'DefaultLayout', requiresAuth: true }
+        },
+        {
+            path: '/catalogue/:catalogueUuid/categories/:categorieUuid',
+            name: 'CategorieEdit',
+            component: () => import('../views/CategorieForm.vue'),
+            props: route => ({
+                mode: 'edit',
+                catalogueUuid: route.params.catalogueUuid,
+                categorieUuid: route.params.categorieUuid
+            }),
+            meta: { layout: 'DefaultLayout', requiresAuth: true }
+        },
+        {
+            path: '/catalogue/:catalogueUuid/categories/:categorieUuid/vehicules',
+            name: 'CategorieVehicules',
+            component: () => import('../views/CategorieVehiculesView.vue'),
+            props: route => ({ 
+                catalogueUuid: route.params.catalogueUuid,
+                categorieUuid: route.params.categorieUuid
+            }),
+            meta: { layout: 'DefaultLayout', requiresAuth: true }
+        },
+        // Routes véhicules pour catalogues (Étape 8 activée)
+        {
+            path: '/catalogue/:catalogueUuid/categories/:categorieUuid/vehicules/add',
+            name: 'CatalogueVehiculeAdd',
+            component: () => import('../views/CatalogueVehiculeForm.vue'),
+            props: route => ({ 
+                mode: 'add', 
+                catalogueUuid: route.params.catalogueUuid,
+                categorieUuid: route.params.categorieUuid
+            }),
+            meta: { layout: 'DefaultLayout', requiresAuth: true }
+        },
+        {
+            path: '/catalogue/:catalogueUuid/categories/:categorieUuid/vehicules/:vehiculeUuid',
+            name: 'CatalogueVehiculeEdit',
+            component: () => import('../views/CatalogueVehiculeForm.vue'),
+            props: route => ({
+                mode: 'edit',
+                catalogueUuid: route.params.catalogueUuid,
+                categorieUuid: route.params.categorieUuid,
+                vehiculeUuid: route.params.vehiculeUuid
+            }),
+            meta: { layout: 'DefaultLayout', requiresAuth: true }
+        },
+        // TODO: Étapes 9 - Route analyse catalogue (temporairement commentée)
+        /*
+        {
+            path: '/catalogue/:uuid/analyse',
+            name: 'CatalogueAnalyse',
+            component: () => import('../views/CatalogueAnalyseView.vue'),
+            props: route => ({ uuid: route.params.uuid }),
+            meta: { layout: 'DefaultLayout', requiresAuth: true }
+        },
+        */
+        {
             path: '/comparos',
             name: 'comparos',
             component: () => import('../views/ComparosView.vue'),

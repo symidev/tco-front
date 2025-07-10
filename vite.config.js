@@ -10,7 +10,9 @@ import path from 'path'
 export default defineConfig({
   plugins: [
     vue(),
-    tailwindcss()
+    tailwindcss({
+      config: './tailwind.config.js'
+    })
   ],
   server: {
     https: {

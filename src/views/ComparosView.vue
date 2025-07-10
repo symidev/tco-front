@@ -14,7 +14,8 @@ import Select from 'primevue/select';
 import Slider from 'primevue/slider';
 
 import {comparoService} from '@/services/api/comparoService';
-import {formatShortDate} from '@/lib/date.js'
+import {formatShortDate} from '@/lib/date.js';
+import {typeRechargeOptions} from '@/lib/constants.js';
 
 const store = useStore()
 const router = useRouter()
@@ -36,18 +37,7 @@ const selectedComparo = ref(null);
 const typeRecharge = ref(null);
 const plageElec = ref([10, 80]);
 
-// Options pour le type de recharge
-const typeRechargeOptions = [
-  { label: '2.3 kW', value: 2.3 },
-  { label: '3.7 kW', value: 3.7 },
-  { label: '7.4 kW', value: 7.4 },
-  { label: '11 kW', value: 11 },
-  { label: '22 kW', value: 22 },
-  { label: '50 kW', value: 50 },
-  { label: '100 kW', value: 100 },
-  { label: '150 kW', value: 150 },
-  { label: '200 kW', value: 200 }
-];
+// Options pour le type de recharge (importées depuis constants.js)
 
 const maxVehicule = computed(() => {
   if (store.state.auth?.tokenInfo?.drupal && store.state.auth?.tokenInfo?.drupal?.nbMaxVehicules) {
