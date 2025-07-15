@@ -258,6 +258,7 @@ onMounted(() => {
             <p class="page-subtitle">Gérez les catégories de votre catalogue</p>
           </div>
         </div>
+
       </div>
 
       <!-- Loading state -->

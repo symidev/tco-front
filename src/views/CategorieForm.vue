@@ -150,6 +150,20 @@ onMounted(() => {
             <p class="page-subtitle">{{ props.mode === 'edit' ? 'Modifiez les paramètres de votre catégorie' : 'Créez une nouvelle catégorie pour organiser vos véhicules' }}</p>
           </div>
         </div>
+
+        <!-- Bouton d'action -->
+        <div class="header-actions">
+          <Button
+              severity="primary"
+              class="btn-primary"
+              v-if="!loading && props.mode === 'edit' && props.categorieUuid"
+              @click="router.push(`/catalogue/${props.catalogueUuid}/categories/${props.categorieUuid}/vehicules`)"
+              outlined
+          >
+            <Car class="w-4 h-4 mr-2"/>
+            Gérer les véhicules
+          </Button>
+        </div>
       </div>
 
       <!-- Loading state -->

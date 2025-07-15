@@ -121,12 +121,22 @@ const handleSubmit = async () => {
       })
       router.replace('/')
     } else {
-      toast.add({
-        severity: 'error',
-        summary: 'Échec de connexion',
-        detail: result.error || 'Identifiants incorrects',
-        life: 5000
-      })
+      // Si l'erreur est liée à l'abonnement, afficher un toast spécifique
+      if (result.noSubscription) {
+        toast.add({
+          severity: 'warn',
+          summary: 'Abonnement inactif',
+          detail: result.error || 'Aucun abonnement actif trouvé',
+          life: 8000
+        })
+      } else {
+        toast.add({
+          severity: 'error',
+          summary: 'Échec de connexion',
+          detail: result.error || 'Identifiants incorrects',
+          life: 5000
+        })
+      }
     }
   } catch (error) {
     toast.add({

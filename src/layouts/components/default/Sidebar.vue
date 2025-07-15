@@ -1,6 +1,6 @@
 <!-- Sidebar.vue -->
 <script setup>
-import { Car, FileText, Book, Calculator, ChevronsLeft, Home, BarChart3, Settings, Users, Building2 } from 'lucide-vue-next'
+import { Car, FileText, Book, Calculator, ChevronsLeft, BarChart3, Settings, Users, Building2 } from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
 import { useStore } from 'vuex'
 import { computed } from 'vue'
@@ -65,13 +65,7 @@ const hasPermission = (permissions) => {
 // Configuration des groupes de menu
 const menuGroups = [
   {
-    title: 'Général',
-    items: [
-      { path: '/', icon: Home, label: 'Tableau de bord' }
-    ]
-  },
-  {
-    title: 'Outils',
+    title: '',
     items: [
       { path: '/comparos', icon: BarChart3, label: 'Comparatifs', permissions: ['comparo', 'catalogue'] },
       { path: '/catalogues', icon: Book, label: 'Catalogues', permissions: ['catalogue'] },
@@ -83,7 +77,6 @@ const menuGroups = [
 
 // Liste plate pour compatibilité (deprecated - utiliser menuGroups)
 const allMenuItems = [
-  { path: '/', icon: Home, label: 'Tableau de bord' },
   { path: '/comparos', icon: BarChart3, label: 'Comparatifs', permissions: ['comparo', 'catalogue'] },
   { path: '/catalogues', icon: Book, label: 'Catalogues', permissions: ['catalogue'] },
   { path: '/calculette-aen', icon: Calculator, label: 'Calculette AEN', permissions: ['catalogue'] },

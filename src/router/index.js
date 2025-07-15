@@ -2,7 +2,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '../views/auth/LoginView.vue'
 import Registerview from '../views/auth/RegisterView.vue'
 import ForgetPasswordView from '../views/auth/ForgetPasswordView.vue'
-import HomeView from '../views/HomeView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
 import AccountLayout from '../views/account/AccountLayout.vue'
 import UserProfile from '../components/user/UserProfile.vue'
@@ -14,8 +13,27 @@ const router = createRouter({
         {
             path: '/',
             name: 'home',
-            component: HomeView,
-            meta: { layout: 'DefaultLayout', requiresAuth: true }
+            redirect: to => {
+                const token = localStorage.getItem('token')
+                if (!token) {
+                    return { name: 'login' }
+                }
+                
+                try {
+                    const tokenData = JSON.parse(atob(token.split('.')[1]))
+                    const roles = tokenData.drupal?.roles || []
+                    
+                    // Si le rôle est "catalogue", rediriger vers catalogues
+                    if (roles.includes('catalogue')) {
+                        return '/catalogues'
+                    }
+                    // Sinon rediriger vers comparos
+                    return '/comparos'
+                } catch (error) {
+                    console.error('Erreur lors de la lecture du token:', error)
+                    return '/comparos'
+                }
+            }
         },
         {
             path: '/vehicules',
@@ -261,7 +279,7 @@ router.beforeEach((to, from, next) => {
     }
     // Si l'utilisateur est connecté et essaie d'accéder à une page de connexion
     else if (token && to.path === '/login') {
-        next({ name: 'home' })
+        next({ name: 'comparos' })
     }
     // Dans tous les autres cas
     else {

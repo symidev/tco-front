@@ -16,6 +16,30 @@ export default {
 
       const { token, refresh_token } = response.data
 
+      // Vérifier les rôles de l'utilisateur
+      try {
+        const tokenData = JSON.parse(atob(token.split('.')[1]))
+        const roles = tokenData.drupal?.roles || []
+        
+        // Vérifier si l'utilisateur a au moins un des rôles requis
+        const hasValidRole = roles.includes('comparo') || roles.includes('catalogue')
+        
+        if (!hasValidRole) {
+          return { 
+            success: false, 
+            error: 'Aucun abonnement actif trouvé. Veuillez contacter l\'administrateur.',
+            noSubscription: true 
+          }
+        }
+      } catch (tokenError) {
+        console.error('Erreur lors de la vérification des rôles:', tokenError)
+        return { 
+          success: false, 
+          error: 'Erreur lors de la vérification de l\'abonnement. Veuillez réessayer.',
+          noSubscription: true 
+        }
+      }
+
       commit('setToken', token)
       commit('setRefreshToken', refresh_token)
 

@@ -16,7 +16,7 @@ onMounted(async () => {
     toast.error('Vous êtes déjà connecté', {
       description: 'Vous ne pouvez pas utiliser un lien de connexion automatique lorsque vous êtes déjà connecté.'
     })
-    router.push({name: 'home'})
+    router.push({name: 'comparos'})
     return
   }
 

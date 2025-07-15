@@ -32,10 +32,6 @@ const loading = ref(false);
 const showAnalyzeDialog = ref(false);
 const selectedCatalogue = ref(null);
 
-const maxCatalogues = computed(() => {
-  // Pour les catalogues, on peut utiliser -1 pour illimité
-  return -1;
-});
 
 const maxCategories = computed(() => {
   // Maximum 5 catégories par catalogue (en dur comme demandé)
@@ -449,7 +445,7 @@ onMounted(() => {
 
       <div class="space-y-4">
         <p class="text-surface-600 dark:text-surface-400">
-          Une fois l'analyse lancée, plus aucune modification de ce catalogue ne pourra être effectuée. 
+          Une fois l'analyse lancée, plus aucune modification de ce catalogue ne pourra être effectuée.
           Souhaitez-vous continuer ?
         </p>
 
