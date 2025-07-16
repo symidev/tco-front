@@ -51,6 +51,10 @@ export function setupApiInterceptors(store) {
                     try {
                         error.config._isRetry = true;
                         await store.dispatch('auth/refreshToken');
+                        
+                        // Charger les données partagées après refresh token
+                        store.dispatch('siteData/getSiteDataIfNeeded');
+                        
                         // Réessayer la requête originale avec le nouveau token
                         return apiClient(error.config);
                     } catch (refreshError) {

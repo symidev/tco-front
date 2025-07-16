@@ -119,6 +119,10 @@ const handleSubmit = async () => {
         detail: 'Vous êtes maintenant connecté',
         life: 3000
       })
+      
+      // Charger les données partagées après connexion
+      await store.dispatch('siteData/fetchSiteData')
+      
       router.replace('/')
     } else {
       // Si l'erreur est liée à l'abonnement, afficher un toast spécifique

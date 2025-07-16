@@ -37,6 +37,10 @@ onMounted(async () => {
       toast.success('Connexion réussie', {
         description: 'Vous avez été automatiquement connecté. Veuillez changer votre mot de passe.'
       })
+      
+      // Charger les données partagées après auto-connect
+      await store.dispatch('siteData/fetchSiteData')
+      
       // Rediriger vers la page de modification du mot de passe
       router.push({name: 'password'})
     } else {
