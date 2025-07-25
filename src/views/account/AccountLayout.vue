@@ -92,4 +92,42 @@ const activeIndex = computed(() => {
 :deep(.p-tab[aria-selected="true"] a) {
   color: white;
 }
+
+/* Styles responsives pour mobile */
+@media (max-width: 767px) {
+  :deep(.p-tablist-tab-list) {
+    margin-bottom: 1rem;
+  }
+  
+  :deep(.p-tab) {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
+  
+  :deep(.p-tab a) {
+    gap: 0.375rem;
+    font-size: 0.875rem;
+  }
+  
+  :deep(.p-tab i) {
+    font-size: 0.875rem;
+  }
+}
+
+/* Styles pour très petits écrans */
+@media (max-width: 480px) {
+  :deep(.p-tab) {
+    padding: 0.375rem 0.5rem;
+    font-size: 0.8125rem;
+  }
+  
+  :deep(.p-tab a) {
+    gap: 0.25rem;
+    font-size: 0.8125rem;
+  }
+  
+  :deep(.p-tab i) {
+    font-size: 0.8125rem;
+  }
+}
 </style>

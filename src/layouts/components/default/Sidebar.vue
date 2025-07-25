@@ -1,6 +1,6 @@
 <!-- Sidebar.vue -->
 <script setup>
-import { Car, FileText, Book, Calculator, ChevronsLeft, BarChart3, Settings, Users, Building2 } from 'lucide-vue-next'
+import { Car, FileText, Book, BookOpen, Calculator, ChevronsLeft, BarChart3, Settings, Users, Building2 } from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
 import { useStore } from 'vuex'
 import { computed } from 'vue'
@@ -67,8 +67,8 @@ const menuGroups = [
   {
     title: '',
     items: [
-      { path: '/comparos', icon: BarChart3, label: 'Comparatifs', permissions: ['comparo', 'catalogue'] },
-      { path: '/catalogues', icon: Book, label: 'Catalogues', permissions: ['catalogue'] },
+      { path: '/comparos', icon: BarChart3, label: 'COMPARATIF véhicules', permissions: ['comparo', 'catalogue'] },
+      { path: '/catalogues', icon: BookOpen, label: 'Catalogues de véhicules', permissions: ['catalogue'] },
       { path: '/calculette-aen', icon: Calculator, label: 'Calculette AEN', permissions: ['catalogue'] },
       { path: '/calculateur-taxes', icon: Calculator, label: 'Calculateur de taxes', permissions: ['catalogue'] }
     ]
@@ -77,8 +77,8 @@ const menuGroups = [
 
 // Liste plate pour compatibilité (deprecated - utiliser menuGroups)
 const allMenuItems = [
-  { path: '/comparos', icon: BarChart3, label: 'Comparatifs', permissions: ['comparo', 'catalogue'] },
-  { path: '/catalogues', icon: Book, label: 'Catalogues', permissions: ['catalogue'] },
+  { path: '/comparos', icon: BarChart3, label: 'COMPARATIF véhicules', permissions: ['comparo', 'catalogue'] },
+  { path: '/catalogues', icon: BookOpen, label: 'Catalogues de véhicules', permissions: ['catalogue'] },
   { path: '/calculette-aen', icon: Calculator, label: 'Calculette AEN', permissions: ['catalogue'] },
   { path: '/calculateur-taxes', icon: Calculator, label: 'Calculateur de taxes', permissions: ['catalogue'] }
 ]
