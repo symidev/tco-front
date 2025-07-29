@@ -100,8 +100,8 @@ const filteredMenuGroups = computed(() => {
 <template>
   <aside
       :class="[
-      'sidebar bg-gradient-to-b from-surface-900 to-surface-950 z-30 transition-all duration-300 ease-in-out flex flex-col border-r border-surface-700',
-      !props.isMobile ? 'h-screen fixed top-0 left-0 w-64' : 'h-auto w-48',
+      'sidebar z-30 transition-all duration-300 ease-in-out flex flex-col',
+      !props.isMobile ? 'bg-gradient-to-b from-surface-800 to-surface-950 h-screen fixed top-0 left-0 w-64 border-r border-surface-700' : 'h-auto w-48 mobile-sidebar',
       !props.isMobile && (props.isOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full')
     ]"
   >
@@ -171,6 +171,7 @@ const filteredMenuGroups = computed(() => {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
+
 
 /* Header */
 .sidebar-header {
@@ -294,7 +295,7 @@ const filteredMenuGroups = computed(() => {
 
 /* Mode sombre amélioré */
 @media (prefers-color-scheme: dark) {
-  .sidebar {
+  .sidebar:not(.mobile-sidebar) {
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.3);
   }
 }

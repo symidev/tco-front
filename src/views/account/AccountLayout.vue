@@ -1,12 +1,18 @@
 <script setup>
 import {ref, computed} from 'vue'
 import {useRoute, RouterLink} from 'vue-router'
+import {useStore} from 'vuex'
 import Tabs from 'primevue/tabs';
 import TabList from 'primevue/tablist';
 import Tab from 'primevue/tab';
 import { User } from 'lucide-vue-next';
+import SubscriptionInfo from '@/components/user/SubscriptionInfo.vue';
 
 const route = useRoute()
+const store = useStore()
+
+// Récupérer les données utilisateur depuis le store
+const userData = computed(() => store.state.user.user)
 
 const items = ref([
   {
@@ -35,11 +41,15 @@ const activeIndex = computed(() => {
       <div class="page-header">
         <div class="header-content">
           <div class="title-section">
-            <h1 class="page-title">
-              <User class="title-icon" />
-              Mon compte
-            </h1>
-            <p class="page-subtitle">Gérez vos informations personnelles et préférences</p>
+            <div class="title-container">
+              <h1 class="page-title">
+                <User class="title-icon" />
+                Mon compte
+              </h1>
+              <div class="subscription-container">
+                <SubscriptionInfo v-if="userData" :userData="userData" :compact="true" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -128,6 +138,32 @@ const activeIndex = computed(() => {
   
   :deep(.p-tab i) {
     font-size: 0.8125rem;
+  }
+}
+
+/* Styles pour le layout du header */
+.title-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 2rem;
+}
+
+.subscription-container {
+  flex-shrink: 0;
+}
+
+/* Responsive pour le header */
+@media (max-width: 768px) {
+  .title-container {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .subscription-container {
+    width: 100%;
   }
 }
 </style>

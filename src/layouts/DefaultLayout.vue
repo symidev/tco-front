@@ -59,7 +59,7 @@ onUnmounted(() => {
         position="left"
         :modal="true"
         :showCloseIcon="true"
-        class="w-64 p-0"
+        class="w-64 p-0 mobile-drawer-gradient bg-gradient-to-b from-surface-800 to-surface-950"
         :contentStyle="{ padding: '0', overflow: 'hidden' }"
         @hide="isOpen = false"
     >
@@ -68,7 +68,7 @@ onUnmounted(() => {
           :isMobile="isMobile"
           @toggleSidebar="toggleSidebar"
           @closeSidebar="isOpen = false"
-          class="static transform-none shadow-none w-64 bg-surface-900"
+          class="static transform-none w-64"
       />
     </Drawer>
 
@@ -94,3 +94,23 @@ onUnmounted(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Gradient pour le drawer mobile */
+:deep(.mobile-drawer-gradient) {
+  background: linear-gradient(to bottom, rgb(30 41 59), rgb(15 23 42)) !important;
+}
+
+:deep(.mobile-drawer-gradient .p-drawer-content) {
+  background: linear-gradient(to bottom, rgb(30 41 59), rgb(15 23 42)) !important;
+}
+
+:deep(.mobile-drawer-gradient .p-drawer) {
+  background: linear-gradient(to bottom, rgb(30 41 59), rgb(15 23 42)) !important;
+}
+
+/* Retirer toutes les ombres de la sidebar en mobile */
+:deep(.mobile-drawer-gradient .sidebar) {
+  box-shadow: none !important;
+}
+</style>

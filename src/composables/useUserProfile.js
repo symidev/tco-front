@@ -41,6 +41,9 @@ export function useUserProfile(toast) {
         user_is: '',
         user_charge_patronale: '',
 
+        // Logo de l'entreprise
+        user_logo: null,
+
         // Comptable info
         comptable_nom: '',
         comptable_prenom: '',
@@ -123,22 +126,22 @@ export function useUserProfile(toast) {
         }
 
         // Validation de l'intérêt de l'offre
-        if (hasCompanyInfoRef && typeof companyInfoRefObject.value.validateOffre === 'function') {
+        /*if (hasCompanyInfoRef && typeof companyInfoRefObject.value.validateOffre === 'function') {
             const isOffreValid = companyInfoRefObject.value.validateOffre()
             if (!isOffreValid) {
                 isValid = false
                 errorMessage = "Veuillez sélectionner au moins un intérêt pour l'offre"
             }
-        }
+        }*/
 
         // Validation du canal de connaissance
-        if (hasCompanyInfoRef && typeof companyInfoRefObject.value.validateConnaissance === 'function') {
+        /*if (hasCompanyInfoRef && typeof companyInfoRefObject.value.validateConnaissance === 'function') {
             const isConnaissanceValid = companyInfoRefObject.value.validateConnaissance()
             if (!isConnaissanceValid) {
                 isValid = false
                 errorMessage = "Veuillez sélectionner au moins un canal de connaissance"
             }
-        }
+        }*/
 
         if (!isValid && errorMessage) {
             toast.add({
@@ -207,6 +210,7 @@ export function useUserProfile(toast) {
                 user_siret: userData.field_user_siret || '',
                 user_is: userData.field_user_is || '',
                 user_charge_patronale: userData.field_user_charge_patronale || '',
+                user_logo: userData.field_user_logo || null,
 
                 user_connaissance: userConnaissance,
                 user_connaissance_autre: userData.field_user_connaissance_autre || '',
@@ -232,69 +236,121 @@ export function useUserProfile(toast) {
         isSaving.value = true
 
         try {
-            // Prepare API data
-            const apiData = {
+            // Check if we have a file to upload
+            const hasFileUpload = formData.value.user_logo && formData.value.user_logo instanceof File
+
+            let apiData
+
+            if (hasFileUpload) {
+                // Use FormData for file upload
+                apiData = new FormData()
 
                 // Add commercial info
-                field_commercial_nom: formData.value.commercial_nom,
-                field_commercial_prenom: formData.value.commercial_prenom,
-                field_commercial_fonction: formData.value.commercial_fonction,
-                field_commercial_tel: formData.value.commercial_tel,
-                field_commercial_rue: formData.value.commercial_rue,
-                field_commercial_cp: formData.value.commercial_cp,
-                field_commercial_ville: formData.value.commercial_ville,
+                apiData.append('field_commercial_nom', formData.value.commercial_nom)
+                apiData.append('field_commercial_prenom', formData.value.commercial_prenom)
+                apiData.append('field_commercial_fonction', formData.value.commercial_fonction)
+                apiData.append('field_commercial_tel', formData.value.commercial_tel)
+                apiData.append('field_commercial_rue', formData.value.commercial_rue)
+                apiData.append('field_commercial_cp', formData.value.commercial_cp)
+                apiData.append('field_commercial_ville', formData.value.commercial_ville)
 
                 // Add company info
-                field_user_raison_sociale: formData.value.user_raison_sociale,
-                field_user_siret: formData.value.user_siret,
-                field_user_is: formData.value.user_is,
-                field_user_charge_patronale: formData.value.user_charge_patronale,
+                apiData.append('field_user_raison_sociale', formData.value.user_raison_sociale)
+                apiData.append('field_user_siret', formData.value.user_siret)
+                apiData.append('field_user_is', formData.value.user_is)
+                apiData.append('field_user_charge_patronale', formData.value.user_charge_patronale)
+                apiData.append('field_user_logo', formData.value.user_logo)
 
-                // Add user preferences
-                field_user_offre: formData.value.user_offre,
+                // Add user preferences as JSON strings for arrays
+                apiData.append('field_user_offre', JSON.stringify(formData.value.user_offre))
+                apiData.append('field_user_connaissance', JSON.stringify(formData.value.user_connaissance.filter(item => item !== 'autre')))
+            } else {
+                // Use regular JSON object
+                apiData = {
+                    // Add commercial info
+                    field_commercial_nom: formData.value.commercial_nom,
+                    field_commercial_prenom: formData.value.commercial_prenom,
+                    field_commercial_fonction: formData.value.commercial_fonction,
+                    field_commercial_tel: formData.value.commercial_tel,
+                    field_commercial_rue: formData.value.commercial_rue,
+                    field_commercial_cp: formData.value.commercial_cp,
+                    field_commercial_ville: formData.value.commercial_ville,
 
-                // Add knowledge channels
-                // Filter out 'autre' value if present
-                field_user_connaissance: formData.value.user_connaissance.filter(item => item !== 'autre'),
+                    // Add company info
+                    field_user_raison_sociale: formData.value.user_raison_sociale,
+                    field_user_siret: formData.value.user_siret,
+                    field_user_is: formData.value.user_is,
+                    field_user_charge_patronale: formData.value.user_charge_patronale,
+
+                    // Add user preferences
+                    field_user_offre: formData.value.user_offre,
+
+                    // Add knowledge channels
+                    // Filter out 'autre' value if present
+                    field_user_connaissance: formData.value.user_connaissance.filter(item => item !== 'autre'),
+                }
             }
 
             // Only include user_connaissance_autre if 'autre' is selected
             if (formData.value.user_connaissance.includes('autre')) {
-                apiData.field_user_connaissance_autre = formData.value.user_connaissance_autre
+                if (hasFileUpload) {
+                    apiData.append('field_user_connaissance_autre', formData.value.user_connaissance_autre)
+                } else {
+                    apiData.field_user_connaissance_autre = formData.value.user_connaissance_autre
+                }
             }
 
             // Add comptable info if enabled
             if (showComptableInfo.value) {
-                apiData.field_comptable_nom = formData.value.comptable_nom
-                apiData.field_comptable_prenom = formData.value.comptable_prenom
-                apiData.field_comptable_fonction = formData.value.comptable_fonction
-                apiData.field_comptable_email = formData.value.comptable_email
-                apiData.field_comptable_tel = formData.value.comptable_tel
-                apiData.field_comptable_rue = formData.value.comptable_rue
-                apiData.field_comptable_cp = formData.value.comptable_cp
-                apiData.field_comptable_ville = formData.value.comptable_ville
+                const comptableFields = {
+                    field_comptable_nom: formData.value.comptable_nom,
+                    field_comptable_prenom: formData.value.comptable_prenom,
+                    field_comptable_fonction: formData.value.comptable_fonction,
+                    field_comptable_email: formData.value.comptable_email,
+                    field_comptable_tel: formData.value.comptable_tel,
+                    field_comptable_rue: formData.value.comptable_rue,
+                    field_comptable_cp: formData.value.comptable_cp,
+                    field_comptable_ville: formData.value.comptable_ville
+                }
+
+                if (hasFileUpload) {
+                    Object.entries(comptableFields).forEach(([key, value]) => {
+                        apiData.append(key, value)
+                    })
+                } else {
+                    Object.assign(apiData, comptableFields)
+                }
             } else {
                 // Clear comptable info if disabled
-                apiData.comptable_nom = ''
-                apiData.comptable_prenom = ''
-                apiData.comptable_fonction = ''
-                apiData.comptable_email = ''
-                apiData.comptable_tel = ''
-                apiData.comptable_rue = ''
-                apiData.comptable_cp = ''
-                apiData.comptable_ville = ''
+                const clearFields = {
+                    field_comptable_nom: '',
+                    field_comptable_prenom: '',
+                    field_comptable_fonction: '',
+                    field_comptable_email: '',
+                    field_comptable_tel: '',
+                    field_comptable_rue: '',
+                    field_comptable_cp: '',
+                    field_comptable_ville: ''
+                }
+
+                if (hasFileUpload) {
+                    Object.entries(clearFields).forEach(([key, value]) => {
+                        apiData.append(key, value)
+                    })
+                } else {
+                    Object.assign(apiData, clearFields)
+                }
             }
 
             const result = await store.dispatch('user/updateUserProfile', apiData)
 
             if (result.success) {
-                // Mise à jour des valeurs par défaut dans le token après succès de l'API
-                if (formData.value.user_is !== undefined && formData.value.user_charge_patronale !== undefined) {
-                    store.commit('auth/updateTokenDrupalDefaults', {
-                        field_is: formData.value.user_is,
-                        field_charge_patronale: formData.value.user_charge_patronale
-                    });
-                }
+                // Rafraîchir le token JWT pour récupérer les données mises à jour (incluant le logo)
+                await store.dispatch('auth/refreshToken')
+                
+                // Recharger les données utilisateur pour mettre à jour le formulaire
+                await loadUserData()
+                
                 toast.add({
                     severity: 'success',
                     summary: 'Profil mis à jour',

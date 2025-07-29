@@ -1,12 +1,14 @@
 <script setup>
-import {computed} from 'vue'
-import {Building, Mail, Hash, Percent} from 'lucide-vue-next'
+import {computed, ref, watch} from 'vue'
+import {Building, Mail, Hash, Percent, Upload, X} from 'lucide-vue-next'
 import Card from 'primevue/card'
 import InputText from 'primevue/inputtext'
 import Checkbox from 'primevue/checkbox'
 import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 import FloatLabel from 'primevue/floatlabel'
+import Button from 'primevue/button'
+import Image from 'primevue/image'
 
 // Props
 const props = defineProps({
@@ -93,6 +95,69 @@ const connaissanceOptions = [
   {value: 'facebook', label: 'Facebook'},
   {value: 'autre', label: 'Autre'}
 ]
+
+// Logo file handling
+const fileInput = ref(null)
+const previewUrl = ref(null)
+
+// Fonction pour ouvrir le sélecteur de fichier
+const openFileDialog = () => {
+  fileInput.value?.click()
+}
+
+// Fonction pour gérer la sélection de fichier
+const handleFileSelect = (event) => {
+  const file = event.target.files[0]
+  if (file) {
+    // Vérifier le type de fichier
+    if (!file.type.startsWith('image/')) {
+      return
+    }
+    
+    // Créer une URL de prévisualisation
+    previewUrl.value = URL.createObjectURL(file)
+    
+    // Mettre à jour le formData
+    props.formData.user_logo = file
+  }
+}
+
+// Fonction pour supprimer le logo
+const removeLogo = () => {
+  if (previewUrl.value) {
+    URL.revokeObjectURL(previewUrl.value)
+  }
+  previewUrl.value = null
+  props.formData.user_logo = null
+  if (fileInput.value) {
+    fileInput.value.value = ''
+  }
+}
+
+// Computed pour l'URL de prévisualisation
+const logoPreviewUrl = computed(() => {
+  // Priorité à la prévisualisation locale (nouveau fichier sélectionné)
+  if (previewUrl.value) {
+    return previewUrl.value
+  }
+  // Sinon, afficher le logo existant (URL string)
+  if (props.formData.user_logo && typeof props.formData.user_logo === 'string') {
+    return props.formData.user_logo
+  }
+  return null
+})
+
+// Initialisation et surveillance du logo existant
+watch(() => props.formData.user_logo, (newLogo, oldLogo) => {
+  // Si c'est une nouvelle URL (pas un File), reset la prévisualisation locale
+  if (newLogo && typeof newLogo === 'string' && newLogo !== oldLogo) {
+    // Reset la prévisualisation locale pour afficher le logo du serveur
+    if (previewUrl.value) {
+      URL.revokeObjectURL(previewUrl.value)
+      previewUrl.value = null
+    }
+  }
+}, { immediate: true })
 
 </script>
 
@@ -187,6 +252,67 @@ const connaissanceOptions = [
           </FloatLabel>
         </div>
 
+        <!-- Logo de l'entreprise (prend toute la largeur) -->
+        <div class="grid gap-2 col-span-1 md:col-span-2">
+          <label class="text-primary font-medium">Logo de l'entreprise</label>
+          
+          <!-- Input file caché -->
+          <input 
+            ref="fileInput"
+            type="file" 
+            accept="image/*" 
+            @change="handleFileSelect"
+            class="hidden"
+          />
+          
+          <!-- Zone logo compacte -->
+          <div class="logo-section">
+            <!-- Logo existant -->
+            <div v-if="logoPreviewUrl" class="logo-preview">
+              <div class="logo-thumbnail">
+                <img 
+                  :src="logoPreviewUrl" 
+                  alt="Logo de l'entreprise"
+                  class="logo-img"
+                />
+              </div>
+              <div class="logo-info">
+                <div class="logo-actions-inline">
+                  <Button 
+                    type="button"
+                    text
+                    size="small"
+                    @click="openFileDialog"
+                    class="text-primary"
+                  >
+                    <Upload class="h-3 w-3 mr-1"/>
+                    Changer
+                  </Button>
+                  <span class="text-gray-400">|</span>
+                  <Button 
+                    type="button"
+                    text
+                    size="small"
+                    @click="removeLogo"
+                    class="text-red-500"
+                  >
+                    <X class="h-3 w-3 mr-1"/>
+                    Supprimer
+                  </Button>
+                </div>
+                <small class="format-hint">JPG, PNG, GIF</small>
+              </div>
+            </div>
+            
+            <!-- Upload zone compacte -->
+            <div v-else class="upload-compact" @click="openFileDialog">
+              <Upload class="upload-icon-small"/>
+              <span class="upload-text-inline">Télécharger un logo</span>
+              <small class="format-hint">JPG, PNG, GIF</small>
+            </div>
+          </div>
+        </div>
+
       </div>
     </template>
   </Card>
@@ -202,5 +328,100 @@ const connaissanceOptions = [
 :deep([invalid="true"]),
 :deep(.p-invalid) {
   border-color: var(--red-500) !important;
+}
+
+/* Styles pour le logo compact */
+.logo-section {
+  border: 1px solid var(--p-content-border-color, #dee2e6);
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+  background-color: var(--p-content-background, white);
+}
+
+.logo-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo-thumbnail {
+  width: 60px;
+  height: 60px;
+  border: 1px solid var(--p-content-border-color, #dee2e6);
+  border-radius: 0.375rem;
+  overflow: hidden;
+  background-color: white;
+  flex-shrink: 0;
+}
+
+.logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 0.25rem;
+}
+
+.logo-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.logo-actions-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.upload-compact {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s;
+}
+
+.upload-compact:hover {
+  background-color: var(--p-content-background, #0f172a);
+}
+
+.upload-icon-small {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--p-primary-color, #0ea5e9);
+  flex-shrink: 0;
+}
+
+.upload-text-inline {
+  color: var(--p-primary-color, #0ea5e9);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.format-hint {
+  color: var(--p-text-muted-color, #6b7280);
+  font-size: 0.75rem;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .logo-preview {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .logo-actions-inline {
+    flex-wrap: wrap;
+  }
+  
+  .upload-compact {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
 }
 </style>

@@ -24,19 +24,40 @@ export default {
       commit('setLoading', true)
       commit('setError', null)
 
-      const response = await apiClient({
-        method: 'patch',
-        url: '/api/user',
-        headers: {
+      const isFormData = userData instanceof FormData
+      
+      const config = {
+        method: 'post',
+        url: '/api/user/update',
+      }
+      
+      if (isFormData) {
+        // For FormData, let axios set the Content-Type automatically
+        config.data = userData
+      } else {
+        // For JSON data
+        config.headers = {
           'Content-Type': 'application/vnd.api+json'
-        },
-        data: JSON.stringify(userData)
-      })
+        }
+        config.data = JSON.stringify(userData)
+      }
+
+      const response = await apiClient(config)
 
       // Update local user data with the changes
-      for (const [key, value] of Object.entries(userData)) {
-        const fieldName = key.startsWith('field_') ? key : `field_${key}`
-        commit('updateUserField', { field: fieldName, value })
+      if (isFormData) {
+        // For FormData, iterate through entries
+        for (const [key, value] of userData.entries()) {
+          if (key.startsWith('field_')) {
+            commit('updateUserField', { field: key, value })
+          }
+        }
+      } else {
+        // For regular object
+        for (const [key, value] of Object.entries(userData)) {
+          const fieldName = key.startsWith('field_') ? key : `field_${key}`
+          commit('updateUserField', { field: fieldName, value })
+        }
       }
 
       return { success: true, data: response.data }
