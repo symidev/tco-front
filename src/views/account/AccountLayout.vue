@@ -42,10 +42,20 @@ const activeIndex = computed(() => {
         <div class="header-content">
           <div class="title-section">
             <div class="title-container">
-              <h1 class="page-title">
-                <User class="title-icon" />
-                Mon compte
-              </h1>
+              <div class="flex flex-col gap-2">
+                <h1 class="page-title">
+                  <User class="title-icon" />
+                  Mon compte
+                </h1>
+                <a 
+                  href="/src/assets/doc/cgu.pdf" 
+                  download="Conditions_Generales_Utilisation.pdf"
+                  class="text-sm text-white hover:text-gray-200 hover:bg-gray-700 hover:bg-opacity-30 px-2 py-1 rounded transition-all duration-200 flex items-center gap-1 w-fit mt-6"
+                >
+                  <i class="pi pi-download text-xs mr-1"></i>
+                  Télécharger les CGU
+                </a>
+              </div>
               <div class="subscription-container">
                 <SubscriptionInfo v-if="userData" :userData="userData" :compact="true" />
               </div>

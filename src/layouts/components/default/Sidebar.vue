@@ -1,9 +1,15 @@
 <!-- Sidebar.vue -->
 <script setup>
-import { Car, FileText, Book, BookOpen, Calculator, ChevronsLeft, BarChart3, Settings, Users, Building2 } from 'lucide-vue-next'
+import { Car, FileText, Book, BookOpen, Calculator, ChevronsLeft, BarChart3, Settings, Users, Building2, HelpCircle } from 'lucide-vue-next'
 import { useRoute } from 'vue-router'
 import { useStore } from 'vuex'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import Dialog from 'primevue/dialog'
+import InputText from 'primevue/inputtext'
+import Textarea from 'primevue/textarea'
+import Button from 'primevue/button'
+import { useToast } from 'primevue/usetoast'
+import apiService from '@/services/api/apiService'
 
 const props = defineProps({
   isOpen: Boolean,
@@ -95,6 +101,67 @@ const filteredMenuGroups = computed(() => {
     items: group.items.filter(item => hasPermission(item.permissions))
   })).filter(group => group.items.length > 0)
 })
+
+// Dialog d'assistance
+const showAssistanceDialog = ref(false)
+const assistanceForm = ref({
+  sujet: '',
+  message: ''
+})
+const isSubmitting = ref(false)
+const toast = useToast()
+
+// Ouvrir le dialog d'assistance
+const openAssistanceDialog = () => {
+  showAssistanceDialog.value = true
+  assistanceForm.value = { sujet: '', message: '' }
+}
+
+// Fermer le dialog d'assistance
+const closeAssistanceDialog = () => {
+  showAssistanceDialog.value = false
+  assistanceForm.value = { sujet: '', message: '' }
+}
+
+// Envoyer le formulaire d'assistance
+const submitAssistance = async () => {
+  if (!assistanceForm.value.sujet.trim() || !assistanceForm.value.message.trim()) {
+    toast.add({
+      severity: 'warn',
+      summary: 'Champs requis',
+      detail: 'Veuillez remplir tous les champs',
+      life: 3000
+    })
+    return
+  }
+
+  isSubmitting.value = true
+  
+  try {
+    const response = await apiService.post('/api/assistance', {
+      sujet: assistanceForm.value.sujet,
+      message: assistanceForm.value.message
+    })
+
+    toast.add({
+      severity: 'success',
+      summary: 'Message envoyé',
+      detail: 'Votre demande d\'assistance a été envoyée avec succès',
+      life: 4000
+    })
+    closeAssistanceDialog()
+  } catch (error) {
+    console.error('Erreur assistance:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Une erreur est survenue lors de l\'envoi de votre message',
+      life: 4000
+    })
+  } finally {
+    isSubmitting.value = false
+  }
+}
 </script>
 
 <template>
@@ -154,15 +221,79 @@ const filteredMenuGroups = computed(() => {
       </div>
     </nav>
 
-    <!-- Footer de la sidebar
+    <!-- Footer de la sidebar -->
     <div class="sidebar-footer p-4 border-t border-surface-700/50">
-      <div class="text-center">
-        <div class="text-xs text-surface-500">
-          Version 1.0.0
-        </div>
-      </div>
-    </div>-->
+      <button
+        @click="openAssistanceDialog"
+        class="assistance-link flex items-center justify-center w-full px-3 py-2 text-sm text-surface-300 hover:text-white hover:bg-surface-800/50 rounded-lg transition-all duration-200 group"
+      >
+        <HelpCircle class="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
+        <span class="font-medium">Assistance</span>
+      </button>
+    </div>
   </aside>
+
+  <!-- Dialog d'assistance -->
+  <Dialog
+    v-model:visible="showAssistanceDialog"
+    :style="{ width: '90vw', maxWidth: '500px' }"
+    :breakpoints="{ '960px': '75vw', '640px': '90vw' }"
+    header="Demande d'assistance"
+    :modal="true"
+    :closable="!isSubmitting"
+    :dismissableMask="!isSubmitting"
+    class="assistance-dialog"
+  >
+    <div class="flex flex-col gap-6 pt-4">
+      <div class="field">
+        <label for="sujet" class="block text-sm font-medium text-surface-700 dark:text-surface-200 mb-2">
+          Sujet *
+        </label>
+        <InputText
+          id="sujet"
+          v-model="assistanceForm.sujet"
+          :disabled="isSubmitting"
+          placeholder="Décrivez brièvement votre demande"
+          class="w-full"
+        />
+      </div>
+
+      <div class="field">
+        <label for="message" class="block text-sm font-medium text-surface-700 dark:text-surface-200 mb-2">
+          Message *
+        </label>
+        <Textarea
+          id="message"
+          v-model="assistanceForm.message"
+          :disabled="isSubmitting"
+          placeholder="Décrivez votre problème ou votre question en détail..."
+          rows="5"
+          class="w-full"
+        />
+      </div>
+    </div>
+
+    <template #footer>
+      <div class="flex justify-end gap-3">
+        <Button
+          label="Annuler"
+          icon="pi pi-times"
+          :disabled="isSubmitting"
+          @click="closeAssistanceDialog"
+          outlined
+          severity="secondary"
+          class="btn-primary"
+        />
+        <Button
+          label="Envoyer"
+          icon="pi pi-send"
+          :loading="isSubmitting"
+          @click="submitAssistance"
+          class="p-button-primary"
+        />
+      </div>
+    </template>
+  </Dialog>
 </template>
 
 <style scoped>
@@ -289,7 +420,13 @@ const filteredMenuGroups = computed(() => {
   }
 
   .sidebar-footer {
-    display: none;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .assistance-link {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
   }
 }
 
@@ -305,5 +442,36 @@ const filteredMenuGroups = computed(() => {
   transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
   transition-duration: 200ms;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Styles pour le bouton d'assistance */
+.assistance-link:hover .lucide {
+  transform: scale(1.1);
+}
+
+/* Styles pour le dialog d'assistance */
+:deep(.assistance-dialog .p-dialog-header) {
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
+  color: white;
+  border-radius: 6px 6px 0 0;
+}
+
+:deep(.assistance-dialog .p-dialog-header .p-dialog-title) {
+  color: white;
+  font-weight: 600;
+}
+
+:deep(.assistance-dialog .p-dialog-header .p-dialog-header-icon) {
+  color: white;
+}
+
+:deep(.assistance-dialog .p-dialog-content) {
+  padding: 1.5rem;
+}
+
+:deep(.assistance-dialog .p-dialog-footer) {
+  padding: 1rem 1.5rem;
+  background: var(--surface-50);
+  border-radius: 0 0 6px 6px;
 }
 </style>
