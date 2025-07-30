@@ -271,7 +271,6 @@ const prepareTableData = () => {
       id: 'infos_vehicule',
       title: 'Infos véhicule',
       rows: [
-        {id: 'loueur', name: 'Loueur', getValue: (v) => v.loueur?.name || '-'},
         {id: 'marque', name: 'Marque', getValue: (v) => v.marque?.name || '-'},
         {id: 'modele', name: 'Modèle', getValue: (v) => v.modele?.title || '-'},
         {
@@ -741,12 +740,18 @@ const getVehicleLabel = (vehicule) => {
   const modele = vehicule.modele?.title || '';
   const moteur = vehicule.modele?.moteur || '';
   const finition = vehicule.finition || '';
+  const loueur = vehicule.loueur?.name || '';
 
   let label = `${marque} ${modele}`;
   if (moteur) {
     label += ` ${moteur}`;
   } else if (finition) {
     label += ` ${finition}`;
+  }
+  
+  // Ajouter le loueur entre parenthèses s'il existe
+  if (loueur) {
+    label += ` (${loueur})`;
   }
 
   return label.trim();
@@ -1227,6 +1232,21 @@ onBeforeUnmount(() => {
                       <div class="text-xs text-blue-400 font-medium">
                         {{ vehicule?.modele?.moteur ? vehicule?.modele?.moteur : vehicule?.finition }}
                       </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Ligne du loueur collée à l'en-tête -->
+                  <div class="comparison-header-grid gap-0" :style="`--total-columns: ${comparo.vehicules.length + 1}`">
+                    <div
+                        class="header-criteria bg-surface-900 p-2 font-medium text-white border-0 text-sm flex items-center">
+                      Loueur
+                    </div>
+                    <div
+                        v-for="(vehicule, index) in comparo.vehicules"
+                        :key="'loueur_'+vehicule.id"
+                        class="bg-surface-900 text-center p-2 border-0 text-sm flex items-center justify-center text-white font-medium"
+                    >
+                      {{ vehicule.loueur?.name || '-' }}
                     </div>
                   </div>
                 </div>
