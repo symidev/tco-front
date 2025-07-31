@@ -1942,4 +1942,14 @@ onBeforeUnmount(() => {
   background-color: var(--p-surface-800) !important;
 }
 
+/* Border gauche sur tous les TD sauf le premier de chaque ligne dans tous les datatables */
+:deep(.comparison-table .p-datatable-tbody > tr > td:not(:first-child)) {
+  border-left: 1px solid var(--p-gray-300) !important;
+}
+
+/* Border gauche sur les colonnes de l'en-tête sauf la première */
+.comparison-header-grid > div:not(:first-child) {
+  border-left: 1px solid var(--p-gray-300) !important;
+}
+
 </style>
