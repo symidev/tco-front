@@ -61,6 +61,17 @@ const malus = ref(null);
 const loading = ref(false);
 const hasResults = ref(false);
 
+// Fonction pour scroller vers les résultats avec animation
+const scrollToResults = () => {
+  const resultsElement = document.querySelector('.section-card.animate-fade-in');
+  if (resultsElement) {
+    resultsElement.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    });
+  }
+};
+
 // Fonction pour calculer via l'API
 const calculer = async () => {
   if (!isFormValid.value) {
@@ -93,6 +104,11 @@ const calculer = async () => {
     taxeMasse.value = response.data.taxe_masse;
     malus.value = response.data.malus;
     hasResults.value = true;
+    
+    // Scroll vers les résultats après un court délai pour permettre l'affichage
+    setTimeout(() => {
+      scrollToResults();
+    }, 100);
   } catch (error) {
     console.error('Erreur lors du calcul des taxes:', error);
     toast.add({

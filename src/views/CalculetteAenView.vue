@@ -43,6 +43,17 @@ const baseLoyer = ref(null);
 const loading = ref(false);
 const hasResults = ref(false);
 
+// Fonction pour scroller vers les résultats avec animation
+const scrollToResults = () => {
+  const resultsElement = document.querySelector('.section-card.animate-fade-in');
+  if (resultsElement) {
+    resultsElement.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    });
+  }
+};
+
 // Fonction pour calculer via l'API
 const calculer = async () => {
   if (!isFormValid.value) {
@@ -75,6 +86,11 @@ const calculer = async () => {
     tauxAenLoyer.value = response.data.taux_loyer;
     baseLoyer.value = response.data.montant_loyer;
     hasResults.value = true;
+    
+    // Scroll vers les résultats après un court délai pour permettre l'affichage
+    setTimeout(() => {
+      scrollToResults();
+    }, 100);
   } catch (error) {
     console.error('Erreur lors du calcul AEN:', error);
     toast.add({
