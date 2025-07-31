@@ -455,6 +455,7 @@ const prepareTableData = () => {
     {
       id: 'tco',
       title: 'TCO',
+      getClass: (v) => 'tco-section',
       rows: [
         {
           id: 'tco_mensuel', name: 'TCO mensuel',
@@ -748,7 +749,7 @@ const getVehicleLabel = (vehicule) => {
   } else if (finition) {
     label += ` ${finition}`;
   }
-  
+
   // Ajouter le loueur entre parenthèses s'il existe
   if (loueur) {
     label += ` (${loueur})`;
@@ -1234,7 +1235,7 @@ onBeforeUnmount(() => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <!-- Ligne du loueur collée à l'en-tête -->
                   <div class="comparison-header-grid gap-0" :style="`--total-columns: ${comparo.vehicules.length + 1}`">
                     <div
@@ -1257,18 +1258,21 @@ onBeforeUnmount(() => {
                     <!-- Header de section -->
                     <div
                         class="section-header-custom bg-surface-900 p-3 border-0 shadow-sm hover:shadow-md transition-all duration-200 rounded-t-lg"
-                        :class="{ 'cursor-pointer': sectionsData[section.id]?.hasNonColoredRows }"
+                        :class="[
+          section.getClass ? section.getClass() : '',
+          { 'cursor-pointer': sectionsData[section.id]?.hasNonColoredRows }
+        ]"
                         @click="sectionsData[section.id]?.hasNonColoredRows && toggleSection(section.id)">
                       <div class="flex items-center gap-2 w-full">
                         <span class="font-medium text-white text-lg">{{ section.title }}</span>
                         <div v-if="sectionsData[section.id]?.hasNonColoredRows" class="ml-auto flex items-center gap-2">
-                          <span class="text-xs text-gray-300 hidden sm:inline">
+                          <span class="text-xs text-white hidden sm:inline">
                             {{
                               expandedSections.has(section.id) ? 'Cliquez ici pour masquer' : 'Cliquez ici pour voir plus'
                             }}
                           </span>
                           <div
-                              class="bg-amber-500 hover:bg-amber-400 rounded-full p-2 transition-all duration-200 transform hover:scale-110 shadow-lg">
+                              class="bg-amber-500 hover:bg-amber-500 rounded-full p-2 transition-all duration-200 transform hover:scale-110 shadow-lg">
                             <svg
                                 class="w-4 h-4 text-white transition-transform duration-300"
                                 :class="{ 'rotate-180': expandedSections.has(section.id) }"
@@ -1301,7 +1305,7 @@ onBeforeUnmount(() => {
                         <DataTable
                             v-if="sectionsData[section.id]?.hasNonColoredRows && expandedSections.has(section.id)"
                             :value="sectionsData[section.id].nonColoredRows"
-                            class="comparison-table comparison-animate-load"
+                            class="comparison-table comparison-animate-load collapsed-by-default"
                             size="small"
                             :showHeaders="false"
                             :rowHover="true"
@@ -1894,6 +1898,48 @@ onBeforeUnmount(() => {
   .export-text {
     display: none;
   }
+}
+
+/* Styles spécifiques pour la section TCO */
+.tco-section {
+  background-color: var(--p-amber-500) !important; /* bg-amber-500 */
+}
+
+.tco-section:hover {
+  background-color: var(--p-amber-500) !important; /* bg-amber-400 */
+}
+
+/* Style pour les lignes de données dans la section TCO */
+.tco-section ~ .section-content .comparison-grid .grid-row:nth-child(even) {
+  background-color: color-mix(in srgb, var(--p-amber-500) 10%, transparent) !important; /* bg-amber-500 avec transparence */
+}
+
+.tco-section ~ .section-content .comparison-grid .grid-row:nth-child(odd) {
+  background-color: color-mix(in srgb, var(--p-amber-500) 5%, transparent) !important; /* bg-amber-400 avec transparence */
+}
+
+/* Border pour le contenu de la section TCO */
+.section-content-wrapper[data-section-id="tco"] {
+  border: 2px solid var(--p-amber-500) !important;
+}
+
+/* Supprimer la bordure bottom de tous les tds de la dernière ligne dans les DataTables */
+:deep(.p-datatable-tbody > tr:last-child > td) {
+  border-bottom: none !important;
+}
+
+/* Pour les tables collapsées par défaut, remettre la bordure bottom sur la dernière ligne */
+:deep(.collapsed-by-default .p-datatable-tbody > tr:last-child > td) {
+  border-bottom: 1px solid var(--p-datatable-body-cell-border-color) !important;
+}
+
+/* Style spécifique pour le badge de collapse de la section TCO */
+.tco-section .bg-amber-500 {
+  background-color: var(--p-surface-900) !important;
+}
+
+.tco-section .bg-amber-500:hover {
+  background-color: var(--p-surface-800) !important;
 }
 
 </style>
