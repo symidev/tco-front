@@ -219,12 +219,40 @@ const analyzeCatalogue = () => {
   }
   
   // Si toutes les conditions sont remplies, lancer l'analyse
-  // TODO: Étapes 9 - Implémenter l'analyse
-  toast.add({
-    severity: 'info',
-    summary: 'Analyse en cours de développement',
-    detail: 'La fonctionnalité d\'analyse sera disponible prochainement',
-    life: 3000
+  confirm.require({
+    message: 'Lancer l\'analyse de ce catalogue ?',
+    header: 'Confirmer l\'analyse',
+    icon: 'pi pi-chart-bar',
+    acceptLabel: 'Analyser',
+    rejectLabel: 'Annuler',
+    acceptClass: 'p-button-primary',
+    accept: async () => {
+      loading.value = true;
+      try {
+        await catalogueService.analyzeCatalogue(catalogue.value.uuid);
+        
+        toast.add({
+          severity: 'success',
+          summary: 'Analyse lancée',
+          detail: 'L\'analyse du catalogue a été lancée avec succès',
+          life: 3000
+        });
+        
+        // Rediriger vers la vue d'analyse
+        router.push(`/catalogue/${catalogue.value.uuid}/analyse`);
+        
+      } catch (error) {
+        console.error('Erreur lors du lancement de l\'analyse:', error);
+        toast.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: error.response?.data?.error || 'Erreur lors du lancement de l\'analyse',
+          life: 5000
+        });
+      } finally {
+        loading.value = false;
+      }
+    }
   });
 };
 

@@ -276,14 +276,38 @@ const closeAnalyzeDialog = () => {
 
 // Fonction pour confirmer l'analyse
 const confirmAnalyze = async () => {
-  // TODO: Étapes 9 - Analyse temporairement désactivée
-  toast.add({
-    severity: 'info',
-    summary: 'Fonctionnalité en développement',
-    detail: 'L\'analyse des catalogues sera disponible prochainement',
-    life: 3000
-  });
-  closeAnalyzeDialog();
+  if (!selectedCatalogue.value) return;
+  
+  loading.value = true;
+  try {
+    await catalogueService.analyzeCatalogue(selectedCatalogue.value.uuid);
+    
+    toast.add({
+      severity: 'success',
+      summary: 'Analyse lancée',
+      detail: 'L\'analyse du catalogue a été lancée avec succès',
+      life: 3000
+    });
+    
+    closeAnalyzeDialog();
+    
+    // Recharger les catalogues pour voir les changements
+    await fetchCatalogues();
+    
+    // Rediriger vers la vue d'analyse
+    router.push(`/catalogue/${selectedCatalogue.value.uuid}/analyse`);
+    
+  } catch (error) {
+    console.error('Erreur lors du lancement de l\'analyse:', error);
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: error.response?.data?.error || 'Erreur lors du lancement de l\'analyse',
+      life: 5000
+    });
+  } finally {
+    loading.value = false;
+  }
 };
 
 // Équivalent à mounted dans l'option API

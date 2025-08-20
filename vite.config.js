@@ -19,7 +19,7 @@ export default defineConfig({
       key: fs.readFileSync(path.resolve(__dirname, './ssl/server.key')),
       cert: fs.readFileSync(path.resolve(__dirname, './ssl/server.crt')),
     },
-    port: 5173, // port par défaut de Vite
+    port: 5174, // port personnalisé
   },
   resolve: {
     alias: {

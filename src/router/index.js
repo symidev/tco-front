@@ -121,8 +121,6 @@ const router = createRouter({
             }),
             meta: { layout: 'DefaultLayout', requiresAuth: true }
         },
-        // TODO: Étapes 9 - Route analyse catalogue (temporairement commentée)
-        /*
         {
             path: '/catalogue/:uuid/analyse',
             name: 'CatalogueAnalyse',
@@ -130,7 +128,6 @@ const router = createRouter({
             props: route => ({ uuid: route.params.uuid }),
             meta: { layout: 'DefaultLayout', requiresAuth: true }
         },
-        */
         {
             path: '/comparos',
             name: 'comparos',
