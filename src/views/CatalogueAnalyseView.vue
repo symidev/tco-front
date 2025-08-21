@@ -11,6 +11,7 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Panel from 'primevue/panel';
 import ToggleSwitch from 'primevue/toggleswitch';
+import Checkbox from 'primevue/checkbox';
 
 // Icons
 import { BarChart3, AreaChart, FileSpreadsheet, FileText, Table } from 'lucide-vue-next';
@@ -27,6 +28,7 @@ const catalogue = ref(null);
 const loading = ref(true);
 const displayMode = ref('table'); // 'table' ou 'charts'
 const expandedSections = ref(new Set());
+const selectedCategories = ref(new Set());
 
 // Responsive scroll management
 const headerScrollContainer = ref(null);
@@ -42,6 +44,18 @@ const canDownloadFiles = computed(() => {
   return catalogue.value?.export_pdf || catalogue.value?.export_xls;
 });
 
+// Computed pour les catégories disponibles
+const availableCategories = computed(() => {
+  return catalogue.value?.categories || [];
+});
+
+// Initialiser toutes les catégories comme sélectionnées par défaut
+const initializeCategories = () => {
+  if (catalogue.value?.categories) {
+    selectedCategories.value = new Set(catalogue.value.categories.map(cat => cat.uuid));
+  }
+};
+
 // Computed pour calculer le TCO moyen
 const getTCOMoyen = computed(() => {
   if (!getAllVehicules().length) return 0;
@@ -56,13 +70,16 @@ const loadCatalogueData = async () => {
   try {
     loading.value = true;
     const uuid = route.params.uuid;
-    
+
     const response = await catalogueService.getCatalogueAnalyseByUuid(uuid);
     catalogue.value = response.data;
+
+    // Initialiser toutes les catégories comme sélectionnées
+    initializeCategories();
     
     // Préparer les données pour les tableaux
     prepareTableData();
-    
+
   } catch (error) {
     console.error('Erreur lors du chargement des données:', error);
     toast.add({
@@ -112,17 +129,17 @@ const prepareTableData = () => {
         { id: 'vitesse_recharge', name: 'Capacité de recharge de la batterie', getValue: (v) => v.vitesse_recharge_batterie ? `${v.vitesse_recharge_batterie} kW` : '-' },
         { id: 'prix', name: 'Prix du véhicule non remisé', getValue: (v) => formatCurrency(v.prix || 0) },
         { id: 'prix_options', name: 'Montant option(s) non remisé', getValue: (v) => formatCurrency(v.prix_options || 0) },
-        { 
-          id: 'prix_total', 
-          name: 'Prix total avec options', 
+        {
+          id: 'prix_total',
+          name: 'Prix total avec options',
           getValue: (v) => formatCurrency((v.prix || 0) + (v.prix_options || 0)),
           field: 'prix_vehicule',
           getClass: (v) => getCellClass((v.prix || 0) + (v.prix_options || 0), 'prix_vehicule')
         },
         { id: 'remise', name: 'Remise en %', getValue: (v) => formatPercent(v.remise || 0) },
-        { 
-          id: 'prix_remise', 
-          name: 'Prix remisé TTC', 
+        {
+          id: 'prix_remise',
+          name: 'Prix remisé TTC',
           getValue: (v) => {
             const prixTotal = (v.prix || 0) + (v.prix_options || 0);
             const remiseDecimal = (v.remise || 0) / 100;
@@ -154,16 +171,16 @@ const prepareTableData = () => {
         { id: 'badge_telepeage', name: 'Badge Télépéage', getValue: (v) => formatCurrency(v.badge_telepeage || 0) },
         { id: 'pastille_critair', name: 'Pastille Crit\'Air', getValue: (v) => formatCurrency(v.vignette_critair || 0) },
         { id: 'autre_cout', name: 'Autre coût', getValue: (v) => formatCurrency(v.autre_cout || 0) },
-        { 
-          id: 'loyer_total', 
-          name: 'Loyer total', 
+        {
+          id: 'loyer_total',
+          name: 'Loyer total',
           getValue: (v) => formatCurrency(v.calcul?.loyer_total || 0),
           field: 'loyer_total',
           getClass: (v) => getCellClass(v.calcul?.loyer_total || 0, 'loyer_total')
         },
-        { 
-          id: 'prk_contrat', 
-          name: 'PRK /km', 
+        {
+          id: 'prk_contrat',
+          name: 'PRK /km',
           getValue: (v) => formatCurrency(v.calcul?.prk || 0),
           field: 'prk_contrat',
           getClass: (v) => getCellClass(v.calcul?.prk || 0, 'prk_contrat')
@@ -178,9 +195,9 @@ const prepareTableData = () => {
         { id: 'taxe_co2', name: 'Taxe C0² (annuelle)', getValue: (v) => formatCurrency(v.calcul?.taxe_co2 || 0) },
         { id: 'taxe_polluant', name: 'Taxe polluants (annuelle)', getValue: (v) => formatCurrency(v.calcul?.taxe_polluant || 0) },
         { id: 'taxe_masse', name: 'Taxe à la masse (une fois)', getValue: (v) => formatCurrency(v.calcul?.taxe_masse || 0) },
-        { 
-          id: 'fiscalite_mensuelle', 
-          name: 'Fiscalité mensuelle', 
+        {
+          id: 'fiscalite_mensuelle',
+          name: 'Fiscalité mensuelle',
           getValue: (v) => formatCurrency(v.calcul?.fiscalite_mensuel || 0),
           field: 'fiscalite',
           getClass: (v) => getCellClass(v.calcul?.fiscalite_mensuel || 0, 'fiscalite')
@@ -193,9 +210,9 @@ const prepareTableData = () => {
       rows: [
         { id: 'energie_thermique', name: 'Prix de l\'énergie Thermique €', getValue: (v) => v.calcul?.prix_energie_thermique ? formatCurrency(v.calcul.prix_energie_thermique) : '-' },
         { id: 'energie_electrique', name: 'Prix de l\'énergie Electrique €', getValue: (v) => v.calcul?.prix_energie_electrique ? formatCurrency(v.calcul.prix_energie_electrique) : '-' },
-        { 
-          id: 'budget_energie_mensuel', 
-          name: 'Budget énergie mensuel', 
+        {
+          id: 'budget_energie_mensuel',
+          name: 'Budget énergie mensuel',
           getValue: (v) => formatCurrency(v.calcul?.budget_mensuel_total_energie || 0),
           field: 'budget_energie_mensuel',
           getClass: (v) => getCellClass(v.calcul?.budget_mensuel_total_energie || 0, 'budget_energie_mensuel')
@@ -209,9 +226,9 @@ const prepareTableData = () => {
         { id: 'pct_imposition_client', name: '% d\'imposition Client (IS)', getValue: (v) => formatPercent(catalogue.value?.is || 0) },
         { id: 'plafond_and', name: 'Plafond d\'AND', getValue: (v) => formatCurrency(v.calcul?.plafondAnd || 0) },
         { id: 'calcul_and_mensuel', name: 'Calcul AND Mensuel', getValue: (v) => formatCurrency(v.calcul?.andMensuel || 0) },
-        { 
-          id: 'is_and_value', 
-          name: 'IS sur AND', 
+        {
+          id: 'is_and_value',
+          name: 'IS sur AND',
           getValue: (v) => formatCurrency(v.calcul?.isAnd || 0),
           field: 'is_and_value',
           getClass: (v) => getCellClass(v.calcul?.isAnd || 0, 'is_and_value')
@@ -225,9 +242,9 @@ const prepareTableData = () => {
         { id: 'taux_aen', name: 'Taux AEN', getValue: (v) => formatPercent(v.aen || 0) },
         { id: 'aen_mensuel_detail', name: 'AEN Mensuel', getValue: (v) => formatCurrency(v.calcul?.aenMensuel || 0) },
         { id: 'taux_charges_patronales', name: 'Taux charges patronales', getValue: (v) => formatPercent(v.chargePatronale || 0) },
-        { 
-          id: 'aen_charge', 
-          name: 'Charges patronales sur AEN', 
+        {
+          id: 'aen_charge',
+          name: 'Charges patronales sur AEN',
           getValue: (v) => formatCurrency(v.calcul?.aenChargePatronale || 0),
           field: 'aen_charge',
           getClass: (v) => getCellClass(v.calcul?.aenChargePatronale || 0, 'aen_charge')
@@ -238,17 +255,17 @@ const prepareTableData = () => {
       id: 'tco',
       title: 'TCO',
       rows: [
-        { 
-          id: 'tco_mensuel', 
-          name: 'TCO mensuel', 
+        {
+          id: 'tco_mensuel',
+          name: 'TCO mensuel',
           getValue: (v) => formatCurrency(v.calcul?.tcoMensuel || 0),
           field: 'tco_mensuel',
           getClass: (v) => getCellClass(v.calcul?.tcoMensuel || 0, 'tco_mensuel')
         },
         { id: 'tco_moyen', name: 'TCO Moyen mensuel', getValue: () => formatCurrency(getTCOMoyen.value) },
-        { 
-          id: 'prk', 
-          name: 'PRK /km', 
+        {
+          id: 'prk',
+          name: 'PRK /km',
           getValue: (v) => formatCurrency(getPRK(v)),
           field: 'prk',
           getClass: (v) => getCellClass(getPRK(v), 'prk')
@@ -316,23 +333,49 @@ const prepareTableData = () => {
   sectionsData.value = sectionDataMap;
 };
 
-// Récupérer tous les véhicules avec leurs catégories
+// Récupérer tous les véhicules avec leurs catégories (filtrés par catégories sélectionnées)
 const getAllVehicules = () => {
   const vehicules = [];
-  
+
   if (!catalogue.value?.categories) return vehicules;
-  
+
   catalogue.value.categories.forEach(category => {
-    category.vehicules?.forEach(vehicule => {
-      vehicules.push({
-        ...vehicule,
-        categoryTitle: category.title,
-        categoryUuid: category.uuid
+    // Ne garder que les catégories sélectionnées
+    if (selectedCategories.value.has(category.uuid)) {
+      category.vehicules?.forEach(vehicule => {
+        vehicules.push({
+          ...vehicule,
+          categoryTitle: category.title,
+          categoryUuid: category.uuid
+        });
       });
-    });
+    }
   });
-  
+
   return vehicules;
+};
+
+// Toggle d'une catégorie
+const toggleCategory = (categoryUuid) => {
+  const newSelectedCategories = new Set(selectedCategories.value);
+  if (newSelectedCategories.has(categoryUuid)) {
+    newSelectedCategories.delete(categoryUuid);
+  } else {
+    newSelectedCategories.add(categoryUuid);
+  }
+  selectedCategories.value = newSelectedCategories;
+  // Recalculer les données des tableaux
+  prepareTableData();
+};
+
+// Sélectionner/désélectionner toutes les catégories
+const toggleAllCategories = () => {
+  if (selectedCategories.value.size === catalogue.value?.categories?.length) {
+    selectedCategories.value = new Set(); // Créer un nouveau Set vide
+  } else {
+    selectedCategories.value = new Set(catalogue.value?.categories?.map(cat => cat.uuid) || []);
+  }
+  prepareTableData();
 };
 
 // Fonctions pour calculs min/max (comme ComparoAnalyseView)
@@ -410,21 +453,19 @@ const getCellClass = (value, field) => {
 // Utility functions for calculations (simplified versions)
 const getVehicleLabel = (vehicule) => {
   // Debug pour voir la structure des données
-  console.log('Véhicule structure:', vehicule);
-  
   // Gérer les objets imbriqués potentiels
-  const marque = typeof vehicule.marque === 'object' 
+  const marque = typeof vehicule.marque === 'object'
     ? (vehicule.marque?.name || vehicule.marque?.title || '[Marque inconnue]')
     : (vehicule.marque || '[Marque inconnue]');
-    
+
   const modele = typeof vehicule.modele === 'object'
     ? (vehicule.modele?.name || vehicule.modele?.title || '[Modèle inconnu]')
     : (vehicule.modele || '[Modèle inconnu]');
-    
+
   const finition = typeof vehicule.finition === 'object'
     ? (vehicule.finition?.name || vehicule.finition?.title || '')
     : (vehicule.finition || '');
-  
+
   const parts = [marque, modele, finition].filter(part => part && part !== '[Marque inconnue]' && part !== '[Modèle inconnu]');
   return parts.join(' ') || 'Véhicule sans nom';
 };
@@ -532,69 +573,135 @@ const downloadPDF = async () => {
   } else {
     toast.add({
       severity: 'error',
-      summary: 'Erreur', 
+      summary: 'Erreur',
       detail: 'Le fichier PDF n\'est pas disponible',
       life: 3000
     });
   }
 };
 
-// Responsive scroll management
-const syncScrollPosition = (scrollLeft) => {
+// Improved scroll synchronization system
+const syncScrollPosition = (sourceElement, scrollLeft) => {
   if (isScrollSyncing.value) return;
-  
+
   isScrollSyncing.value = true;
-  
-  // Synchroniser tous les containers
-  const allContainers = [
-    headerScrollContainer.value,
-    ...document.querySelectorAll('.section-scroll-container')
-  ];
-  
-  allContainers.forEach(container => {
-    if (container && container.scrollLeft !== scrollLeft) {
-      container.scrollLeft = scrollLeft;
+
+  // Find all scrollable elements within sync containers
+  const syncContainers = document.querySelectorAll('.sync-scroll-container');
+  const allScrollableElements = [];
+
+  syncContainers.forEach(syncContainer => {
+    // Look for the actual scrollable element (p-datatable-table-container)
+    const scrollableElement = syncContainer.querySelector('.p-datatable-table-container');
+    if (scrollableElement) {
+      allScrollableElements.push(scrollableElement);
     }
   });
-  
+
+  console.log('Syncing scroll across', allScrollableElements.length, 'elements, scrollLeft:', scrollLeft);
+
+  // Synchronize all scrollable elements except the source
+  allScrollableElements.forEach(element => {
+    if (element && element !== sourceElement && element.scrollLeft !== scrollLeft) {
+      element.scrollLeft = scrollLeft;
+      console.log('Updated scroll for element:', element);
+    }
+  });
+
   setTimeout(() => {
     isScrollSyncing.value = false;
   }, 10);
 };
 
-const attachScrollListeners = () => {
-  nextTick(() => {
-    const allSectionContainers = document.querySelectorAll('.section-scroll-container');
-    
-    // Header scroll
-    if (headerScrollContainer.value) {
-      const headerHandler = (e) => {
-        syncScrollPosition(e.target.scrollLeft);
-      };
-      headerScrollContainer.value.addEventListener('scroll', headerHandler);
-      scrollListeners.value.push({
-        element: headerScrollContainer.value,
-        handler: headerHandler
-      });
+const syncNewElementsToCurrentScroll = () => {
+  // Get current scroll position from the first visible scrollable element
+  const firstScrollableElement = document.querySelector('.sync-scroll-container .p-datatable-table-container');
+  if (!firstScrollableElement) return;
+  
+  const currentScrollLeft = firstScrollableElement.scrollLeft;
+  console.log('Current scroll position:', currentScrollLeft);
+  
+  // Apply this scroll position to all scrollable elements
+  const allScrollableElements = document.querySelectorAll('.sync-scroll-container .p-datatable-table-container');
+  allScrollableElements.forEach(element => {
+    if (element.scrollLeft !== currentScrollLeft) {
+      element.scrollLeft = currentScrollLeft;
+      console.log('Synced new element to current scroll position:', element);
     }
-    
-    // Section scroll listeners
-    allSectionContainers.forEach(container => {
-      const sectionHandler = (e) => {
-        syncScrollPosition(e.target.scrollLeft);
-      };
-      container.addEventListener('scroll', sectionHandler);
-      scrollListeners.value.push({
-        element: container,
-        handler: sectionHandler
+  });
+};
+
+const attachScrollListeners = () => {
+  // Clean up existing listeners first
+  cleanupScrollListeners();
+
+  nextTick(() => {
+    // Wait a bit more for all DataTables to be rendered
+    setTimeout(() => {
+      // Find all DataTable wrappers directly
+      const allDataTableWrappers = document.querySelectorAll('.p-datatable-wrapper');
+      console.log(`Found ${allDataTableWrappers.length} DataTable wrappers:`, allDataTableWrappers);
+      
+      // Also check for sync containers
+      const syncContainers = document.querySelectorAll('.sync-scroll-container');
+      console.log(`Found ${syncContainers.length} sync containers:`, syncContainers);
+      
+      // Try to find scrollable elements in sync containers
+      syncContainers.forEach((syncContainer, index) => {
+        console.log(`Container ${index}:`, syncContainer);
+        
+        // Look for different possible scrollable elements
+        const dataTableWrapper = syncContainer.querySelector('.p-datatable-wrapper');
+        const dataTable = syncContainer.querySelector('.p-datatable');
+        const scrollableDiv = syncContainer.querySelector('[style*="overflow"]');
+        
+        console.log(`In container ${index}:`);
+        console.log(`- .p-datatable-wrapper:`, dataTableWrapper);
+        console.log(`- .p-datatable:`, dataTable);
+        console.log(`- scrollable div:`, scrollableDiv);
+        
+        // Find the actual scrollable element
+        let scrollableElement = null;
+        if (dataTableWrapper && dataTableWrapper.scrollWidth > dataTableWrapper.clientWidth) {
+          scrollableElement = dataTableWrapper;
+        } else if (dataTable && dataTable.scrollWidth > dataTable.clientWidth) {
+          scrollableElement = dataTable;
+        } else if (scrollableDiv && scrollableDiv.scrollWidth > scrollableDiv.clientWidth) {
+          scrollableElement = scrollableDiv;
+        }
+        
+        if (scrollableElement) {
+          console.log(`Found scrollable element in container ${index}:`, scrollableElement);
+          console.log(`ScrollWidth: ${scrollableElement.scrollWidth}, ClientWidth: ${scrollableElement.clientWidth}`);
+          
+          const scrollHandler = (e) => {
+            console.log('Scroll detected on element:', e.target);
+            syncScrollPosition(e.target, e.target.scrollLeft);
+          };
+          
+          scrollableElement.addEventListener('scroll', scrollHandler, { passive: true });
+          scrollListeners.value.push({
+            element: scrollableElement,
+            handler: scrollHandler
+          });
+          console.log(`Added listener to container ${index}`);
+        } else {
+          console.log(`No scrollable element found in container ${index}`);
+        }
       });
-    });
+      
+      // Sync all elements to current scroll position
+      syncNewElementsToCurrentScroll();
+
+    }, 300);
   });
 };
 
 const cleanupScrollListeners = () => {
   scrollListeners.value.forEach(({ element, handler }) => {
-    element.removeEventListener('scroll', handler);
+    if (element && handler) {
+      element.removeEventListener('scroll', handler);
+    }
   });
   scrollListeners.value = [];
 };
@@ -608,22 +715,49 @@ onBeforeUnmount(() => {
   cleanupScrollListeners();
 });
 
-// Watchers
+// Watchers for re-attaching scroll listeners when content changes
 watch(sectionsData, () => {
-  cleanupScrollListeners();
-  setTimeout(attachScrollListeners, 100);
+  // Re-attach listeners when sections data changes
+  setTimeout(attachScrollListeners, 300);
+}, { deep: true });
+
+watch(expandedSections, () => {
+  // Re-attach listeners when sections are expanded/collapsed
+  nextTick(() => {
+    setTimeout(() => {
+      attachScrollListeners();
+      // Extra delay to ensure new elements are fully rendered
+      setTimeout(syncNewElementsToCurrentScroll, 100);
+    }, 300);
+  });
 }, { deep: true });
 
 watch(displayMode, () => {
+  // Re-attach listeners when display mode changes
   nextTick(() => {
-    setTimeout(attachScrollListeners, 100);
+    setTimeout(attachScrollListeners, 300);
   });
 });
 
-watch(expandedSections, () => {
-  nextTick(() => {
-    setTimeout(attachScrollListeners, 100);
-  });
+// Re-attach listeners after data is loaded
+watch(catalogue, (newCatalogue) => {
+  if (newCatalogue) {
+    nextTick(() => {
+      setTimeout(attachScrollListeners, 500);
+    });
+  }
+});
+
+// Watch pour les catégories sélectionnées
+watch(selectedCategories, () => {
+  // Recalculer les données des tableaux quand les catégories changent
+  if (catalogue.value) {
+    prepareTableData();
+    // Re-attacher les listeners après recalcul
+    nextTick(() => {
+      setTimeout(attachScrollListeners, 300);
+    });
+  }
 }, { deep: true });
 </script>
 
@@ -656,17 +790,11 @@ watch(expandedSections, () => {
                         </svg>
                         {{ catalogue.categories?.length || 0 }} catégories
                       </div>
-                      <div class="inline-flex items-center gap-1.5 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        {{ catalogue.vehicules?.length || 0 }} véhicules
-                      </div>
                     </div>
                   </div>
-                  
+
                   <div class="flex gap-3">
-                    <Button 
+                    <Button
                       v-if="canDownloadFiles"
                       class="export-btn export-excel"
                       @click="downloadExcel"
@@ -675,8 +803,8 @@ watch(expandedSections, () => {
                       <FileSpreadsheet class="w-4 h-4" />
                       <span class="export-text">Excel</span>
                     </Button>
-                    
-                    <Button 
+
+                    <Button
                       v-if="canDownloadFiles"
                       class="export-btn export-pdf"
                       @click="downloadPDF"
@@ -701,8 +829,8 @@ watch(expandedSections, () => {
                       <Table class="h-5 w-5" />
                       <span class="hidden sm:inline">Tableau</span>
                     </span>
-                    <ToggleSwitch 
-                      v-model="displayMode" 
+                    <ToggleSwitch
+                      v-model="displayMode"
                       class="mode-toggle-switch"
                       true-value="charts"
                       false-value="table"
@@ -713,13 +841,51 @@ watch(expandedSections, () => {
                     </span>
                   </div>
                 </div>
+                
+                <!-- Filtres par catégorie -->
+                <div v-if="availableCategories.length > 0" class="mt-4">
+                  <div class="bg-surface-900 p-4 rounded-lg">
+                    <div class="flex flex-col gap-3">
+                      <div class="flex items-center justify-between">
+                        <h3 class="text-white font-medium text-sm">Filtrer par catégorie :</h3>
+                        <button 
+                          @click="toggleAllCategories"
+                          class="text-xs text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
+                        >
+                          {{ selectedCategories.size === availableCategories.length ? 'Tout désélectionner' : 'Tout sélectionner' }}
+                        </button>
+                      </div>
+                      <div class="flex flex-wrap gap-4">
+                        <div 
+                          v-for="category in availableCategories" 
+                          :key="category.uuid"
+                          class="flex items-center gap-2 text-white"
+                        >
+                          <Checkbox 
+                            :inputId="`category-${category.uuid}`"
+                            :value="category.uuid"
+                            :checked="selectedCategories.has(category.uuid)"
+                            @change="toggleCategory(category.uuid)"
+                            class="category-checkbox"
+                          />
+                          <label 
+                            :for="`category-${category.uuid}`" 
+                            class="text-sm cursor-pointer category-filter-label"
+                          >
+                            {{ category.title }} ({{ category.vehicules?.length || 0 }})
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <!-- Sections d'analyse -->
               <div class="space-y-4 sections-container">
                 <div v-for="section in sectionsConfig" :key="section.id" class="section-wrapper mb-4">
                   <!-- Header de section -->
-                  <div 
+                  <div
                     class="section-header-custom bg-surface-900 p-3 border-0 shadow-sm hover:shadow-md transition-all duration-200 rounded-t-lg"
                     :class="[
                       section.id === 'tco' ? 'tco-section' : '',
@@ -733,18 +899,18 @@ watch(expandedSections, () => {
                         <span class="text-xs text-white hidden sm:inline">
                           {{ expandedSections.has(section.id) ? 'Cliquez ici pour masquer' : 'Cliquez ici pour voir plus' }}
                         </span>
-                        <div 
+                        <div
                           class="rounded-full p-2 transition-all duration-200 transform hover:scale-110 shadow-lg"
                           :class="section.id === 'tco' ? 'bg-white hover:bg-gray-100' : 'bg-amber-500 hover:bg-amber-500'"
                         >
-                          <svg 
-                            class="w-4 h-4 transition-transform duration-300" 
+                          <svg
+                            class="w-4 h-4 transition-transform duration-300"
                             :class="[
                               { 'rotate-180': expandedSections.has(section.id) },
                               section.id === 'tco' ? 'text-amber-500' : 'text-white'
                             ]"
-                            fill="none" 
-                            stroke="currentColor" 
+                            fill="none"
+                            stroke="currentColor"
                             viewBox="0 0 24 24"
                           >
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
@@ -757,14 +923,14 @@ watch(expandedSections, () => {
                   <!-- Contenu de section -->
                   <div class="bg-transparent rounded-b-lg shadow-sm overflow-x-auto section-content-wrapper section-scroll-container"
                        :data-section-id="section.id">
-                    
+
                     <!-- Lignes non-colorées (conditionnelles) -->
-                    <div 
+                    <div
                       v-if="sectionsData[section.id]?.hasNonColoredRows && expandedSections.has(section.id)"
-                      class="non-colored-rows-container"
+                      class="non-colored-rows-container sync-scroll-container"
                     >
-                      <DataTable 
-                        :value="sectionsData[section.id].nonColoredRows" 
+                      <DataTable
+                        :value="sectionsData[section.id].nonColoredRows"
                         class="comparison-table comparison-animate-load"
                         responsive-layout="scroll"
                         :scrollable="true"
@@ -785,8 +951,8 @@ watch(expandedSections, () => {
                         </Column>
 
                         <!-- Colonnes dynamiques pour chaque véhicule -->
-                        <Column 
-                          v-for="(vehicule, index) in sectionsData[section.id].vehiculesColumns" 
+                        <Column
+                          v-for="(vehicule, index) in sectionsData[section.id].vehiculesColumns"
                           :key="`noncolored_${vehicule.uuid}`"
                           class="value-column"
                           style="min-width: 200px;"
@@ -808,9 +974,9 @@ watch(expandedSections, () => {
                     </div>
 
                     <!-- Lignes colorées (toujours visibles, en bas) -->
-                    <div v-if="sectionsData[section.id]?.hasColoredRows" class="colored-rows-container">
-                      <DataTable 
-                        :value="sectionsData[section.id].coloredRows" 
+                    <div v-if="sectionsData[section.id]?.hasColoredRows" class="colored-rows-container sync-scroll-container">
+                      <DataTable
+                        :value="sectionsData[section.id].coloredRows"
                         class="comparison-table comparison-animate-load always-visible"
                         responsive-layout="scroll"
                         :scrollable="true"
@@ -831,8 +997,8 @@ watch(expandedSections, () => {
                         </Column>
 
                         <!-- Colonnes dynamiques pour chaque véhicule -->
-                        <Column 
-                          v-for="(vehicule, index) in sectionsData[section.id].vehiculesColumns" 
+                        <Column
+                          v-for="(vehicule, index) in sectionsData[section.id].vehiculesColumns"
                           :key="`colored_${vehicule.uuid}`"
                           class="value-column"
                           style="min-width: 200px;"
@@ -954,7 +1120,7 @@ watch(expandedSections, () => {
     align-items: center;
     justify-content: space-between;
   }
-  
+
   .title-section {
     flex-direction: row;
     align-items: center;
@@ -966,7 +1132,7 @@ watch(expandedSections, () => {
   .header-content {
     text-align: center;
   }
-  
+
   .title-section {
     align-items: center;
   }
@@ -1176,7 +1342,7 @@ watch(expandedSections, () => {
   .export-btn {
     padding: 0.5rem;
   }
-  
+
   .export-text {
     display: none;
   }
@@ -1288,17 +1454,17 @@ watch(expandedSections, () => {
   .comparison-header-grid {
     grid-template-columns: 250px repeat(auto-fit, minmax(140px, 1fr));
   }
-  
+
   :deep(.comparison-table .property-column) {
     width: 250px !important;
     min-width: 250px !important;
     max-width: 250px !important;
   }
-  
+
   .category-header {
     min-width: 140px !important;
   }
-  
+
   :deep(.comparison-table .p-datatable-tbody > tr > td:not(:first-child)) {
     min-width: 140px;
   }
@@ -1308,19 +1474,62 @@ watch(expandedSections, () => {
   .comparison-header-grid {
     grid-template-columns: 200px repeat(auto-fit, minmax(120px, 1fr));
   }
-  
+
   :deep(.comparison-table .property-column) {
     width: 200px !important;
     min-width: 200px !important;
     max-width: 200px !important;
   }
-  
+
   .category-header {
     min-width: 120px !important;
   }
-  
+
   :deep(.comparison-table .p-datatable-tbody > tr > td:not(:first-child)) {
     min-width: 120px;
   }
+}
+
+/* Category filter checkboxes */
+:deep(.category-checkbox .p-checkbox-box) {
+  background: rgb(75 85 99) !important;
+  border: 2px solid rgb(156 163 175) !important;
+  border-radius: 6px !important;
+  width: 20px !important;
+  height: 20px !important;
+  transition: all 0.2s ease !important;
+}
+
+:deep(.category-checkbox .p-checkbox-box.p-highlight) {
+  background: rgb(251 191 36) !important;
+  border-color: rgb(251 191 36) !important;
+  box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.2) !important;
+}
+
+:deep(.category-checkbox .p-checkbox-box .p-checkbox-icon) {
+  color: rgb(30 41 59) !important;
+  font-size: 14px !important;
+  font-weight: 900 !important;
+  stroke-width: 3px !important;
+}
+
+:deep(.category-checkbox:not(.p-disabled):hover .p-checkbox-box) {
+  border-color: rgb(251 191 36) !important;
+  transform: scale(1.05) !important;
+}
+
+:deep(.category-checkbox:not(.p-disabled):hover .p-checkbox-box:not(.p-highlight)) {
+  background: rgb(107 114 128) !important;
+  box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.1) !important;
+}
+
+/* Amélioration des labels */
+.category-filter-label {
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.category-filter-label:hover {
+  color: rgb(251 191 36) !important;
 }
 </style>
