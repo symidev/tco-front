@@ -17,6 +17,42 @@ import Dialog from 'primevue/dialog';
 // Icons
 import { BarChart3, AreaChart, FileSpreadsheet, FileText, Table, Search } from 'lucide-vue-next';
 
+// Chart.js imports
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+  BarController,
+  LineController,
+  ArcElement,
+  PieController
+} from 'chart.js';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+  BarController,
+  LineController,
+  ArcElement,
+  PieController,
+  ChartDataLabels
+);
+
 // Services
 import { catalogueService } from '@/services/api/catalogueService';
 
@@ -33,6 +69,10 @@ const selectedCategories = ref([]);
 // Dialog states
 const showVehicleDetails = ref(false);
 const selectedVehicleDetails = ref(null);
+
+// Chart references
+const categoryChartInstances = ref([]);
+const pieChartInstances = ref([]);
 
 // Scroll sync
 const isScrollSyncing = ref(false);
@@ -705,27 +745,664 @@ const cleanupScrollListeners = () => {
   scrollListeners.value = [];
 };
 
+
+// Chart creation functions - Create separate charts for each category
+const createCategoryCharts = () => {
+  
+  if (!vehiclesByCategory.value?.length || !selectedCategories.value?.length) {
+    destroyAllCategoryCharts();
+    return;
+  }
+
+  // Force complete cleanup before creating new charts
+  destroyAllCategoryCharts();
+  
+  // Wait a bit for cleanup to complete
+  setTimeout(() => {
+    // Create a chart for each category
+    vehiclesByCategory.value.forEach((category, categoryIndex) => {
+      createSingleCategoryChart(category, categoryIndex);
+    });
+  }, 50);
+};
+
+// Dedicated function for complete chart cleanup
+const destroyAllCategoryCharts = () => {
+  // First, destroy by canvas ID to clean Chart.js registry
+  for (let i = 0; i < 10; i++) { // Max 10 categories
+    const canvasId = `categoryChart_${i}`;
+    const existingChart = ChartJS.getChart(canvasId);
+    if (existingChart) {
+      try {
+        existingChart.stop();
+        existingChart.destroy();
+      } catch (error) {
+        // Ignore cleanup errors
+      }
+    }
+  }
+  
+  // Then destroy our tracked instances
+  categoryChartInstances.value.forEach((instance, index) => {
+    if (instance) {
+      try {
+        if (!instance.destroyed) {
+          instance.stop();
+          instance.destroy();
+        }
+      } catch (error) {
+        // Ignore cleanup errors
+      }
+    }
+  });
+  
+  // Clear the array
+  categoryChartInstances.value = [];
+  
+  // Force garbage collection hint
+  if (window.gc) {
+    window.gc();
+  }
+};
+
+const createSingleCategoryChart = (category, categoryIndex, retryCount = 0) => {
+  const canvasId = `categoryChart_${categoryIndex}`;
+  const canvas = document.getElementById(canvasId);
+  
+  if (!canvas) {
+    if (retryCount < 5) {
+      // Use exponential backoff for retries
+      setTimeout(() => {
+        createSingleCategoryChart(category, categoryIndex, retryCount + 1);
+      }, 100 * Math.pow(1.5, retryCount));
+      return;
+    } else {
+      return;
+    }
+  }
+  
+  if (!category.vehicules?.length) {
+    return;
+  }
+
+  // Check if Chart.js already has a chart instance for this canvas
+  const existingChart = ChartJS.getChart(canvasId);
+  if (existingChart) {
+    try {
+      existingChart.stop();
+      existingChart.destroy();
+    } catch (error) {
+      return;
+    }
+  }
+
+  // Verify canvas is valid and attached to DOM
+  if (!canvas.isConnected) {
+    return;
+  }
+  
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    return;
+  }
+  
+  // Verify context is valid
+  try {
+    ctx.save();
+    ctx.restore();
+  } catch (error) {
+    return;
+  }
+
+  // Prepare labels for vehicles in this category
+  const labels = category.vehicules.map(vehicule => {
+    const marque = vehicule.marque?.name || vehicule.marque || '';
+    const modele = vehicule.modele?.title || vehicule.modele || '';
+    const moteur = vehicule.modele?.moteur || vehicule.finition || '';
+    const loueur = vehicule.loueur?.name || '';
+    
+    let label = `${marque} ${modele}`;
+    if (moteur) label += ` ${moteur}`;
+    if (loueur) label += ` (${loueur})`;
+    
+    return label.trim();
+  });
+
+  // Sort vehicles by TCO for better visualization
+  const sortedData = category.vehicules
+    .map((vehicule, index) => ({ vehicule, label: labels[index] }))
+    .sort((a, b) => (a.vehicule.calcul?.tcoMensuel || 0) - (b.vehicule.calcul?.tcoMensuel || 0));
+
+  const sortedLabels = sortedData.map(item => item.label);
+  const sortedVehicles = sortedData.map(item => item.vehicule);
+
+  // Prepare datasets for this category
+  const loyerTotalData = sortedVehicles.map(v => v.calcul?.loyer_total || 0);
+  const fiscaliteMensuelleData = sortedVehicles.map(v => v.calcul?.fiscalite_mensuel || 0);
+  const budgetEnergieData = sortedVehicles.map(v => v.calcul?.budget_mensuel_total_energie || 0);
+  const isAndData = sortedVehicles.map(v => v.calcul?.isAnd || 0);
+  const chargesPatronalesData = sortedVehicles.map(v => v.calcul?.aenChargePatronale || 0);
+  const tcoMensuelData = sortedVehicles.map(v => v.calcul?.tcoMensuel || 0);
+
+  // TCO moyen pour cette catégorie et global
+  const tcoMoyenCategorie = category.tcoMoyenCategorie || 0;
+  const tcoMoyenGlobal = getTCOMoyenGlobal.value;
+  const tcoMoyenCategorieData = sortedVehicles.map(() => tcoMoyenCategorie);
+  const tcoMoyenGlobalData = sortedVehicles.map(() => tcoMoyenGlobal);
+
+  // Calculate Y axis max for this category
+  const maxTco = Math.max(...tcoMensuelData, tcoMoyenCategorie, tcoMoyenGlobal);
+  const yAxisMax = Math.ceil(maxTco / 200) * 200 + 200;
+
+  // Chart title
+  const chartTitle = `${category.title} (${category.vehicules.length} véhicules)`;
+
+  const chartConfig = {
+    type: 'bar',
+    data: {
+      labels: sortedLabels,
+      datasets: [
+        {
+          label: "Loyer total",
+          data: loyerTotalData,
+          backgroundColor: "#5B9BD5",
+          stack: "stack1",
+          order: 2,
+          borderWidth: 0,
+          datalabels: { display: false }
+        },
+        {
+          label: "Fiscalité mensuelle",
+          data: fiscaliteMensuelleData,
+          backgroundColor: "#A5A5A5",
+          stack: "stack1",
+          order: 2,
+          borderWidth: 0,
+          datalabels: { display: false }
+        },
+        {
+          label: "Budget énergie mensuel",
+          data: budgetEnergieData,
+          backgroundColor: "#ED7D31",
+          stack: "stack1",
+          order: 2,
+          borderWidth: 0,
+          datalabels: { display: false }
+        },
+        {
+          label: "IS sur AND",
+          data: isAndData,
+          backgroundColor: "#70AD47",
+          stack: "stack1",
+          order: 2,
+          borderWidth: 0,
+          datalabels: { display: false }
+        },
+        {
+          label: "Charges patronales sur AEN",
+          data: chargesPatronalesData,
+          backgroundColor: "#264478",
+          stack: "stack1",
+          order: 2,
+          borderWidth: 0,
+          datalabels: { display: false }
+        },
+        {
+          type: "line",
+          label: "TCO mensuel",
+          data: tcoMensuelData,
+          borderColor: "#FFC000",
+          borderWidth: 3,
+          backgroundColor: "transparent",
+          fill: false,
+          tension: 0.1,
+          pointRadius: 5,
+          pointBackgroundColor: "#FFC000",
+          pointBorderColor: "#333",
+          pointBorderWidth: 2,
+          order: 1,
+          datalabels: {
+            display: true,
+            backgroundColor: "rgba(255, 255, 255, 0.9)",
+            borderColor: "#FFC000",
+            borderRadius: 4,
+            borderWidth: 1,
+            color: "#333",
+            font: { size: 10, weight: "bold" },
+            padding: 3,
+            anchor: "end",
+            align: "top",
+            offset: 6,
+            formatter: (value) => `${value.toLocaleString('fr-FR', {maximumFractionDigits: 0})}€`
+          }
+        },
+        {
+          type: "line",
+          label: "TCO moyen catégorie",
+          data: tcoMoyenCategorieData,
+          borderColor: "#C55A5A",
+          borderWidth: 2,
+          borderDash: [5, 5],
+          fill: false,
+          order: 1,
+          pointRadius: 0,
+          tension: 0,
+          datalabels: { display: false }
+        },
+        {
+          type: "line",
+          label: "TCO moyen global",
+          data: tcoMoyenGlobalData,
+          borderColor: "#9966CC",
+          borderWidth: 2,
+          borderDash: [10, 5],
+          fill: false,
+          order: 1,
+          pointRadius: 0,
+          tension: 0,
+          datalabels: { display: false }
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: {
+        padding: { top: 10, left: 10, right: 10, bottom: 10 }
+      },
+      plugins: {
+        datalabels: { display: false },
+        legend: {
+          position: "bottom",
+          labels: {
+            padding: 20,
+            color: "#CCCCCC",
+            font: { size: 10 },
+            usePointStyle: true,
+            boxWidth: 15
+          }
+        },
+        title: {
+          display: true,
+          text: chartTitle,
+          color: "#CCCCCC",
+          font: { size: 14, weight: "bold" },
+          padding: { top: 0, bottom: 30 }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false, drawBorder: false },
+          ticks: {
+            color: "#CCCCCC",
+            font: { size: 9 },
+            maxRotation: 45,
+            minRotation: 45
+          }
+        },
+        y: {
+          max: yAxisMax,
+          grid: {
+            color: "rgba(255, 255, 255, 0.08)",
+            borderDash: [3, 3],
+            drawBorder: false
+          },
+          ticks: {
+            color: "#CCCCCC",
+            stepSize: 200,
+            padding: 8,
+            font: { size: 10 }
+          },
+          title: {
+            display: true,
+            text: "€/mois",
+            color: "#CCCCCC"
+          }
+        }
+      },
+      elements: {
+        bar: { borderRadius: 0, borderSkipped: false }
+      }
+    }
+  };
+
+  try {
+    const instance = new ChartJS(ctx, chartConfig);
+    categoryChartInstances.value.push(instance);
+  } catch (error) {
+    // Try to clean up any partial state
+    try {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    } catch (cleanupError) {
+      // Ignore cleanup errors
+    }
+  }
+};
+
+// Create pie charts for TCO breakdown by category and vehicle
+const createPieCharts = () => {
+  if (!vehiclesByCategory.value?.length) return;
+
+  // Clean up existing instances with Chart.js registry cleanup
+  destroyAllPieCharts();
+
+  // Create category overview pie chart
+  createCategoryOverviewChart();
+
+  // Create individual vehicle pie charts
+  vehiclesByCategory.value.forEach((category, categoryIndex) => {
+    category.vehicules?.forEach((vehicule, vehicleIndex) => {
+      createVehiclePieChart(vehicule, `${categoryIndex}_${vehicleIndex}`);
+    });
+  });
+};
+
+// Dedicated cleanup function for pie charts
+const destroyAllPieCharts = () => {
+  // Clean up overview chart
+  const overviewChart = ChartJS.getChart('categoryOverviewChart');
+  if (overviewChart) {
+    try {
+      overviewChart.stop();
+      overviewChart.destroy();
+    } catch (error) {
+      // Ignore cleanup errors
+    }
+  }
+  
+  // Clean up pie charts by scanning possible IDs
+  for (let catIndex = 0; catIndex < 10; catIndex++) {
+    for (let vehIndex = 0; vehIndex < 20; vehIndex++) {
+      const pieId = `pieChart_${catIndex}_${vehIndex}`;
+      const existingPieChart = ChartJS.getChart(pieId);
+      if (existingPieChart) {
+        try {
+          existingPieChart.stop();
+          existingPieChart.destroy();
+        } catch (error) {
+          // Ignore cleanup errors
+        }
+      }
+    }
+  }
+  
+  // Clean up tracked instances
+  pieChartInstances.value.forEach((instance, index) => {
+    if (instance && !instance.destroyed) {
+      try {
+        instance.stop();
+        instance.destroy();
+      } catch (error) {
+        // Ignore cleanup errors
+      }
+    }
+  });
+  
+  pieChartInstances.value = [];
+};
+
+// Create category overview chart
+const createCategoryOverviewChart = () => {
+  const canvasId = 'categoryOverviewChart';
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+
+  // Check for existing chart
+  const existingChart = ChartJS.getChart(canvasId);
+  if (existingChart) {
+    try {
+      existingChart.stop();
+      existingChart.destroy();
+    } catch (error) {
+      return;
+    }
+  }
+
+  const ctx = canvas.getContext('2d');
+  
+  // Calculate average TCO per category
+  const categoryData = vehiclesByCategory.value.map(category => {
+    const avgTco = category.tcoMoyenCategorie || 0;
+    return {
+      label: category.title,
+      value: avgTco,
+      vehicleCount: category.vehicules?.length || 0
+    };
+  });
+
+  const categoryColors = [
+    '#5B9BD5', '#70AD47', '#FFC000', '#ED7D31', '#A5A5A5',
+    '#264478', '#C55A5A', '#9966CC', '#FF6B6B', '#4ECDC4'
+  ];
+
+  const pieConfig = {
+    type: 'pie',
+    data: {
+      labels: categoryData.map(cat => `${cat.label} (${cat.vehicleCount} véh.)`),
+      datasets: [{
+        data: categoryData.map(cat => cat.value),
+        backgroundColor: categoryColors.slice(0, categoryData.length),
+        borderWidth: 2,
+        borderColor: '#2d3748'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        datalabels: { display: false },
+        legend: {
+          position: 'right',
+          labels: {
+            color: '#CCCCCC',
+            font: { size: 10 },
+            padding: 10
+          }
+        },
+        title: {
+          display: true,
+          text: 'TCO Moyen par Catégorie',
+          color: '#CCCCCC',
+          font: { size: 14, weight: 'bold' },
+          padding: { top: 5, bottom: 15 }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const label = context.label || '';
+              const value = context.parsed;
+              return `${label}: ${value.toLocaleString('fr-FR', {style: 'currency', currency: 'EUR', maximumFractionDigits: 0})}`;
+            }
+          }
+        }
+      },
+      layout: { padding: 10 }
+    }
+  };
+
+  const instance = new ChartJS(ctx, pieConfig);
+  pieChartInstances.value.push(instance);
+};
+
+// Create individual vehicle pie chart
+const createVehiclePieChart = (vehicule, id) => {
+  const canvasId = `pieChart_${id}`;
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+
+  // Check for existing chart
+  const existingChart = ChartJS.getChart(canvasId);
+  if (existingChart) {
+    try {
+      existingChart.stop();
+      existingChart.destroy();
+    } catch (error) {
+      return;
+    }
+  }
+
+  const ctx = canvas.getContext('2d');
+  const tcoMensuel = vehicule.calcul?.tcoMensuel || 0;
+
+  if (tcoMensuel === 0) return;
+
+  // Calculate percentages
+  const loyerTotal = vehicule.calcul?.loyer_total || 0;
+  const fiscaliteMensuelle = vehicule.calcul?.fiscalite_mensuel || 0;
+  const budgetEnergie = vehicule.calcul?.budget_mensuel_total_energie || 0;
+  const isAnd = vehicule.calcul?.isAnd || 0;
+  const chargesPatronales = vehicule.calcul?.aenChargePatronale || 0;
+
+  const loyerPct = tcoMensuel ? ((loyerTotal / tcoMensuel) * 100) : 0;
+  const fiscalitePct = tcoMensuel ? ((fiscaliteMensuelle / tcoMensuel) * 100) : 0;
+  const energiePct = tcoMensuel ? ((budgetEnergie / tcoMensuel) * 100) : 0;
+  const isAndPct = tcoMensuel ? ((isAnd / tcoMensuel) * 100) : 0;
+  const chargesPatronalesPct = tcoMensuel ? ((chargesPatronales / tcoMensuel) * 100) : 0;
+
+  // Vehicle label
+  const marque = vehicule.marque?.name || vehicule.marque || '';
+  const modele = vehicule.modele?.title || vehicule.modele || '';
+  const moteur = vehicule.modele?.moteur || vehicule.finition || '';
+  
+  let vehicleLabel = `${marque} ${modele}`;
+  if (moteur) vehicleLabel += ` ${moteur}`;
+
+  const pieConfig = {
+    type: 'pie',
+    data: {
+      labels: [
+        'Loyer total',
+        'Fiscalité mensuelle',
+        'Budget énergie',
+        'IS sur AND',
+        'Charges patronales AEN'
+      ],
+      datasets: [{
+        data: [loyerPct, fiscalitePct, energiePct, isAndPct, chargesPatronalesPct],
+        backgroundColor: ['#5B9BD5', '#A5A5A5', '#ED7D31', '#70AD47', '#264478'],
+        borderWidth: 2,
+        borderColor: '#2d3748'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        datalabels: { display: false },
+        legend: { display: false },
+        title: {
+          display: true,
+          text: [vehicleLabel, `TCO: ${formatCurrency(tcoMensuel)}`],
+          color: '#CCCCCC',
+          font: { size: 11, weight: 'bold' },
+          padding: { top: 5, bottom: 10 }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const label = context.label || '';
+              const percentage = context.parsed;
+              return `${label}: ${percentage.toFixed(1)}%`;
+            }
+          }
+        }
+      },
+      layout: { padding: 10 }
+    }
+  };
+
+  const instance = new ChartJS(ctx, pieConfig);
+  pieChartInstances.value.push(instance);
+};
+
 // Lifecycle
 onMounted(() => {
   loadCatalogueData();
+  
+  // Add window focus listener to recreate charts if needed
+  const handleWindowFocus = () => {
+    if (displayMode.value === 'charts' && vehiclesByCategory.value?.length > 0) {
+      setTimeout(() => {
+        const missingCanvas = vehiclesByCategory.value?.some((category, index) => {
+          const canvasId = `categoryChart_${index}`;
+          return !document.getElementById(canvasId);
+        });
+        
+        if (missingCanvas) {
+          createCategoryCharts();
+          createPieCharts();
+        }
+      }, 100);
+    }
+  };
+  
+  window.addEventListener('focus', handleWindowFocus);
+  
+  // Cleanup on unmount
+  onBeforeUnmount(() => {
+    window.removeEventListener('focus', handleWindowFocus);
+  });
 });
 
 onBeforeUnmount(() => {
   cleanupScrollListeners();
+  // Cleanup chart instances
+  categoryChartInstances.value.forEach(instance => {
+    if (instance) instance.destroy();
+  });
+  pieChartInstances.value.forEach(instance => {
+    if (instance) instance.destroy();
+  });
 });
 
 // Watchers pour re-attacher les scroll listeners
-watch(vehiclesByCategory, () => {
+watch(vehiclesByCategory, (newValue, oldValue) => {
   setTimeout(attachScrollListeners, 300);
+  
+  // With dynamic keys, Vue will handle canvas recreation automatically
+  // We just need to recreate the charts after DOM updates
+  if (displayMode.value === 'charts' && newValue?.length > 0) {
+    nextTick(() => {
+      setTimeout(() => {
+        createCategoryCharts();
+        createPieCharts();
+      }, 250);
+    });
+  }
 }, { deep: true });
 
 watch(selectedCategories, () => {
   if (catalogue.value) {
+    // First, immediately clean up existing charts to prevent context issues
+    if (displayMode.value === 'charts') {
+      destroyAllCategoryCharts();
+      destroyAllPieCharts();
+    }
+    
     nextTick(() => {
       setTimeout(attachScrollListeners, 300);
+      // Recreate charts when categories change - Vue will recreate canvas elements due to key changes
+      if (displayMode.value === 'charts') {
+        setTimeout(() => {
+          createCategoryCharts();
+          createPieCharts();
+        }, 200); // Reduced delay since Vue will recreate elements
+      }
     });
   }
 }, { deep: true });
+
+// Watch for display mode changes
+watch(displayMode, (newMode) => {
+  if (newMode === 'charts') {
+    nextTick(() => {
+      setTimeout(() => {
+        createCategoryCharts();
+        createPieCharts();
+      }, 200);
+    });
+  }
+});
 </script>
 
 <template>
@@ -932,13 +1609,136 @@ watch(selectedCategories, () => {
                 </div>
               </div>
 
-              <!-- Mode graphiques (placeholder pour l'instant) -->
-              <div v-else class="mt-6">
-                <Card class="text-center p-8">
-                  <AreaChart class="w-16 h-16 mx-auto text-amber-500 mb-4" />
-                  <h3 class="text-xl font-bold mb-2">Mode Graphiques</h3>
-                  <p class="text-gray-600">Les graphiques seront implémentés dans une prochaine version.</p>
-                </Card>
+              <!-- Mode graphiques -->
+              <div v-else class="mt-6 animate-fade-in">
+                <!-- Graphiques TCO par Catégorie -->
+                <div class="mb-6">
+                  <div class="mb-6 text-center">
+                    <h3 class="text-2xl font-bold text-white flex items-center justify-center gap-2 mb-2">
+                      <AreaChart class="h-6 w-6 text-blue-500"/>
+                      Comparatifs TCO par Catégorie
+                    </h3>
+                    <p class="text-surface-400">
+                      Analyse graphique détaillée des coûts totaux de possession pour chaque catégorie
+                    </p>
+                  </div>
+
+                  <!-- Un graphique par catégorie -->
+                  <div v-for="(categoryData, categoryIndex) in vehiclesByCategory" :key="categoryData.uuid" class="mb-8">
+                    <div class="bg-surface-800 rounded-lg shadow-inner p-6 category-chart-section">
+                      <div class="mb-4">
+                        <h4 class="text-xl font-bold text-white flex items-center gap-2 mb-3">
+                          <span class="w-4 h-4 bg-amber-500 rounded-full"></span>
+                          {{ categoryData.title }}
+                          <span class="text-sm text-gray-400 ml-2">({{ categoryData.vehicules?.length || 0 }} véhicules)</span>
+                        </h4>
+                        <div class="category-title-stats">
+                          <div class="flex flex-wrap gap-4 text-sm">
+                            <span class="text-amber-400">
+                              <strong>TCO moyen catégorie:</strong> {{ formatCurrency(categoryData.tcoMoyenCategorie) }}
+                            </span>
+                            <span class="text-purple-400">
+                              <strong>TCO moyen global:</strong> {{ formatCurrency(getTCOMoyenGlobal) }}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="category-chart-container bg-surface-900 rounded-lg p-4">
+                        <canvas 
+                          :id="`categoryChart_${categoryIndex}`" 
+                          :key="`chart-${categoryData.uuid}-${selectedCategories.join(',')}`"
+                          style="height: 500px;"
+                        ></canvas>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Graphique par Catégorie et Véhicules -->
+                <div class="bg-surface-800 rounded-lg shadow-inner p-6">
+                  <div class="mb-6">
+                    <h3 class="text-2xl font-bold text-white flex items-center gap-2">
+                      <AreaChart class="h-6 w-6 text-green-500"/>
+                      Ventilation TCO par Catégorie et Véhicule
+                    </h3>
+                    <p class="text-surface-400 mt-2">
+                      Répartition des coûts par composant pour chaque catégorie et véhicule
+                    </p>
+                  </div>
+
+                  <!-- Vue d'ensemble par catégorie -->
+                  <div class="mb-8 bg-surface-900 rounded-lg p-6">
+                    <h4 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                      <span class="w-4 h-4 bg-amber-500 rounded-full"></span>
+                      Vue d'ensemble par catégorie
+                    </h4>
+                    <div class="category-overview-container">
+                      <canvas 
+                        id="categoryOverviewChart" 
+                        :key="`overview-${selectedCategories.join(',')}`"
+                        width="400" 
+                        height="300"
+                      ></canvas>
+                    </div>
+                  </div>
+
+                  <!-- Légende commune -->
+                  <div class="mb-6 bg-surface-900 rounded-lg p-4">
+                    <h4 class="text-lg font-semibold text-white mb-3">Légende des composants TCO</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+                      <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 rounded-full" style="background-color: #5B9BD5;"></div>
+                        <span class="text-sm text-gray-300">Loyer total</span>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 rounded-full" style="background-color: #A5A5A5;"></div>
+                        <span class="text-sm text-gray-300">Fiscalité mensuelle</span>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 rounded-full" style="background-color: #ED7D31;"></div>
+                        <span class="text-sm text-gray-300">Budget énergie</span>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 rounded-full" style="background-color: #70AD47;"></div>
+                        <span class="text-sm text-gray-300">IS sur AND</span>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 rounded-full" style="background-color: #264478;"></div>
+                        <span class="text-sm text-gray-300">Charges patronales AEN</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Ventilation par véhicule organisée par catégorie -->
+                  <div v-for="(categoryData, categoryIndex) in vehiclesByCategory" :key="categoryData.uuid" class="mb-8">
+                    <div class="bg-surface-900 rounded-lg p-6">
+                      <h4 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                        <span class="w-4 h-4 bg-amber-500 rounded-full"></span>
+                        {{ categoryData.title }}
+                        <span class="text-sm text-gray-400 ml-2">({{ categoryData.vehicules?.length || 0 }} véhicules)</span>
+                        <span class="text-sm text-amber-400 ml-4">TCO moyen : {{ formatCurrency(categoryData.tcoMoyenCategorie) }}</span>
+                      </h4>
+
+                      <div class="pie-charts-grid">
+                        <div
+                          v-for="(vehicule, vehicleIndex) in categoryData.vehicules"
+                          :key="`pie_${categoryIndex}_${vehicleIndex}`"
+                          class="pie-chart-item bg-surface-800 rounded-lg p-4"
+                        >
+                          <div class="pie-chart-container">
+                            <canvas 
+                              :id="`pieChart_${categoryIndex}_${vehicleIndex}`" 
+                              :key="`pie-${categoryData.uuid}-${vehicule.id || vehicleIndex}-${selectedCategories.join(',')}`"
+                              width="200" 
+                              height="200"
+                            ></canvas>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <!-- Retour -->
@@ -1658,6 +2458,132 @@ watch(selectedCategories, () => {
   border-radius: 1rem;
   font-weight: 800;
   font-size: 0.875rem;
+}
+
+/* Chart styles */
+.chart-container {
+  position: relative;
+  height: 600px;
+  width: 100%;
+}
+
+.chart-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Category chart containers */
+.category-chart-container {
+  position: relative;
+  height: 500px;
+  width: 100%;
+}
+
+.category-chart-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Category overview chart container */
+.category-overview-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+  width: 100%;
+}
+
+.category-overview-container canvas {
+  max-width: 400px;
+  max-height: 300px;
+}
+
+/* Pie charts grid */
+.pie-charts-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  justify-items: center;
+}
+
+@media (max-width: 1024px) {
+  .pie-charts-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .pie-charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pie-chart-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
+  max-width: 240px;
+}
+
+.pie-chart-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.pie-chart-container {
+  width: 200px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pie-chart-container canvas {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* Category chart responsive adjustments */
+@media (max-width: 1024px) {
+  .category-chart-container {
+    height: 450px;
+  }
+}
+
+@media (max-width: 640px) {
+  .pie-chart-container {
+    width: 180px;
+    height: 180px;
+  }
+  
+  .chart-container {
+    height: 400px;
+  }
+  
+  .category-chart-container {
+    height: 350px;
+  }
+}
+
+/* Category section styling */
+.category-chart-section {
+  border-left: 4px solid rgb(251 191 36);
+  transition: all 0.3s ease;
+}
+
+.category-chart-section:hover {
+  border-left-color: rgb(245 158 11);
+  transform: translateX(2px);
+}
+
+/* Category title enhancements */
+.category-title-stats {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(245, 158, 11, 0.05));
+  border-left: 3px solid rgb(251 191 36);
+  border-radius: 0 8px 8px 0;
+  padding: 0.75rem 1rem;
 }
 
 /* Responsive */
