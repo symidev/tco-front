@@ -140,7 +140,7 @@ const getProgressMenuItems = (catalogue) => {
     },
     {
       label: 'Lancer l\'analyse',
-      condition: catalogue.countCategories >= 2 && catalogue.canAnalyze,
+      condition: catalogue.countCategories >= 1 && catalogue.canAnalyze,
       icon: TrendingUp,
       command: () => {
         openAnalyzeDialog(catalogue);
@@ -278,9 +278,12 @@ const closeAnalyzeDialog = () => {
 const confirmAnalyze = async () => {
   if (!selectedCatalogue.value) return;
   
+  // Sauvegarder l'UUID avant de fermer le dialog
+  const catalogueUuid = selectedCatalogue.value.uuid;
+  
   loading.value = true;
   try {
-    await catalogueService.analyzeCatalogue(selectedCatalogue.value.uuid);
+    await catalogueService.analyzeCatalogue(catalogueUuid);
     
     toast.add({
       severity: 'success',
@@ -295,7 +298,7 @@ const confirmAnalyze = async () => {
     await fetchCatalogues();
     
     // Rediriger vers la vue d'analyse
-    router.push(`/catalogue/${selectedCatalogue.value.uuid}/analyse`);
+    router.push(`/catalogue/${catalogueUuid}/analyse`);
     
   } catch (error) {
     console.error('Erreur lors du lancement de l\'analyse:', error);
@@ -479,7 +482,7 @@ onMounted(() => {
             <span>Prérequis pour l'analyse</span>
           </div>
           <ul class="text-sm text-surface-600 dark:text-surface-400 space-y-1">
-            <li>• Minimum 2 catégories dans le catalogue</li>
+            <li>• Au moins 1 catégorie dans le catalogue</li>
             <li>• Minimum 2 véhicules par catégorie</li>
           </ul>
         </div>

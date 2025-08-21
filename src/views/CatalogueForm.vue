@@ -7,6 +7,7 @@ import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
+import Slider from 'primevue/slider';
 import ProgressSpinner from 'primevue/progressspinner';
 import RadioButton from 'primevue/radiobutton';
 import IconField from 'primevue/iconfield';
@@ -60,6 +61,17 @@ const formData = ref({
   field_autonomie_elec_plage_min: 10,
   field_autonomie_elec_plage_max: 80,
   field_type_recharge: null
+});
+
+// Computed pour le slider d'autonomie
+const plageAutonomie = computed({
+  get() {
+    return [formData.value.field_autonomie_elec_plage_min, formData.value.field_autonomie_elec_plage_max];
+  },
+  set(value) {
+    formData.value.field_autonomie_elec_plage_min = value[0];
+    formData.value.field_autonomie_elec_plage_max = value[1];
+  }
 });
 
 const pageTitle = computed(() => {
@@ -310,49 +322,30 @@ onMounted(() => {
                     </FloatLabel>
                   </div>
 
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Autonomie minimum -->
-                    <div class="form-field">
-                      <FloatLabel variant="in">
-                        <IconField>
-                          <InputIcon>
-                            <Zap class="h-4 w-4"/>
-                          </InputIcon>
-                          <InputNumber
-                            id="autonomie_min"
-                            v-model="formData.field_autonomie_elec_plage_min"
-                            :min="0"
-                            :max="100"
-                            :step="10"
-                            showButtons
-                            fluid
-                            required
-                          />
-                        </IconField>
-                        <label for="autonomie_min" class="form-label">Autonomie minimum (%) *</label>
-                      </FloatLabel>
+                  <!-- Plage d'autonomie avec slider -->
+                  <div class="form-field">
+                    <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-3">
+                      <Zap class="inline h-4 w-4 mr-2"/>
+                      Plage d'autonomie (%) *
+                    </label>
+                    <div class="flex items-center gap-3 px-3">
+                      <span class="text-sm font-medium text-surface-600 dark:text-surface-400 min-w-[2.5rem] text-center">
+                        {{ plageAutonomie[0] }}%
+                      </span>
+                      <Slider
+                        v-model="plageAutonomie"
+                        range
+                        :min="0"
+                        :max="100"
+                        :step="1"
+                        class="flex-1"
+                      />
+                      <span class="text-sm font-medium text-surface-600 dark:text-surface-400 min-w-[2.5rem] text-center">
+                        {{ plageAutonomie[1] }}%
+                      </span>
                     </div>
-
-                    <!-- Autonomie maximum -->
-                    <div class="form-field">
-                      <FloatLabel variant="in">
-                        <IconField>
-                          <InputIcon>
-                            <Zap class="h-4 w-4"/>
-                          </InputIcon>
-                          <InputNumber
-                            id="autonomie_max"
-                            v-model="formData.field_autonomie_elec_plage_max"
-                            :min="0"
-                            :max="100"
-                            :step="10"
-                            showButtons
-                            fluid
-                            required
-                          />
-                        </IconField>
-                        <label for="autonomie_max" class="form-label">Autonomie maximum (%) *</label>
-                      </FloatLabel>
+                    <div class="text-xs text-surface-500 dark:text-surface-400 mt-2 px-3">
+                      Définit la plage d'autonomie électrique pour les calculs de TCO
                     </div>
                   </div>
 

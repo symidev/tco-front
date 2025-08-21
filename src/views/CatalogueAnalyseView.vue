@@ -12,9 +12,10 @@ import Column from 'primevue/column';
 import Panel from 'primevue/panel';
 import ToggleSwitch from 'primevue/toggleswitch';
 import Checkbox from 'primevue/checkbox';
+import Dialog from 'primevue/dialog';
 
 // Icons
-import { BarChart3, AreaChart, FileSpreadsheet, FileText, Table } from 'lucide-vue-next';
+import { BarChart3, AreaChart, FileSpreadsheet, FileText, Table, Search } from 'lucide-vue-next';
 
 // Services
 import { catalogueService } from '@/services/api/catalogueService';
@@ -27,17 +28,15 @@ const toast = useToast();
 const catalogue = ref(null);
 const loading = ref(true);
 const displayMode = ref('table'); // 'table' ou 'charts'
-const expandedSections = ref(new Set());
-const selectedCategories = ref(new Set());
+const selectedCategories = ref([]);
 
-// Responsive scroll management
-const headerScrollContainer = ref(null);
-const sectionsData = ref([]);
-const scrollListeners = ref([]);
+// Dialog states
+const showVehicleDetails = ref(false);
+const selectedVehicleDetails = ref(null);
+
+// Scroll sync
 const isScrollSyncing = ref(false);
-
-// Configuration complète des sections d'analyse (comme ComparoAnalyseView)
-const sectionsConfig = ref([]);
+const scrollListeners = ref([]);
 
 // Computed properties
 const canDownloadFiles = computed(() => {
@@ -49,21 +48,127 @@ const availableCategories = computed(() => {
   return catalogue.value?.categories || [];
 });
 
-// Initialiser toutes les catégories comme sélectionnées par défaut
-const initializeCategories = () => {
-  if (catalogue.value?.categories) {
-    selectedCategories.value = new Set(catalogue.value.categories.map(cat => cat.uuid));
-  }
-};
+// Computed pour les véhicules organisés par catégorie avec ranking TCO
+const vehiclesByCategory = computed(() => {
+  if (!catalogue.value?.categories) return [];
 
-// Computed pour calculer le TCO moyen
-const getTCOMoyen = computed(() => {
-  if (!getAllVehicules().length) return 0;
-  const total = getAllVehicules().reduce((sum, vehicule) => {
+  return catalogue.value.categories
+    .filter(category => selectedCategories.value.includes(category.uuid))
+    .map(category => {
+      // Trier les véhicules par TCO mensuel (croissant = meilleur)
+      const sortedVehicules = (category.vehicules || [])
+        .map(vehicule => ({
+          ...vehicule,
+          categoryTitle: category.title,
+          categoryUuid: category.uuid
+        }))
+        .sort((a, b) => (a.calcul?.tcoMensuel || 0) - (b.calcul?.tcoMensuel || 0));
+
+      // Ajouter le ranking TCO dans la catégorie
+      const vehiculesWithRanking = sortedVehicules.map((vehicule, index) => ({
+        ...vehicule,
+        tcoRankInCategory: index + 1
+      }));
+
+      return {
+        ...category,
+        vehicules: vehiculesWithRanking,
+        tcoMoyenCategorie: calculateCategoryTCOAverage(vehiculesWithRanking)
+      };
+    });
+});
+
+// Computed pour le TCO moyen global
+const getTCOMoyenGlobal = computed(() => {
+  const allVehicules = getAllVehicules();
+  if (!allVehicules.length) return 0;
+  const total = allVehicules.reduce((sum, vehicule) => {
     return sum + (vehicule.calcul?.tcoMensuel || 0);
   }, 0);
-  return total / getAllVehicules().length;
+  return total / allVehicules.length;
 });
+
+// Computed pour les colonnes principales (non-collapsées)
+const mainColumns = computed(() => [
+  {
+    field: 'vehicle_info',
+    header: 'Véhicule',
+    key: 'vehicle_info',
+    sortable: false,
+    style: 'min-width: 250px'
+  },
+  {
+    field: 'prix_total_remise',
+    header: 'Prix Total TTC',
+    key: 'prix_total_remise',
+    sortable: true,
+    style: 'min-width: 120px'
+  },
+  {
+    field: 'loyer_total',
+    header: 'Loyer Total',
+    key: 'loyer_total',
+    sortable: true,
+    style: 'min-width: 120px'
+  },
+  {
+    field: 'fiscalite_mensuelle',
+    header: 'Fiscalité Mensuelle',
+    key: 'fiscalite_mensuelle',
+    sortable: true,
+    style: 'min-width: 140px'
+  },
+  {
+    field: 'budget_energie_mensuel',
+    header: 'Budget Énergie',
+    key: 'budget_energie_mensuel',
+    sortable: true,
+    style: 'min-width: 120px'
+  },
+  {
+    field: 'is_and_value',
+    header: 'IS sur AND',
+    key: 'is_and_value',
+    sortable: true,
+    style: 'min-width: 100px'
+  },
+  {
+    field: 'aen_charge',
+    header: 'Charges AEN',
+    key: 'aen_charge',
+    sortable: true,
+    style: 'min-width: 120px'
+  },
+  {
+    field: 'tco_mensuel',
+    header: 'TCO Mensuel',
+    key: 'tco_mensuel',
+    sortable: true,
+    style: 'min-width: 120px',
+    special: 'tco' // Pour le highlighting spécial
+  },
+  {
+    field: 'ecart_tco',
+    header: 'Écart TCO',
+    key: 'ecart_tco',
+    sortable: true,
+    style: 'min-width: 120px'
+  },
+  {
+    field: 'prk',
+    header: 'PRK /km',
+    key: 'prk',
+    sortable: true,
+    style: 'min-width: 100px'
+  },
+  {
+    field: 'ranking_tco',
+    header: 'Ranking TCO',
+    key: 'ranking_tco',
+    sortable: true,
+    style: 'min-width: 120px'
+  }
+]);
 
 // Methods
 const loadCatalogueData = async () => {
@@ -76,9 +181,6 @@ const loadCatalogueData = async () => {
 
     // Initialiser toutes les catégories comme sélectionnées
     initializeCategories();
-    
-    // Préparer les données pour les tableaux
-    prepareTableData();
 
   } catch (error) {
     console.error('Erreur lors du chargement des données:', error);
@@ -94,254 +196,20 @@ const loadCatalogueData = async () => {
   }
 };
 
-const prepareTableData = () => {
-  if (!catalogue.value?.categories) return;
-
-  // Créer la configuration des sections (comme ComparoAnalyseView)
-  let labelPlage = '';
-  if (catalogue.value.catalogue?.autonomie_elec_plage_min || catalogue.value.catalogue?.autonomie_elec_plage_max) {
-    labelPlage = (catalogue.value.catalogue.autonomie_elec_plage_min || 0) + '% - ' + (catalogue.value.catalogue.autonomie_elec_plage_max || 100) + '%';
+// Initialiser toutes les catégories comme sélectionnées par défaut
+const initializeCategories = () => {
+  if (catalogue.value?.categories) {
+    selectedCategories.value = catalogue.value.categories.map(cat => cat.uuid);
   }
-
-  sectionsConfig.value = [
-    {
-      id: 'infos_vehicule',
-      title: 'Infos véhicule',
-      rows: [
-        { id: 'marque', name: 'Marque', getValue: (v) => {
-          const marque = typeof v.marque === 'object' ? (v.marque?.name || v.marque?.title) : v.marque;
-          return marque || '-';
-        }},
-        { id: 'modele', name: 'Modèle', getValue: (v) => {
-          const modele = typeof v.modele === 'object' ? (v.modele?.name || v.modele?.title) : v.modele;
-          return modele || '-';
-        }},
-        { id: 'finition', name: 'Moteur/Finition', getValue: (v) => {
-          const finition = typeof v.finition === 'object' ? (v.finition?.name || v.finition?.title) : v.finition;
-          return finition || '-';
-        }},
-        { id: 'energie', name: 'Énergie', getValue: (v) => v.energie?.toUpperCase() || '-' },
-        { id: 'conso_carb', name: 'Consommation carburant', getValue: (v) => v.conso_carb ? `${formatNumber(v.conso_carb, 1)} L/100km` : '-' },
-        { id: 'conso_kwh', name: 'Consommation kwh', getValue: (v) => v.conso_kwh ? `${formatNumber(v.conso_kwh, 1)} kWh/100km` : '-' },
-        { id: 'co2', name: 'Émission CO2 WLTP', getValue: (v) => v.co2 ? `${v.co2} g/km` : '-' },
-        { id: 'autonomie', name: 'Autonomie batterie (WLTP)', getValue: (v) => v.autonomie ? `${v.autonomie} km` : '-' },
-        { id: 'capacite_batterie', name: 'Capacité de la batterie', getValue: (v) => v.capacite_batterie ? `${v.capacite_batterie} kWh` : '-' },
-        { id: 'vitesse_recharge', name: 'Capacité de recharge de la batterie', getValue: (v) => v.vitesse_recharge_batterie ? `${v.vitesse_recharge_batterie} kW` : '-' },
-        { id: 'prix', name: 'Prix du véhicule non remisé', getValue: (v) => formatCurrency(v.prix || 0) },
-        { id: 'prix_options', name: 'Montant option(s) non remisé', getValue: (v) => formatCurrency(v.prix_options || 0) },
-        {
-          id: 'prix_total',
-          name: 'Prix total avec options',
-          getValue: (v) => formatCurrency((v.prix || 0) + (v.prix_options || 0)),
-          field: 'prix_vehicule',
-          getClass: (v) => getCellClass((v.prix || 0) + (v.prix_options || 0), 'prix_vehicule')
-        },
-        { id: 'remise', name: 'Remise en %', getValue: (v) => formatPercent(v.remise || 0) },
-        {
-          id: 'prix_remise',
-          name: 'Prix remisé TTC',
-          getValue: (v) => {
-            const prixTotal = (v.prix || 0) + (v.prix_options || 0);
-            const remiseDecimal = (v.remise || 0) / 100;
-            return formatCurrency(prixTotal * (1 - remiseDecimal));
-          },
-          field: 'prix_vehicule',
-          getClass: (v) => {
-            const prixTotal = (v.prix || 0) + (v.prix_options || 0);
-            const remiseDecimal = (v.remise || 0) / 100;
-            return getCellClass(prixTotal * (1 - remiseDecimal), 'prix_vehicule');
-          }
-        }
-      ]
-    },
-    {
-      id: 'contrat',
-      title: 'Contrat',
-      rows: [
-        { id: 'loyer_financier', name: 'Loyer Financier', getValue: (v) => formatCurrency(v.loyer_financier || 0) },
-        { id: 'entretien', name: 'Entretien', getValue: (v) => formatCurrency(v.entretien || 0) },
-        { id: 'pneumatiques', name: 'Pneumatiques', getValue: (v) => formatCurrency(v.pneumatique || 0) },
-        { id: 'gardiennage_pneumatiques', name: 'Gardiennage des pneumatiques', getValue: (v) => formatCurrency(v.pneumatique_garde || 0) },
-        { id: 'vehicule_relais', name: 'Véhicule Relais', getValue: (v) => formatCurrency(v.vehicule_relais || 0) },
-        { id: 'assurance_rc', name: 'Assurance RC', getValue: (v) => formatCurrency(v.assurance_rc || 0) },
-        { id: 'assurance_dommages', name: 'Assurance Dommages', getValue: (v) => formatCurrency(v.assurance_dommage || 0) },
-        { id: 'perte_financiere', name: 'Perte Financière', getValue: (v) => formatCurrency(v.perte_fi || 0) },
-        { id: 'carte_carburant', name: 'Carte (s) Carburant', getValue: (v) => formatCurrency(v.carte_carb || 0) },
-        { id: 'carte_electrique', name: 'Carte électrique', getValue: (v) => formatCurrency(v.carte_elec || 0) },
-        { id: 'badge_telepeage', name: 'Badge Télépéage', getValue: (v) => formatCurrency(v.badge_telepeage || 0) },
-        { id: 'pastille_critair', name: 'Pastille Crit\'Air', getValue: (v) => formatCurrency(v.vignette_critair || 0) },
-        { id: 'autre_cout', name: 'Autre coût', getValue: (v) => formatCurrency(v.autre_cout || 0) },
-        {
-          id: 'loyer_total',
-          name: 'Loyer total',
-          getValue: (v) => formatCurrency(v.calcul?.loyer_total || 0),
-          field: 'loyer_total',
-          getClass: (v) => getCellClass(v.calcul?.loyer_total || 0, 'loyer_total')
-        },
-        {
-          id: 'prk_contrat',
-          name: 'PRK /km',
-          getValue: (v) => formatCurrency(v.calcul?.prk || 0),
-          field: 'prk_contrat',
-          getClass: (v) => getCellClass(v.calcul?.prk || 0, 'prk_contrat')
-        }
-      ]
-    },
-    {
-      id: 'fiscalite',
-      title: 'Fiscalité',
-      rows: [
-        { id: 'malus_co2', name: 'Malus CO² (une fois)', getValue: (v) => formatCurrency(v.calcul?.malus_co2 || 0) },
-        { id: 'taxe_co2', name: 'Taxe C0² (annuelle)', getValue: (v) => formatCurrency(v.calcul?.taxe_co2 || 0) },
-        { id: 'taxe_polluant', name: 'Taxe polluants (annuelle)', getValue: (v) => formatCurrency(v.calcul?.taxe_polluant || 0) },
-        { id: 'taxe_masse', name: 'Taxe à la masse (une fois)', getValue: (v) => formatCurrency(v.calcul?.taxe_masse || 0) },
-        {
-          id: 'fiscalite_mensuelle',
-          name: 'Fiscalité mensuelle',
-          getValue: (v) => formatCurrency(v.calcul?.fiscalite_mensuel || 0),
-          field: 'fiscalite',
-          getClass: (v) => getCellClass(v.calcul?.fiscalite_mensuel || 0, 'fiscalite')
-        }
-      ]
-    },
-    {
-      id: 'energie',
-      title: 'Énergie',
-      rows: [
-        { id: 'energie_thermique', name: 'Prix de l\'énergie Thermique €', getValue: (v) => v.calcul?.prix_energie_thermique ? formatCurrency(v.calcul.prix_energie_thermique) : '-' },
-        { id: 'energie_electrique', name: 'Prix de l\'énergie Electrique €', getValue: (v) => v.calcul?.prix_energie_electrique ? formatCurrency(v.calcul.prix_energie_electrique) : '-' },
-        {
-          id: 'budget_energie_mensuel',
-          name: 'Budget énergie mensuel',
-          getValue: (v) => formatCurrency(v.calcul?.budget_mensuel_total_energie || 0),
-          field: 'budget_energie_mensuel',
-          getClass: (v) => getCellClass(v.calcul?.budget_mensuel_total_energie || 0, 'budget_energie_mensuel')
-        }
-      ]
-    },
-    {
-      id: 'is_and',
-      title: 'IS sur AND',
-      rows: [
-        { id: 'pct_imposition_client', name: '% d\'imposition Client (IS)', getValue: (v) => formatPercent(catalogue.value?.is || 0) },
-        { id: 'plafond_and', name: 'Plafond d\'AND', getValue: (v) => formatCurrency(v.calcul?.plafondAnd || 0) },
-        { id: 'calcul_and_mensuel', name: 'Calcul AND Mensuel', getValue: (v) => formatCurrency(v.calcul?.andMensuel || 0) },
-        {
-          id: 'is_and_value',
-          name: 'IS sur AND',
-          getValue: (v) => formatCurrency(v.calcul?.isAnd || 0),
-          field: 'is_and_value',
-          getClass: (v) => getCellClass(v.calcul?.isAnd || 0, 'is_and_value')
-        }
-      ]
-    },
-    {
-      id: 'aen_details',
-      title: 'AEN',
-      rows: [
-        { id: 'taux_aen', name: 'Taux AEN', getValue: (v) => formatPercent(v.aen || 0) },
-        { id: 'aen_mensuel_detail', name: 'AEN Mensuel', getValue: (v) => formatCurrency(v.calcul?.aenMensuel || 0) },
-        { id: 'taux_charges_patronales', name: 'Taux charges patronales', getValue: (v) => formatPercent(v.chargePatronale || 0) },
-        {
-          id: 'aen_charge',
-          name: 'Charges patronales sur AEN',
-          getValue: (v) => formatCurrency(v.calcul?.aenChargePatronale || 0),
-          field: 'aen_charge',
-          getClass: (v) => getCellClass(v.calcul?.aenChargePatronale || 0, 'aen_charge')
-        }
-      ]
-    },
-    {
-      id: 'tco',
-      title: 'TCO',
-      rows: [
-        {
-          id: 'tco_mensuel',
-          name: 'TCO mensuel',
-          getValue: (v) => formatCurrency(v.calcul?.tcoMensuel || 0),
-          field: 'tco_mensuel',
-          getClass: (v) => getCellClass(v.calcul?.tcoMensuel || 0, 'tco_mensuel')
-        },
-        { id: 'tco_moyen', name: 'TCO Moyen mensuel', getValue: () => formatCurrency(getTCOMoyen.value) },
-        {
-          id: 'prk',
-          name: 'PRK /km',
-          getValue: (v) => formatCurrency(getPRK(v)),
-          field: 'prk',
-          getClass: (v) => getCellClass(getPRK(v), 'prk')
-        },
-        { id: 'tco_total', name: 'TCO Total (durée du contrat)', getValue: (v) => formatCurrency((v.calcul?.tcoMensuel || 0) * (v.duree || 36)) }
-      ]
-    },
-    {
-      id: 'ventilation_tco',
-      title: 'Ventilation TCO',
-      rows: [
-        { id: 'tco_loyer', name: 'Loyer et services (en %)', getValue: (v) => formatPercent(getTCOVentilation(v, 'loyer')) },
-        { id: 'tco_fiscalite', name: 'Fiscalité (en %)', getValue: (v) => formatPercent(getTCOVentilation(v, 'fiscalite')) },
-        { id: 'tco_carburant', name: 'Carburant (en %)', getValue: (v) => formatPercent(getTCOVentilation(v, 'carburant')) },
-        { id: 'aen_charge', name: 'Charges sur AEN (en %)', getValue: (v) => formatPercent(getTCOVentilation(v, 'aenCharge')) },
-        { id: 'is_and', name: 'IS sur AND (en %)', getValue: (v) => formatPercent(getTCOVentilation(v, 'isAnd')) }
-      ]
-    }
-  ];
-
-  // Créer les données pour chaque section séparément (comme ComparoAnalyseView)
-  const sectionDataMap = {};
-  const allVehicules = getAllVehicules();
-
-  sectionsConfig.value.forEach(section => {
-    const coloredRows = [];
-    const nonColoredRows = [];
-
-    section.rows.forEach(row => {
-      const rowData = {
-        id: row.id,
-        type: 'data',
-        label: row.name,
-        field: row.field || null,
-        hasColor: !!row.field && !!row.getClass
-      };
-
-      // Ajouter une colonne pour chaque véhicule
-      allVehicules.forEach((vehicule, index) => {
-        rowData[`vehicule_${index}`] = {
-          value: row.getValue(vehicule),
-          class: row.getClass ? row.getClass(vehicule) : ''
-        };
-      });
-
-      // Séparer les lignes avec et sans couleur
-      if (rowData.hasColor) {
-        coloredRows.push(rowData);
-      } else {
-        nonColoredRows.push(rowData);
-      }
-    });
-
-    sectionDataMap[section.id] = {
-      coloredRows,
-      nonColoredRows,
-      hasColoredRows: coloredRows.length > 0,
-      hasNonColoredRows: nonColoredRows.length > 0,
-      allRows: [...coloredRows, ...nonColoredRows],
-      title: section.title,
-      vehiculesColumns: allVehicules
-    };
-  });
-
-  sectionsData.value = sectionDataMap;
 };
 
-// Récupérer tous les véhicules avec leurs catégories (filtrés par catégories sélectionnées)
+// Récupérer tous les véhicules (filtrés par catégories sélectionnées)
 const getAllVehicules = () => {
   const vehicules = [];
-
   if (!catalogue.value?.categories) return vehicules;
 
   catalogue.value.categories.forEach(category => {
-    // Ne garder que les catégories sélectionnées
-    if (selectedCategories.value.has(category.uuid)) {
+    if (selectedCategories.value.includes(category.uuid)) {
       category.vehicules?.forEach(vehicule => {
         vehicules.push({
           ...vehicule,
@@ -355,30 +223,148 @@ const getAllVehicules = () => {
   return vehicules;
 };
 
+// Calculer le TCO moyen d'une catégorie
+const calculateCategoryTCOAverage = (vehicules) => {
+  if (!vehicules.length) return 0;
+  const total = vehicules.reduce((sum, vehicule) => {
+    return sum + (vehicule.calcul?.tcoMensuel || 0);
+  }, 0);
+  return total / vehicules.length;
+};
+
 // Toggle d'une catégorie
 const toggleCategory = (categoryUuid) => {
-  const newSelectedCategories = new Set(selectedCategories.value);
-  if (newSelectedCategories.has(categoryUuid)) {
-    newSelectedCategories.delete(categoryUuid);
+  const index = selectedCategories.value.indexOf(categoryUuid);
+  if (index > -1) {
+    selectedCategories.value.splice(index, 1);
   } else {
-    newSelectedCategories.add(categoryUuid);
+    selectedCategories.value.push(categoryUuid);
   }
-  selectedCategories.value = newSelectedCategories;
-  // Recalculer les données des tableaux
-  prepareTableData();
 };
 
 // Sélectionner/désélectionner toutes les catégories
 const toggleAllCategories = () => {
-  if (selectedCategories.value.size === catalogue.value?.categories?.length) {
-    selectedCategories.value = new Set(); // Créer un nouveau Set vide
+  if (selectedCategories.value.length === catalogue.value?.categories?.length) {
+    selectedCategories.value = []; 
   } else {
-    selectedCategories.value = new Set(catalogue.value?.categories?.map(cat => cat.uuid) || []);
+    selectedCategories.value = catalogue.value?.categories?.map(cat => cat.uuid) || [];
   }
-  prepareTableData();
 };
 
-// Fonctions pour calculs min/max (comme ComparoAnalyseView)
+// Afficher les détails d'un véhicule dans une popup
+const showVehicleDetailsDialog = (vehicule) => {
+  // Ajouter le TCO moyen de la catégorie au véhicule sélectionné
+  const categoryData = vehiclesByCategory.value.find(cat => cat.uuid === vehicule.categoryUuid);
+  selectedVehicleDetails.value = {
+    ...vehicule,
+    tcoMoyenCategorie: categoryData?.tcoMoyenCategorie || 0
+  };
+  showVehicleDetails.value = true;
+};
+
+// Fonction pour calculer le PRK (comme dans ComparoAnalyseView)
+const getPRK = (vehicule) => {
+  const kmMensuel = vehicule.calcul?.km_mensuel || 0;
+  const tcoMensuel = vehicule.calcul?.tcoMensuel || 0;
+  return kmMensuel ? (tcoMensuel / kmMensuel) : 0;
+};
+
+// Obtenir la valeur formatée d'une colonne
+const getColumnValue = (vehicule, columnField) => {
+  switch (columnField) {
+    case 'prix_total_remise':
+      const prixTotal = (vehicule.prix || 0) + (vehicule.prix_options || 0);
+      const remiseDecimal = (vehicule.remise || 0) / 100;
+      return formatCurrency(prixTotal * (1 - remiseDecimal));
+    case 'loyer_total':
+      return formatCurrency(vehicule.calcul?.loyer_total || 0);
+    case 'fiscalite_mensuelle':
+      return formatCurrency(vehicule.calcul?.fiscalite_mensuel || 0);
+    case 'budget_energie_mensuel':
+      return formatCurrency(vehicule.calcul?.budget_mensuel_total_energie || 0);
+    case 'is_and_value':
+      return formatCurrency(vehicule.calcul?.isAnd || 0);
+    case 'aen_charge':
+      return formatCurrency(vehicule.calcul?.aenChargePatronale || 0);
+    case 'tco_mensuel':
+      return formatCurrency(vehicule.calcul?.tcoMensuel || 0);
+    case 'ecart_tco':
+      const categoryData = vehiclesByCategory.value.find(cat => cat.uuid === vehicule.categoryUuid);
+      const tcoMoyenCategorie = categoryData?.tcoMoyenCategorie || 0;
+      const tcoVehicule = vehicule.calcul?.tcoMensuel || 0;
+      const ecart = tcoMoyenCategorie - tcoVehicule;
+      return formatCurrency(ecart);
+    case 'prk':
+      return formatCurrency(getPRK(vehicule));
+    case 'ranking_tco':
+      return `#${vehicule.tcoRankInCategory || '-'}`;
+    default:
+      return '-';
+  }
+};
+
+// Obtenir la classe CSS conditionnelle pour le highlighting
+const getColumnClass = (vehicule, columnField) => {
+  const value = getColumnRawValue(vehicule, columnField);
+  const field = getFieldForMinMax(columnField);
+  if (!field) return '';
+
+  const min = getMinValueForCategory(field, vehicule.categoryUuid);
+  const max = getMaxValueForCategory(field, vehicule.categoryUuid);
+
+  if (value === min) return 'text-green-400 font-bold';
+  if (value === max) return 'text-red-400 font-bold';
+  return '';
+};
+
+// Obtenir la valeur brute pour les calculs min/max
+const getColumnRawValue = (vehicule, columnField) => {
+  switch (columnField) {
+    case 'prix_total_remise':
+      const prixTotal = (vehicule.prix || 0) + (vehicule.prix_options || 0);
+      const remiseDecimal = (vehicule.remise || 0) / 100;
+      return prixTotal * (1 - remiseDecimal);
+    case 'loyer_total':
+      return vehicule.calcul?.loyer_total || 0;
+    case 'fiscalite_mensuelle':
+      return vehicule.calcul?.fiscalite_mensuel || 0;
+    case 'budget_energie_mensuel':
+      return vehicule.calcul?.budget_mensuel_total_energie || 0;
+    case 'is_and_value':
+      return vehicule.calcul?.isAnd || 0;
+    case 'aen_charge':
+      return vehicule.calcul?.aenChargePatronale || 0;
+    case 'tco_mensuel':
+      return vehicule.calcul?.tcoMensuel || 0;
+    case 'ecart_tco':
+      const categoryData = vehiclesByCategory.value.find(cat => cat.uuid === vehicule.categoryUuid);
+      const tcoMoyenCategorie = categoryData?.tcoMoyenCategorie || 0;
+      const tcoVehicule = vehicule.calcul?.tcoMensuel || 0;
+      return tcoMoyenCategorie - tcoVehicule;
+    case 'prk':
+      return getPRK(vehicule);
+    default:
+      return 0;
+  }
+};
+
+// Mapping pour les champs min/max
+const getFieldForMinMax = (columnField) => {
+  const mapping = {
+    'prix_total_remise': 'prix_vehicule',
+    'loyer_total': 'loyer_total',
+    'fiscalite_mensuelle': 'fiscalite',
+    'budget_energie_mensuel': 'budget_energie_mensuel',
+    'is_and_value': 'is_and_value',
+    'aen_charge': 'aen_charge',
+    'tco_mensuel': 'tco_mensuel',
+    'ecart_tco': 'ecart_tco',
+    'prk': 'prk_contrat'
+  };
+  return mapping[columnField];
+};
+
+// Fonctions pour calculs min/max
 const getMinValue = (field) => {
   const allVehicules = getAllVehicules();
   if (!allVehicules.length) return Infinity;
@@ -386,7 +372,9 @@ const getMinValue = (field) => {
   let values = allVehicules.map(vehicule => {
     switch (field) {
       case 'prix_vehicule':
-        return vehicule.calcul?.prix_total_sans_remise || vehicule.prix || 0;
+        const prixTotal = (vehicule.prix || 0) + (vehicule.prix_options || 0);
+        const remiseDecimal = (vehicule.remise || 0) / 100;
+        return prixTotal * (1 - remiseDecimal);
       case 'loyer_total':
         return vehicule.calcul?.loyer_total || 0;
       case 'fiscalite':
@@ -396,7 +384,7 @@ const getMinValue = (field) => {
       case 'tco_mensuel':
         return vehicule.calcul?.tcoMensuel || 0;
       case 'prk_contrat':
-        return vehicule.calcul?.prk || 0;
+        return getPRK(vehicule);
       case 'is_and_value':
         return vehicule.calcul?.isAnd || 0;
       case 'aen_charge':
@@ -416,7 +404,9 @@ const getMaxValue = (field) => {
   let values = allVehicules.map(vehicule => {
     switch (field) {
       case 'prix_vehicule':
-        return vehicule.calcul?.prix_total_sans_remise || vehicule.prix || 0;
+        const prixTotal = (vehicule.prix || 0) + (vehicule.prix_options || 0);
+        const remiseDecimal = (vehicule.remise || 0) / 100;
+        return prixTotal * (1 - remiseDecimal);
       case 'loyer_total':
         return vehicule.calcul?.loyer_total || 0;
       case 'fiscalite':
@@ -426,7 +416,7 @@ const getMaxValue = (field) => {
       case 'tco_mensuel':
         return vehicule.calcul?.tcoMensuel || 0;
       case 'prk_contrat':
-        return vehicule.calcul?.prk || 0;
+        return getPRK(vehicule);
       case 'is_and_value':
         return vehicule.calcul?.isAnd || 0;
       case 'aen_charge':
@@ -439,22 +429,92 @@ const getMaxValue = (field) => {
   return Math.max(...values);
 };
 
-// Fonction pour déterminer les styles conditionnels
-const getCellClass = (value, field) => {
-  const min = getMinValue(field);
-  const max = getMaxValue(field);
+// Fonctions pour calculs min/max par catégorie
+const getMinValueForCategory = (field, categoryUuid) => {
+  const categoryVehicules = getVehiculesByCategory(categoryUuid);
+  if (!categoryVehicules.length) return Infinity;
 
-  if (value === min) return 'text-green-400';
-  if (value === max) return 'text-amber-400';
-  return '';
+  let values = categoryVehicules.map(vehicule => {
+    switch (field) {
+      case 'prix_vehicule':
+        const prixTotal = (vehicule.prix || 0) + (vehicule.prix_options || 0);
+        const remiseDecimal = (vehicule.remise || 0) / 100;
+        return prixTotal * (1 - remiseDecimal);
+      case 'loyer_total':
+        return vehicule.calcul?.loyer_total || 0;
+      case 'fiscalite':
+        return vehicule.calcul?.fiscalite_mensuel || 0;
+      case 'budget_energie_mensuel':
+        return vehicule.calcul?.budget_mensuel_total_energie || 0;
+      case 'tco_mensuel':
+        return vehicule.calcul?.tcoMensuel || 0;
+      case 'ecart_tco':
+        const categoryData = vehiclesByCategory.value.find(cat => cat.uuid === categoryUuid);
+        const tcoMoyenCategorie = categoryData?.tcoMoyenCategorie || 0;
+        const tcoVehicule = vehicule.calcul?.tcoMensuel || 0;
+        return tcoMoyenCategorie - tcoVehicule;
+      case 'prk_contrat':
+        return getPRK(vehicule);
+      case 'is_and_value':
+        return vehicule.calcul?.isAnd || 0;
+      case 'aen_charge':
+        return vehicule.calcul?.aenChargePatronale || 0;
+      default:
+        return 0;
+    }
+  });
+
+  return Math.min(...values);
 };
 
+const getMaxValueForCategory = (field, categoryUuid) => {
+  const categoryVehicules = getVehiculesByCategory(categoryUuid);
+  if (!categoryVehicules.length) return -Infinity;
 
-// Utility functions for calculations (simplified versions)
+  let values = categoryVehicules.map(vehicule => {
+    switch (field) {
+      case 'prix_vehicule':
+        const prixTotal = (vehicule.prix || 0) + (vehicule.prix_options || 0);
+        const remiseDecimal = (vehicule.remise || 0) / 100;
+        return prixTotal * (1 - remiseDecimal);
+      case 'loyer_total':
+        return vehicule.calcul?.loyer_total || 0;
+      case 'fiscalite':
+        return vehicule.calcul?.fiscalite_mensuel || 0;
+      case 'budget_energie_mensuel':
+        return vehicule.calcul?.budget_mensuel_total_energie || 0;
+      case 'tco_mensuel':
+        return vehicule.calcul?.tcoMensuel || 0;
+      case 'ecart_tco':
+        const categoryData = vehiclesByCategory.value.find(cat => cat.uuid === categoryUuid);
+        const tcoMoyenCategorie = categoryData?.tcoMoyenCategorie || 0;
+        const tcoVehicule = vehicule.calcul?.tcoMensuel || 0;
+        return tcoMoyenCategorie - tcoVehicule;
+      case 'prk_contrat':
+        return getPRK(vehicule);
+      case 'is_and_value':
+        return vehicule.calcul?.isAnd || 0;
+      case 'aen_charge':
+        return vehicule.calcul?.aenChargePatronale || 0;
+      default:
+        return 0;
+    }
+  });
+
+  return Math.max(...values);
+};
+
+// Fonction utilitaire pour récupérer les véhicules d'une catégorie spécifique
+const getVehiculesByCategory = (categoryUuid) => {
+  if (!catalogue.value?.categories) return [];
+  
+  const category = catalogue.value.categories.find(cat => cat.uuid === categoryUuid);
+  return category?.vehicules || [];
+};
+
+// Utility functions
 const getVehicleLabel = (vehicule) => {
-  // Debug pour voir la structure des données
-  // Gérer les objets imbriqués potentiels
-  const marque = typeof vehicule.marque === 'object'
+  const marque = typeof vehicule.marque === 'object' 
     ? (vehicule.marque?.name || vehicule.marque?.title || '[Marque inconnue]')
     : (vehicule.marque || '[Marque inconnue]');
 
@@ -470,37 +530,17 @@ const getVehicleLabel = (vehicule) => {
   return parts.join(' ') || 'Véhicule sans nom';
 };
 
-const getTCOTotal = (vehicule) => {
-  return vehicule.tco_total || 0;
-};
-
-const getTCOMensuel = (vehicule) => {
-  return vehicule.tco_mensuel || 0;
-};
-
-const getPrixTotal = (vehicule) => {
-  return vehicule.prix_total || 0;
-};
-
-const getLoyerTotal = (vehicule) => {
-  return vehicule.loyer_total || 0;
-};
-
-const getFiscaliteMensuelle = (vehicule) => {
-  return vehicule.fiscalite_mensuelle || 0;
-};
-
-const getAenCharge = (vehicule) => {
-  return vehicule.aen_charge || 0;
-};
-
 // Formatting functions
 const formatCurrency = (value) => {
   if (value === null || value === undefined) return '-';
+  
+  // Vérifier si la valeur a des décimales significatives
+  const hasDecimals = value % 1 !== 0;
+  
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR',
-    maximumFractionDigits: 0
+    maximumFractionDigits: hasDecimals ? 2 : 0
   }).format(value);
 };
 
@@ -516,41 +556,63 @@ const formatNumber = (value, decimals = 2) => {
   }).format(value);
 };
 
-// Fonction pour calculer le PRK
-const getPRK = (vehicule) => {
-  return vehicule.calcul?.prk || 0;
+// Fonction pour convertir les heures décimales en format heures:minutes
+const formatHeuresMinutes = (heuresDecimales) => {
+  if (!heuresDecimales || !Number.isFinite(heuresDecimales)) {
+    return '-';
+  }
+  const heures = Math.floor(heuresDecimales);
+  const minutes = Math.round((heuresDecimales - heures) * 60);
+  
+  if (minutes === 60) {
+    return `${heures + 1}h`;
+  }
+  if (minutes === 0) {
+    return `${heures}h`;
+  } else {
+    return `${heures}h${minutes.toString().padStart(2, '0')}`;
+  }
 };
 
-// Fonction pour calculer la ventilation TCO
+// Fonction pour calculer le prix total
+const getPrixTotal = (vehicule) => {
+  return (vehicule.prix || 0) + (vehicule.prix_options || 0);
+};
+
+// Fonction pour calculer le prix remisé
+const getPrixRemise = (vehicule) => {
+  const prixTotal = getPrixTotal(vehicule);
+  const remiseDecimal = (vehicule.remise || 0) / 100;
+  return prixTotal * (1 - remiseDecimal);
+};
+
+// Fonction pour calculer le TCO total sur la durée du contrat
+const getTCOTotal = (vehicule) => {
+  return (vehicule.calcul?.tcoMensuel || 0) * (vehicule.duree || 36);
+};
+
+// Fonction pour calculer la ventilation du TCO en pourcentage
 const getTCOVentilation = (vehicule, type) => {
   const tcoMensuel = vehicule.calcul?.tcoMensuel || 0;
-  if (tcoMensuel === 0) return 0;
+  if (!tcoMensuel) return 0;
 
-  switch (type) {
-    case 'loyer':
-      return Math.round(((vehicule.calcul?.loyer_total || 0) / tcoMensuel) * 100);
-    case 'fiscalite':
-      return Math.round(((vehicule.calcul?.fiscalite_mensuel || 0) / tcoMensuel) * 100);
-    case 'carburant':
-      return Math.round(((vehicule.calcul?.budget_mensuel_total_energie || 0) / tcoMensuel) * 100);
-    case 'aenCharge':
-      return Math.round(((vehicule.calcul?.aenChargePatronale || 0) / tcoMensuel) * 100);
-    case 'isAnd':
-      return Math.round(((vehicule.calcul?.isAnd || 0) / tcoMensuel) * 100);
-    default:
-      return 0;
+  if (type === 'loyer') {
+    const loyerTotal = vehicule.calcul?.loyer_total || 0;
+    return Number((loyerTotal / tcoMensuel) * 100).toFixed(2);
+  } else if (type === 'fiscalite') {
+    const fiscalite = vehicule.calcul?.fiscalite_mensuel || 0;
+    return Number((fiscalite / tcoMensuel) * 100).toFixed(2);
+  } else if (type === 'carburant') {
+    const carburant = vehicule.calcul?.budget_mensuel_total_energie || 0;
+    return Number((carburant / tcoMensuel) * 100).toFixed(2);
+  } else if (type == 'aenCharge') {
+    const aenCharge = vehicule.calcul?.aenChargePatronale || 0;
+    return Number((aenCharge / tcoMensuel) * 100).toFixed(2);
+  } else if (type == 'isAnd') {
+    const isAnd = vehicule.calcul?.isAnd || 0;
+    return Number((isAnd / tcoMensuel) * 100).toFixed(2);
   }
-};
-
-
-// Section management
-const toggleSection = (sectionId) => {
-  if (expandedSections.value.has(sectionId)) {
-    expandedSections.value.delete(sectionId);
-  } else {
-    expandedSections.value.add(sectionId);
-  }
-  expandedSections.value = new Set(expandedSections.value);
+  return 0;
 };
 
 // Download functions
@@ -580,120 +642,57 @@ const downloadPDF = async () => {
   }
 };
 
-// Improved scroll synchronization system
+// Scroll synchronization
 const syncScrollPosition = (sourceElement, scrollLeft) => {
   if (isScrollSyncing.value) return;
 
   isScrollSyncing.value = true;
+  
 
-  // Find all scrollable elements within sync containers
-  const syncContainers = document.querySelectorAll('.sync-scroll-container');
-  const allScrollableElements = [];
+  // Find all sync containers and sync them directly
+  const allContainers = document.querySelectorAll('.sync-scroll-container');
+  
 
-  syncContainers.forEach(syncContainer => {
-    // Look for the actual scrollable element (p-datatable-table-container)
-    const scrollableElement = syncContainer.querySelector('.p-datatable-table-container');
-    if (scrollableElement) {
-      allScrollableElements.push(scrollableElement);
+  // Synchronize all containers except the source
+  let syncedCount = 0;
+  allContainers.forEach(container => {
+    if (container && container !== sourceElement) {
+      container.scrollLeft = scrollLeft;
+      syncedCount++;
     }
   });
-
-  console.log('Syncing scroll across', allScrollableElements.length, 'elements, scrollLeft:', scrollLeft);
-
-  // Synchronize all scrollable elements except the source
-  allScrollableElements.forEach(element => {
-    if (element && element !== sourceElement && element.scrollLeft !== scrollLeft) {
-      element.scrollLeft = scrollLeft;
-      console.log('Updated scroll for element:', element);
-    }
-  });
+  
 
   setTimeout(() => {
     isScrollSyncing.value = false;
   }, 10);
 };
 
-const syncNewElementsToCurrentScroll = () => {
-  // Get current scroll position from the first visible scrollable element
-  const firstScrollableElement = document.querySelector('.sync-scroll-container .p-datatable-table-container');
-  if (!firstScrollableElement) return;
-  
-  const currentScrollLeft = firstScrollableElement.scrollLeft;
-  console.log('Current scroll position:', currentScrollLeft);
-  
-  // Apply this scroll position to all scrollable elements
-  const allScrollableElements = document.querySelectorAll('.sync-scroll-container .p-datatable-table-container');
-  allScrollableElements.forEach(element => {
-    if (element.scrollLeft !== currentScrollLeft) {
-      element.scrollLeft = currentScrollLeft;
-      console.log('Synced new element to current scroll position:', element);
-    }
-  });
-};
-
 const attachScrollListeners = () => {
-  // Clean up existing listeners first
   cleanupScrollListeners();
 
   nextTick(() => {
-    // Wait a bit more for all DataTables to be rendered
     setTimeout(() => {
-      // Find all DataTable wrappers directly
-      const allDataTableWrappers = document.querySelectorAll('.p-datatable-wrapper');
-      console.log(`Found ${allDataTableWrappers.length} DataTable wrappers:`, allDataTableWrappers);
-      
-      // Also check for sync containers
+      // Simplified approach: attach to all containers directly
       const syncContainers = document.querySelectorAll('.sync-scroll-container');
-      console.log(`Found ${syncContainers.length} sync containers:`, syncContainers);
       
-      // Try to find scrollable elements in sync containers
-      syncContainers.forEach((syncContainer, index) => {
-        console.log(`Container ${index}:`, syncContainer);
+      syncContainers.forEach((container, index) => {
         
-        // Look for different possible scrollable elements
-        const dataTableWrapper = syncContainer.querySelector('.p-datatable-wrapper');
-        const dataTable = syncContainer.querySelector('.p-datatable');
-        const scrollableDiv = syncContainer.querySelector('[style*="overflow"]');
+        const scrollHandler = (e) => {
+          syncScrollPosition(e.target, e.target.scrollLeft);
+        };
         
-        console.log(`In container ${index}:`);
-        console.log(`- .p-datatable-wrapper:`, dataTableWrapper);
-        console.log(`- .p-datatable:`, dataTable);
-        console.log(`- scrollable div:`, scrollableDiv);
+        container.addEventListener('scroll', scrollHandler, { passive: true });
+        scrollListeners.value.push({
+          element: container,
+          handler: scrollHandler
+        });
         
-        // Find the actual scrollable element
-        let scrollableElement = null;
-        if (dataTableWrapper && dataTableWrapper.scrollWidth > dataTableWrapper.clientWidth) {
-          scrollableElement = dataTableWrapper;
-        } else if (dataTable && dataTable.scrollWidth > dataTable.clientWidth) {
-          scrollableElement = dataTable;
-        } else if (scrollableDiv && scrollableDiv.scrollWidth > scrollableDiv.clientWidth) {
-          scrollableElement = scrollableDiv;
-        }
         
-        if (scrollableElement) {
-          console.log(`Found scrollable element in container ${index}:`, scrollableElement);
-          console.log(`ScrollWidth: ${scrollableElement.scrollWidth}, ClientWidth: ${scrollableElement.clientWidth}`);
-          
-          const scrollHandler = (e) => {
-            console.log('Scroll detected on element:', e.target);
-            syncScrollPosition(e.target, e.target.scrollLeft);
-          };
-          
-          scrollableElement.addEventListener('scroll', scrollHandler, { passive: true });
-          scrollListeners.value.push({
-            element: scrollableElement,
-            handler: scrollHandler
-          });
-          console.log(`Added listener to container ${index}`);
-        } else {
-          console.log(`No scrollable element found in container ${index}`);
-        }
+        // Log container dimensions
       });
       
-      // Sync all elements to current scroll position
-      syncNewElementsToCurrentScroll();
-
-    }, 300);
+    }, 100); // Reduced timeout
   });
 };
 
@@ -715,45 +714,13 @@ onBeforeUnmount(() => {
   cleanupScrollListeners();
 });
 
-// Watchers for re-attaching scroll listeners when content changes
-watch(sectionsData, () => {
-  // Re-attach listeners when sections data changes
+// Watchers pour re-attacher les scroll listeners
+watch(vehiclesByCategory, () => {
   setTimeout(attachScrollListeners, 300);
 }, { deep: true });
 
-watch(expandedSections, () => {
-  // Re-attach listeners when sections are expanded/collapsed
-  nextTick(() => {
-    setTimeout(() => {
-      attachScrollListeners();
-      // Extra delay to ensure new elements are fully rendered
-      setTimeout(syncNewElementsToCurrentScroll, 100);
-    }, 300);
-  });
-}, { deep: true });
-
-watch(displayMode, () => {
-  // Re-attach listeners when display mode changes
-  nextTick(() => {
-    setTimeout(attachScrollListeners, 300);
-  });
-});
-
-// Re-attach listeners after data is loaded
-watch(catalogue, (newCatalogue) => {
-  if (newCatalogue) {
-    nextTick(() => {
-      setTimeout(attachScrollListeners, 500);
-    });
-  }
-});
-
-// Watch pour les catégories sélectionnées
 watch(selectedCategories, () => {
-  // Recalculer les données des tableaux quand les catégories changent
   if (catalogue.value) {
-    prepareTableData();
-    // Re-attacher les listeners après recalcul
     nextTick(() => {
       setTimeout(attachScrollListeners, 300);
     });
@@ -852,7 +819,7 @@ watch(selectedCategories, () => {
                           @click="toggleAllCategories"
                           class="text-xs text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
                         >
-                          {{ selectedCategories.size === availableCategories.length ? 'Tout désélectionner' : 'Tout sélectionner' }}
+                          {{ selectedCategories.length === availableCategories.length ? 'Tout désélectionner' : 'Tout sélectionner' }}
                         </button>
                       </div>
                       <div class="flex flex-wrap gap-4">
@@ -863,9 +830,8 @@ watch(selectedCategories, () => {
                         >
                           <Checkbox 
                             :inputId="`category-${category.uuid}`"
+                            v-model="selectedCategories"
                             :value="category.uuid"
-                            :checked="selectedCategories.has(category.uuid)"
-                            @change="toggleCategory(category.uuid)"
                             class="category-checkbox"
                           />
                           <label 
@@ -881,151 +847,102 @@ watch(selectedCategories, () => {
                 </div>
               </div>
 
-              <!-- Sections d'analyse -->
-              <div class="space-y-4 sections-container">
-                <div v-for="section in sectionsConfig" :key="section.id" class="section-wrapper mb-4">
-                  <!-- Header de section -->
-                  <div
-                    class="section-header-custom bg-surface-900 p-3 border-0 shadow-sm hover:shadow-md transition-all duration-200 rounded-t-lg"
-                    :class="[
-                      section.id === 'tco' ? 'tco-section' : '',
-                      { 'cursor-pointer': sectionsData[section.id]?.hasNonColoredRows }
-                    ]"
-                    @click="sectionsData[section.id]?.hasNonColoredRows && toggleSection(section.id)"
-                  >
-                    <div class="flex items-center gap-2 w-full">
-                      <span class="font-medium text-white text-lg">{{ section.title }}</span>
-                      <div v-if="sectionsData[section.id]?.hasNonColoredRows" class="ml-auto flex items-center gap-2">
-                        <span class="text-xs text-white hidden sm:inline">
-                          {{ expandedSections.has(section.id) ? 'Cliquez ici pour masquer' : 'Cliquez ici pour voir plus' }}
-                        </span>
-                        <div
-                          class="rounded-full p-2 transition-all duration-200 transform hover:scale-110 shadow-lg"
-                          :class="section.id === 'tco' ? 'bg-white hover:bg-gray-100' : 'bg-amber-500 hover:bg-amber-500'"
+              <!-- Nouveau tableau horizontal -->
+              <div v-if="displayMode === 'table'" class="mt-6">
+                <div class="rounded-lg overflow-hidden">
+                  <div class="bg-gradient-to-r from-amber-500 to-orange-500 p-4">
+                    <h3 class="text-white font-bold text-lg flex items-center gap-2">
+                      <Table class="w-5 h-5" />
+                      Analyse comparative des véhicules
+                    </h3>
+                  </div>
+                  
+                  <!-- Tableau par catégorie -->
+                  <div v-for="categoryData in vehiclesByCategory" :key="categoryData.uuid" class="mb-8">
+                    <!-- Header de catégorie -->
+                    <div class="bg-surface-800 p-3 border-b border-surface-700">
+                      <h4 class="text-white font-semibold text-md flex items-center gap-2">
+                        <span class="w-4 h-4 bg-amber-500 rounded-full"></span>
+                        {{ categoryData.title }}
+                        <span class="text-sm text-gray-400 ml-2">({{ categoryData.vehicules?.length || 0 }} véhicules)</span>
+                        <span class="text-sm text-amber-400 ml-4">TCO moyen : {{ formatCurrency(categoryData.tcoMoyenCategorie) }}</span>
+                      </h4>
+                    </div>
+
+                    <!-- Tableau des véhicules de la catégorie -->
+                    <div class="overflow-x-auto sync-scroll-container bg-white rounded-lg w-full">
+                      <div style="width: 1800px; min-width: 1800px;">
+                        <DataTable
+                          :value="categoryData.vehicules"
+                          class="horizontal-comparison-table"
+                          :scrollable="false"
+                          tableStyle="width: 1800px; min-width: 1800px;"
                         >
-                          <svg
-                            class="w-4 h-4 transition-transform duration-300"
-                            :class="[
-                              { 'rotate-180': expandedSections.has(section.id) },
-                              section.id === 'tco' ? 'text-amber-500' : 'text-white'
-                            ]"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </div>
+                        <!-- Colonne actions avec loupe -->
+                        <Column style="width: 60px" :frozen="true">
+                          <template #header>
+                            <div class="text-center text-white font-medium text-xs">
+                              Détails
+                            </div>
+                          </template>
+                          <template #body="slotProps">
+                            <button 
+                              @click="showVehicleDetailsDialog(slotProps.data)"
+                              class="action-btn flex items-center justify-center w-6 h-6 bg-amber-500 hover:bg-amber-600 rounded transition-colors mx-auto"
+                              title="Voir les détails"
+                            >
+                              <Search class="w-3 h-3 text-white" />
+                            </button>
+                          </template>
+                        </Column>
+
+                        <!-- Colonnes principales -->
+                        <Column 
+                          v-for="column in mainColumns" 
+                          :key="column.key"
+                          :field="column.field"
+                          :header="column.header"
+                          :sortable="column.sortable"
+                          :style="column.style || 'min-width: 150px; width: 150px;'"
+                          :frozen="column.key === 'vehicle_info'"
+                          :class="column.special === 'tco' ? 'tco-column' : ''"
+                        >
+                          <template #body="slotProps">
+                            <div 
+                              v-if="column.key === 'vehicle_info'"
+                              class="vehicle-info-cell cursor-pointer hover:text-amber-400 transition-colors"
+                              @click="showVehicleDetailsDialog(slotProps.data)"
+                            >
+                              <div class="font-medium text-sm">{{ getVehicleLabel(slotProps.data) }}</div>
+                              <div class="text-xs text-gray-400 mt-1">{{ slotProps.data.loueur?.name || '' }}</div>
+                            </div>
+                            <div 
+                              v-else
+                              class="text-center font-medium"
+                              :class="getColumnClass(slotProps.data, column.field)"
+                            >
+                              {{ getColumnValue(slotProps.data, column.field) }}
+                            </div>
+                          </template>
+                        </Column>
+                        </DataTable>
                       </div>
                     </div>
-                  </div>
-
-                  <!-- Contenu de section -->
-                  <div class="bg-transparent rounded-b-lg shadow-sm overflow-x-auto section-content-wrapper section-scroll-container"
-                       :data-section-id="section.id">
-
-                    <!-- Lignes non-colorées (conditionnelles) -->
-                    <div
-                      v-if="sectionsData[section.id]?.hasNonColoredRows && expandedSections.has(section.id)"
-                      class="non-colored-rows-container sync-scroll-container"
-                    >
-                      <DataTable
-                        :value="sectionsData[section.id].nonColoredRows"
-                        class="comparison-table comparison-animate-load"
-                        responsive-layout="scroll"
-                        :scrollable="true"
-                        scroll-direction="horizontal"
-                      >
-                        <!-- Colonne fixe pour les critères -->
-                        <Column class="property-column" style="min-width: 300px;">
-                          <template #header>
-                            <div class="font-medium text-white py-1 text-sm flex items-center h-10">
-                              Véhicule
-                            </div>
-                          </template>
-                          <template #body="slotProps">
-                            <div class="font-medium py-1 text-sm flex items-center h-10 bg-surface-800 text-white">
-                              {{ slotProps.data.label }}
-                            </div>
-                          </template>
-                        </Column>
-
-                        <!-- Colonnes dynamiques pour chaque véhicule -->
-                        <Column
-                          v-for="(vehicule, index) in sectionsData[section.id].vehiculesColumns"
-                          :key="`noncolored_${vehicule.uuid}`"
-                          class="value-column"
-                          style="min-width: 200px;"
-                        >
-                          <template #header>
-                            <div class="font-medium text-white text-center py-1 text-xs flex flex-col items-center justify-center min-h-16 px-1">
-                              <div class="font-medium text-xs leading-tight break-words text-center w-full">{{ getVehicleLabel(vehicule) }}</div>
-                              <div class="text-xs text-blue-400 mt-1">{{ vehicule.categoryTitle }}</div>
-                              <div class="text-xs text-gray-400 mt-1">{{ vehicule.loueur?.name || '' }}</div>
-                            </div>
-                          </template>
-                          <template #body="slotProps">
-                            <div class="text-center py-1 font-medium transition-all duration-200 rounded px-2 text-sm flex items-center justify-center min-h-10 bg-surface-700 break-words">
-                              {{ slotProps.data[`vehicule_${index}`]?.value || '-' }}
-                            </div>
-                          </template>
-                        </Column>
-                      </DataTable>
-                    </div>
-
-                    <!-- Lignes colorées (toujours visibles, en bas) -->
-                    <div v-if="sectionsData[section.id]?.hasColoredRows" class="colored-rows-container sync-scroll-container">
-                      <DataTable
-                        :value="sectionsData[section.id].coloredRows"
-                        class="comparison-table comparison-animate-load always-visible"
-                        responsive-layout="scroll"
-                        :scrollable="true"
-                        scroll-direction="horizontal"
-                      >
-                        <!-- Colonne fixe pour les critères -->
-                        <Column class="property-column" style="min-width: 300px;">
-                          <template #header v-if="!sectionsData[section.id]?.hasNonColoredRows || !expandedSections.has(section.id)">
-                            <div class="font-medium text-white py-1 text-sm flex items-center h-10">
-                              Véhicule
-                            </div>
-                          </template>
-                          <template #body="slotProps">
-                            <div class="font-medium py-1 text-sm flex items-center h-10 bg-surface-800 text-white">
-                              {{ slotProps.data.label }}
-                            </div>
-                          </template>
-                        </Column>
-
-                        <!-- Colonnes dynamiques pour chaque véhicule -->
-                        <Column
-                          v-for="(vehicule, index) in sectionsData[section.id].vehiculesColumns"
-                          :key="`colored_${vehicule.uuid}`"
-                          class="value-column"
-                          style="min-width: 200px;"
-                        >
-                          <template #header v-if="!sectionsData[section.id]?.hasNonColoredRows || !expandedSections.has(section.id)">
-                            <div class="font-medium text-white text-center py-1 text-xs flex flex-col items-center justify-center min-h-16 px-1">
-                              <div class="font-medium text-xs leading-tight break-words text-center w-full">{{ getVehicleLabel(vehicule) }}</div>
-                              <div class="text-xs text-blue-400 mt-1">{{ vehicule.categoryTitle }}</div>
-                              <div class="text-xs text-gray-400 mt-1">{{ vehicule.loueur?.name || '' }}</div>
-                            </div>
-                          </template>
-                          <template #body="slotProps">
-                            <div class="text-center py-1 font-medium transition-all duration-200 rounded px-2 text-sm flex items-center justify-center min-h-10 bg-surface-700 break-words"
-                                 :class="slotProps.data[`vehicule_${index}`]?.class || ''">
-                              {{ slotProps.data[`vehicule_${index}`]?.value || '-' }}
-                            </div>
-                          </template>
-                        </Column>
-                      </DataTable>
-                    </div>
-
                   </div>
                 </div>
               </div>
 
+              <!-- Mode graphiques (placeholder pour l'instant) -->
+              <div v-else class="mt-6">
+                <Card class="text-center p-8">
+                  <AreaChart class="w-16 h-16 mx-auto text-amber-500 mb-4" />
+                  <h3 class="text-xl font-bold mb-2">Mode Graphiques</h3>
+                  <p class="text-gray-600">Les graphiques seront implémentés dans une prochaine version.</p>
+                </Card>
+              </div>
+
               <!-- Retour -->
-              <div class="flex justify-start mt-3">
+              <div class="flex justify-start mt-6">
                 <Button @click="router.push('/catalogues')" class="btn-primary w-[200px] min-w-[200px]">
                   Retour aux catalogues
                 </Button>
@@ -1035,16 +952,329 @@ watch(selectedCategories, () => {
         </div>
       </div>
     </div>
+
+    <!-- Dialog pour les détails du véhicule -->
+    <Dialog 
+      v-model:visible="showVehicleDetails" 
+      modal 
+      dismissableMask
+      :header="`Détails - ${selectedVehicleDetails ? getVehicleLabel(selectedVehicleDetails) : ''}`"
+      :style="{ width: '95vw', maxWidth: '1000px', maxHeight: '90vh' }"
+      class="vehicle-details-dialog"
+    >
+      <div v-if="selectedVehicleDetails" class="vehicle-details-content">
+        <!-- Section Informations véhicule -->
+        <div class="detail-section">
+          <h3 class="section-header">📋 Informations véhicule</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Marque</span>
+              <span class="info-value">{{ selectedVehicleDetails.marque?.name || selectedVehicleDetails.marque || '-' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Modèle</span>
+              <span class="info-value">{{ selectedVehicleDetails.modele?.title || selectedVehicleDetails.modele || '-' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Moteur/Finition</span>
+              <span class="info-value">{{ selectedVehicleDetails.modele?.moteur || selectedVehicleDetails.finition || '-' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Type fiscal</span>
+              <span class="info-value">{{ selectedVehicleDetails.type_fisc?.toUpperCase() || '-' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Énergie</span>
+              <span class="info-value">{{ selectedVehicleDetails.energie?.toUpperCase() || '-' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Consommation carburant</span>
+              <span class="info-value">{{ selectedVehicleDetails.conso_carb ? `${formatNumber(selectedVehicleDetails.conso_carb, 1)} L/100km` : '-' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Consommation kWh</span>
+              <span class="info-value">{{ selectedVehicleDetails.conso_kwh ? `${formatNumber(selectedVehicleDetails.conso_kwh, 1)} kWh/100km` : '-' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Émission CO2 WLTP</span>
+              <span class="info-value">{{ selectedVehicleDetails.co2 ? `${selectedVehicleDetails.co2} g/km` : '-' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Poids véhicule (PVOM)</span>
+              <span class="info-value">{{ selectedVehicleDetails.pvom ? `${selectedVehicleDetails.pvom} kg` : '-' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Autonomie batterie (WLTP)</span>
+              <span class="info-value">{{ selectedVehicleDetails.modele?.autonomie ? `${selectedVehicleDetails.modele.autonomie} km` : '-' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Capacité de la batterie</span>
+              <span class="info-value">{{ selectedVehicleDetails.capacite_batterie ? `${selectedVehicleDetails.capacite_batterie} kWh` : '-' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Capacité de recharge</span>
+              <span class="info-value">{{ selectedVehicleDetails.vitesse_recharge_batterie ? `${selectedVehicleDetails.vitesse_recharge_batterie} kW` : '-' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section Prix -->
+        <div class="detail-section">
+          <h3 class="section-header">💰 Informations tarifaires</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Prix du véhicule non remisé</span>
+              <span class="info-value">{{ formatCurrency(selectedVehicleDetails.prix || 0) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Montant option(s) non remisé</span>
+              <span class="info-value">{{ formatCurrency(selectedVehicleDetails.prix_options || 0) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Prix total avec options</span>
+              <span class="info-value highlight">{{ formatCurrency(getPrixTotal(selectedVehicleDetails)) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Remise en %</span>
+              <span class="info-value">{{ formatPercent(selectedVehicleDetails.remise || 0) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Prix remisé TTC</span>
+              <span class="info-value highlight">{{ formatCurrency(getPrixRemise(selectedVehicleDetails)) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section Contrat -->
+        <div class="detail-section">
+          <h3 class="section-header">📄 Contrat</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Loyer Financier</span>
+              <span class="info-value">{{ formatCurrency(selectedVehicleDetails.loyer_financier || 0) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Entretien</span>
+              <span class="info-value">{{ formatCurrency(selectedVehicleDetails.entretien || 0) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Pneumatiques</span>
+              <span class="info-value">{{ formatCurrency(selectedVehicleDetails.pneumatique || 0) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Gardiennage des pneumatiques</span>
+              <span class="info-value">{{ formatCurrency(selectedVehicleDetails.pneumatique_garde || 0) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Véhicule Relais</span>
+              <span class="info-value">{{ formatCurrency(selectedVehicleDetails.vehicule_relais || 0) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Assurance RC</span>
+              <span class="info-value">{{ formatCurrency(selectedVehicleDetails.assurance_rc || 0) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Assurance Dommages</span>
+              <span class="info-value">{{ formatCurrency(selectedVehicleDetails.assurance_dommage || 0) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Perte Financière</span>
+              <span class="info-value">{{ formatCurrency(selectedVehicleDetails.perte_fi || 0) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Carte(s) Carburant</span>
+              <span class="info-value">{{ formatCurrency(selectedVehicleDetails.carte_carb || 0) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Carte électrique</span>
+              <span class="info-value">{{ formatCurrency(selectedVehicleDetails.carte_elec || 0) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Badge Télépéage</span>
+              <span class="info-value">{{ formatCurrency(selectedVehicleDetails.badge_telepeage || 0) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Pastille Crit'Air</span>
+              <span class="info-value">{{ formatCurrency(selectedVehicleDetails.vignette_critair || 0) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Autre coût</span>
+              <span class="info-value">{{ formatCurrency(selectedVehicleDetails.autre_cout || 0) }}</span>
+            </div>
+            <div class="info-item special">
+              <span class="info-label">Loyer total</span>
+              <span class="info-value highlight">{{ formatCurrency(selectedVehicleDetails.calcul?.loyer_total || 0) }}</span>
+            </div>
+            <div class="info-item special">
+              <span class="info-label">PRK /km</span>
+              <span class="info-value highlight">{{ formatCurrency(selectedVehicleDetails.calcul?.prk || 0) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section Fiscalité -->
+        <div class="detail-section">
+          <h3 class="section-header">🏛️ Fiscalité</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Malus CO² (une fois)</span>
+              <span class="info-value">{{ formatCurrency(selectedVehicleDetails.calcul?.malus_co2 || 0) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Taxe CO² (annuelle)</span>
+              <span class="info-value">{{ formatCurrency(selectedVehicleDetails.calcul?.taxe_co2 || 0) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Taxe polluants (annuelle)</span>
+              <span class="info-value">{{ formatCurrency(selectedVehicleDetails.calcul?.taxe_polluant || 0) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Taxe à la masse (une fois)</span>
+              <span class="info-value">{{ formatCurrency(selectedVehicleDetails.calcul?.taxe_masse || 0) }}</span>
+            </div>
+            <div class="info-item special">
+              <span class="info-label">Fiscalité mensuelle</span>
+              <span class="info-value highlight">{{ formatCurrency(selectedVehicleDetails.calcul?.fiscalite_mensuel || 0) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section Énergie -->
+        <div class="detail-section">
+          <h3 class="section-header">⚡ Énergie</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Prix de l'énergie Thermique €</span>
+              <span class="info-value">{{ selectedVehicleDetails.calcul?.prix_energie_thermique ? formatCurrency(selectedVehicleDetails.calcul.prix_energie_thermique) : '-' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Prix de l'énergie Électrique €</span>
+              <span class="info-value">{{ selectedVehicleDetails.calcul?.prix_energie_electrique ? formatCurrency(selectedVehicleDetails.calcul.prix_energie_electrique) : '-' }}</span>
+            </div>
+            <div class="info-item special">
+              <span class="info-label">Budget énergie mensuel</span>
+              <span class="info-value highlight">{{ formatCurrency(selectedVehicleDetails.calcul?.budget_mensuel_total_energie || 0) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section IS sur AND -->
+        <div class="detail-section">
+          <h3 class="section-header">🏢 IS sur AND</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">% d'imposition Client (IS)</span>
+              <span class="info-value">{{ formatPercent(catalogue?.is || 0) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Plafond d'AND</span>
+              <span class="info-value">{{ formatCurrency(selectedVehicleDetails.calcul?.plafondAnd || 0) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Calcul AND Mensuel</span>
+              <span class="info-value">{{ formatCurrency(selectedVehicleDetails.calcul?.andMensuel || 0) }}</span>
+            </div>
+            <div class="info-item special">
+              <span class="info-label">IS sur AND</span>
+              <span class="info-value highlight">{{ formatCurrency(selectedVehicleDetails.calcul?.isAnd || 0) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section AEN -->
+        <div class="detail-section">
+          <h3 class="section-header">👥 AEN</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Taux AEN</span>
+              <span class="info-value">{{ formatPercent(selectedVehicleDetails.aen || 0) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">AEN Mensuel</span>
+              <span class="info-value">{{ formatCurrency(selectedVehicleDetails.calcul?.aenMensuel || 0) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Taux charges patronales</span>
+              <span class="info-value">{{ formatPercent(selectedVehicleDetails.chargePatronale || 0) }}</span>
+            </div>
+            <div class="info-item special">
+              <span class="info-label">Charges patronales sur AEN</span>
+              <span class="info-value highlight">{{ formatCurrency(selectedVehicleDetails.calcul?.aenChargePatronale || 0) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section TCO -->
+        <div class="detail-section tco-section">
+          <h3 class="section-header">🎯 TCO</h3>
+          <div class="info-grid">
+            <div class="info-item special">
+              <span class="info-label">TCO mensuel</span>
+              <span class="info-value tco-highlight">{{ formatCurrency(selectedVehicleDetails.calcul?.tcoMensuel || 0) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">TCO moyen global</span>
+              <span class="info-value">{{ formatCurrency(getTCOMoyenGlobal) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">TCO moyen catégorie</span>
+              <span class="info-value">{{ formatCurrency(selectedVehicleDetails.tcoMoyenCategorie || 0) }}</span>
+            </div>
+            <div class="info-item special">
+              <span class="info-label">PRK /km</span>
+              <span class="info-value highlight">{{ formatCurrency(getPRK(selectedVehicleDetails)) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">TCO Total (durée du contrat)</span>
+              <span class="info-value">{{ formatCurrency(getTCOTotal(selectedVehicleDetails)) }}</span>
+            </div>
+            <div class="info-item ranking">
+              <span class="info-label">Ranking TCO</span>
+              <span class="info-value ranking-badge">#{{ selectedVehicleDetails.tcoRankInCategory || '-' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section Ventilation TCO -->
+        <div class="detail-section">
+          <h3 class="section-header">📊 Ventilation TCO</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Loyer et services (en %)</span>
+              <span class="info-value">{{ formatPercent(getTCOVentilation(selectedVehicleDetails, 'loyer')) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Fiscalité (en %)</span>
+              <span class="info-value">{{ formatPercent(getTCOVentilation(selectedVehicleDetails, 'fiscalite')) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Carburant (en %)</span>
+              <span class="info-value">{{ formatPercent(getTCOVentilation(selectedVehicleDetails, 'carburant')) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Charges sur AEN (en %)</span>
+              <span class="info-value">{{ formatPercent(getTCOVentilation(selectedVehicleDetails, 'aenCharge')) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">IS sur AND (en %)</span>
+              <span class="info-value">{{ formatPercent(getTCOVentilation(selectedVehicleDetails, 'isAnd')) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Dialog>
   </div>
 </template>
 
 <style scoped>
 /* Animation pour l'apparition */
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.3s ease;
+.animate-slide-in-up {
+  animation: slideInUp 0.6s ease-out;
 }
-.fade-enter-from, .fade-leave-to {
-  opacity: 0;
+
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fade-in {
@@ -1056,225 +1286,83 @@ watch(selectedCategories, () => {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Panel customization */
-:deep(.p-panel .p-panel-header) {
+/* Loading */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.loading-card {
+  text-align: center;
+  padding: 2rem;
   background: rgb(30 41 59);
+  border-radius: 1rem;
   color: white;
-  border: none;
-  border-radius: 0.5rem 0.5rem 0 0;
 }
 
-:deep(.p-panel .p-panel-header:hover) {
-  background: rgb(51 65 85);
-}
-
-:deep(.p-panel .p-panel-content) {
-  border: none;
-  border-radius: 0 0 0.5rem 0.5rem;
-}
-
-:deep(.p-panel.p-panel-toggleable .p-panel-header .p-panel-header-icon) {
-  color: rgb(251 191 36);
-}
-
-:deep(.p-panel.p-panel-toggleable .p-panel-header .p-panel-header-icon:hover) {
-  color: rgb(245 158 11);
-}
-
-.sections-container {
-  scroll-behavior: smooth;
-}
-
-:deep(.p-panel) {
+.loading-spinner {
+  width: 2rem;
+  height: 2rem;
   margin-bottom: 1rem;
 }
 
-:deep(.p-panel-content) {
-  padding: 0;
-}
-
-/* Header styling */
-.page-header {
-  background: linear-gradient(135deg, rgb(30 41 59) 0%, rgb(51 65 85) 100%);
-  border-radius: 1rem;
-  padding: 2rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-}
-
-.header-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.title-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-@media (min-width: 1024px) {
-  .header-content {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .title-section {
-    flex-direction: row;
-    align-items: center;
-    gap: 1rem;
-  }
-}
-
-@media (max-width: 1023px) {
-  .header-content {
-    text-align: center;
-  }
-
-  .title-section {
-    align-items: center;
-  }
-}
-
-.page-title {
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: white;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.page-subtitle {
+.loading-text {
   color: rgb(203 213 225);
-  font-size: 1.125rem;
   margin: 0;
 }
 
-.title-icon {
-  width: 2.5rem;
-  height: 2.5rem;
+/* Header */
+.page-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, rgb(15 23 42) 0%, rgb(30 41 59) 100%);
+  padding: 1rem;
+}
+
+.page-content {
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.content-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.section-card {
+  background: linear-gradient(135deg, rgb(30 41 59) 0%, rgb(51 65 85) 100%);
+  border-radius: 1rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.section-header {
+  padding: 2rem;
+  background: linear-gradient(135deg, rgb(30 41 59) 0%, rgb(51 65 85) 100%);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: white;
+}
+
+.section-icon {
+  width: 2rem;
+  height: 2rem;
   color: rgb(251 191 36);
+}
+
+.section-content {
+  background: rgb(30 41 59);
 }
 
 /* Mode toggle styling */
 .mode-toggle-switch {
   margin: 0 1rem;
-}
-
-/* Header grid */
-.comparison-header-grid {
-  display: grid;
-  grid-template-columns: 300px repeat(auto-fit, minmax(200px, 1fr));
-  min-width: fit-content;
-}
-
-.comparison-header-grid > div {
-  min-width: 200px;
-}
-
-/* Table styling */
-:deep(.comparison-table .p-datatable-table) {
-  min-width: 100%;
-  table-layout: fixed;
-}
-
-:deep(.comparison-table .p-datatable-thead > tr > th) {
-  background: rgb(30 41 59) !important;
-  color: white !important;
-  border: 1px solid rgb(51 65 85) !important;
-  padding: 0.5rem !important;
-  text-align: center !important;
-  position: sticky !important;
-  top: 0 !important;
-  z-index: 10 !important;
-}
-
-:deep(.comparison-table .p-datatable-tbody > tr > td) {
-  padding: 0.25rem !important;
-  border: 1px solid rgb(51 65 85) !important;
-  vertical-align: middle !important;
-  background: rgb(30 41 59) !important;
-  color: white !important;
-}
-
-:deep(.comparison-table .property-column) {
-  width: 300px !important;
-  min-width: 300px !important;
-  max-width: 300px !important;
-  position: sticky !important;
-  left: 0 !important;
-  z-index: 5 !important;
-  background: rgb(30 41 59) !important;
-}
-
-:deep(.comparison-table .value-column) {
-  width: 200px !important;
-  min-width: 200px !important;
-  text-align: center !important;
-}
-
-/* Collapse animation */
-.collapse-enter-active, .collapse-leave-active {
-  transition: all 0.3s ease;
-  overflow: hidden;
-}
-
-.collapse-enter-from, .collapse-enter-to {
-  max-height: 0;
-  opacity: 0;
-}
-
-.collapse-leave-from, .collapse-leave-to {
-  max-height: 1000px;
-  opacity: 1;
-}
-
-/* Section content wrapper */
-.section-content-wrapper {
-  max-height: none;
-  overflow-x: auto;
-  overflow-y: visible;
-}
-
-/* Table responsive */
-:deep(.comparison-table .p-datatable-table) {
-  border-collapse: separate;
-  border-spacing: 0;
-}
-
-:deep(.comparison-table .p-datatable-wrapper) {
-  overflow-x: auto;
-  overflow-y: visible;
-}
-
-:deep(.comparison-table) {
-  width: 100%;
-  overflow-x: auto;
-}
-
-:deep(.comparison-table .p-datatable-thead > tr > th) {
-  white-space: nowrap;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-:deep(.comparison-table .p-datatable-tbody > tr > td) {
-  white-space: nowrap;
-}
-
-:deep(.comparison-table .property-column) {
-  position: sticky;
-  left: 0;
-  z-index: 5;
-  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-}
-
-:deep(.comparison-table .value-column) {
-  min-width: 150px;
 }
 
 /* Export buttons */
@@ -1295,33 +1383,10 @@ watch(selectedCategories, () => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.export-btn:active {
-  transform: translateY(0);
-}
-
-.export-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-  transition: left 0.5s ease;
-}
-
-.export-btn:hover::before {
-  left: 100%;
-}
-
 .export-excel {
   background: linear-gradient(135deg, #10b981, #059669);
   color: white;
   border: none;
-}
-
-.export-excel:hover {
-  background: linear-gradient(135deg, #059669, #047857);
 }
 
 .export-pdf {
@@ -1330,164 +1395,125 @@ watch(selectedCategories, () => {
   border: none;
 }
 
-.export-pdf:hover {
-  background: linear-gradient(135deg, #dc2626, #b91c1c);
+/* Nouveau tableau horizontal */
+:deep(.horizontal-comparison-table) {
+  background: rgb(30 41 59);
+  min-width: 1800px !important;
+  width: 1800px !important;
 }
 
-.export-text {
-  font-weight: 600;
+:deep(.horizontal-comparison-table .p-datatable-wrapper) {
+  min-width: 1800px !important;
+  width: 1800px !important;
 }
 
-@media (max-width: 640px) {
-  .export-btn {
-    padding: 0.5rem;
-  }
-
-  .export-text {
-    display: none;
-  }
+:deep(.horizontal-comparison-table table) {
+  min-width: 1800px !important;
+  width: 1800px !important;
+  table-layout: fixed !important;
 }
 
-/* TCO Section special styling */
-.tco-section {
-  background: linear-gradient(135deg, rgb(251 191 36), rgb(245 158 11)) !important;
+:deep(.horizontal-comparison-table .p-datatable-thead > tr > th) {
+  background: rgb(51 65 85) !important;
+  color: white !important;
+  border: 1px solid rgb(75 85 99) !important;
+  padding: 0.75rem 0.5rem !important;
+  text-align: center !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
 }
 
-.tco-section:hover {
-  background: linear-gradient(135deg, rgb(245 158 11), rgb(217 119 6)) !important;
+:deep(.horizontal-comparison-table .p-datatable-tbody > tr > td) {
+  background: rgb(30 41 59) !important;
+  color: white !important;
+  border: 1px solid rgb(51 65 85) !important;
+  padding: 0.75rem 0.5rem !important;
+  vertical-align: middle !important;
 }
 
-.tco-section ~ .section-content .comparison-grid .grid-row:nth-child(even) {
-  background: rgba(251, 191, 36, 0.1);
+:deep(.horizontal-comparison-table .p-datatable-tbody > tr:hover > td) {
+  background: rgb(51 65 85) !important;
 }
 
-.tco-section ~ .section-content .comparison-grid .grid-row:nth-child(odd) {
-  background: rgba(251, 191, 36, 0.05);
+/* Colonne TCO mise en avant */
+:deep(.horizontal-comparison-table .tco-column th) {
+  border: 2px solid rgb(251 191 36) !important;
+  background: rgb(251 191 36) !important;
+  color: rgb(30 41 59) !important;
+  font-weight: 700 !important;
 }
 
-.section-content-wrapper[data-section-id="tco"] {
-  border: 2px solid rgb(251 191 36);
-  border-top: none;
+:deep(.horizontal-comparison-table .tco-column td) {
+  border: 2px solid rgb(251 191 36) !important;
+  background: rgb(45 55 72) !important;
 }
 
-:deep(.p-datatable-tbody > tr:last-child > td) {
-  border-bottom: 2px solid rgb(251 191 36);
+/* Action button */
+.action-btn {
+  transition: all 0.2s ease;
 }
 
-:deep(.collapsed-by-default .p-datatable-tbody > tr:last-child > td) {
-  border-bottom: 1px solid rgb(51 65 85);
+.action-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
 }
 
-.tco-section .bg-amber-500 {
-  background: white !important;
+/* Vehicle info cell */
+.vehicle-info-cell {
+  min-width: 200px !important;
+  max-width: 250px !important;
+  overflow: hidden !important;
+  width: 250px !important;
+}
+
+.vehicle-info-cell > div {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  max-width: 100% !important;
+}
+
+/* Force column width for vehicle info - target by position */
+:deep(.horizontal-comparison-table td:nth-child(2)) {
+  max-width: 250px !important;
+  width: 250px !important;
+  overflow: hidden !important;
+}
+
+:deep(.horizontal-comparison-table th:nth-child(2)) {
+  max-width: 250px !important;
+  width: 250px !important;
+}
+
+/* Additional fallback styles */
+:deep(.horizontal-comparison-table) td[style*="min-width: 250px"] {
+  max-width: 250px !important;
+  width: 250px !important;
+  overflow: hidden !important;
+}
+
+/* TCO Column highlighting - encadré complet colonne 9 */
+:deep(.horizontal-comparison-table th:nth-child(9)) {
+  background: rgba(251, 191, 36, 0.1) !important;
+  box-shadow: 
+    inset 4px 0 0 rgb(251 191 36), 
+    inset -4px 0 0 rgb(251 191 36), 
+    inset 0 4px 0 rgb(251 191 36) !important;
+  font-weight: bold !important;
   color: rgb(251 191 36) !important;
 }
 
-.tco-section .bg-amber-500:hover {
-  background: rgb(254 252 232) !important;
+:deep(.horizontal-comparison-table td:nth-child(9)) {
+  background: rgba(251, 191, 36, 0.05) !important;
+  box-shadow: inset 4px 0 0 rgb(251 191 36), inset -4px 0 0 rgb(251 191 36) !important;
 }
 
-/* Responsive columns */
-:deep(.comparison-table .p-datatable-tbody > tr > td:not(:first-child)) {
-  min-width: 150px;
-}
-
-.comparison-header-grid > div:not(:first-child) {
-  min-width: 150px;
-}
-
-/* Category headers */
-.category-header {
-  min-width: 180px !important;
-  border-left: 1px solid rgb(51 65 85);
-}
-
-/* Scroll horizontal indicators */
-.header-scroll-container {
-  scrollbar-width: thin;
-  scrollbar-color: rgb(251 191 36) rgb(30 41 59);
-}
-
-.header-scroll-container::-webkit-scrollbar {
-  height: 8px;
-}
-
-.header-scroll-container::-webkit-scrollbar-track {
-  background: rgb(30 41 59);
-  border-radius: 4px;
-}
-
-.header-scroll-container::-webkit-scrollbar-thumb {
-  background: rgb(251 191 36);
-  border-radius: 4px;
-}
-
-.header-scroll-container::-webkit-scrollbar-thumb:hover {
-  background: rgb(245 158 11);
-}
-
-.section-scroll-container {
-  scrollbar-width: thin;
-  scrollbar-color: rgb(251 191 36) rgb(30 41 59);
-}
-
-.section-scroll-container::-webkit-scrollbar {
-  height: 8px;
-}
-
-.section-scroll-container::-webkit-scrollbar-track {
-  background: rgb(30 41 59);
-  border-radius: 4px;
-}
-
-.section-scroll-container::-webkit-scrollbar-thumb {
-  background: rgb(251 191 36);
-  border-radius: 4px;
-}
-
-.section-scroll-container::-webkit-scrollbar-thumb:hover {
-  background: rgb(245 158 11);
-}
-
-/* Mobile responsiveness */
-@media (max-width: 768px) {
-  .comparison-header-grid {
-    grid-template-columns: 250px repeat(auto-fit, minmax(140px, 1fr));
-  }
-
-  :deep(.comparison-table .property-column) {
-    width: 250px !important;
-    min-width: 250px !important;
-    max-width: 250px !important;
-  }
-
-  .category-header {
-    min-width: 140px !important;
-  }
-
-  :deep(.comparison-table .p-datatable-tbody > tr > td:not(:first-child)) {
-    min-width: 140px;
-  }
-}
-
-@media (max-width: 640px) {
-  .comparison-header-grid {
-    grid-template-columns: 200px repeat(auto-fit, minmax(120px, 1fr));
-  }
-
-  :deep(.comparison-table .property-column) {
-    width: 200px !important;
-    min-width: 200px !important;
-    max-width: 200px !important;
-  }
-
-  .category-header {
-    min-width: 120px !important;
-  }
-
-  :deep(.comparison-table .p-datatable-tbody > tr > td:not(:first-child)) {
-    min-width: 120px;
-  }
+/* Bordure basse pour la dernière ligne de chaque catégorie */
+:deep(.horizontal-comparison-table tr:last-child td:nth-child(9)) {
+  box-shadow: 
+    inset 4px 0 0 rgb(251 191 36), 
+    inset -4px 0 0 rgb(251 191 36), 
+    inset 0 -4px 0 rgb(251 191 36) !important;
 }
 
 /* Category filter checkboxes */
@@ -1510,20 +1536,8 @@ watch(selectedCategories, () => {
   color: rgb(30 41 59) !important;
   font-size: 14px !important;
   font-weight: 900 !important;
-  stroke-width: 3px !important;
 }
 
-:deep(.category-checkbox:not(.p-disabled):hover .p-checkbox-box) {
-  border-color: rgb(251 191 36) !important;
-  transform: scale(1.05) !important;
-}
-
-:deep(.category-checkbox:not(.p-disabled):hover .p-checkbox-box:not(.p-highlight)) {
-  background: rgb(107 114 128) !important;
-  box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.1) !important;
-}
-
-/* Amélioration des labels */
 .category-filter-label {
   font-weight: 500;
   transition: color 0.2s ease;
@@ -1531,5 +1545,147 @@ watch(selectedCategories, () => {
 
 .category-filter-label:hover {
   color: rgb(251 191 36) !important;
+}
+
+/* Dialog styles */
+:deep(.vehicle-details-dialog .p-dialog-header) {
+  background: rgb(30 41 59);
+  color: white;
+  border-bottom: 2px solid rgb(251 191 36);
+  font-weight: 600;
+}
+
+:deep(.vehicle-details-dialog .p-dialog-content) {
+  background: rgb(30 41 59);
+  color: white;
+  padding: 0;
+}
+
+.vehicle-details-content {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+
+.detail-section {
+  background: rgb(51 65 85);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgb(75 85 99);
+}
+
+.detail-section.tco-section {
+  border: 2px solid rgb(251 191 36);
+  background: linear-gradient(135deg, rgb(51 65 85), rgb(45 55 72));
+}
+
+.section-header {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: rgb(251 191 36);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid rgb(75 85 99);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: rgb(30 41 59);
+  border-radius: 8px;
+  border: 1px solid rgb(75 85 99);
+  transition: all 0.2s ease;
+}
+
+.info-item:hover {
+  background: rgb(45 55 72);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.info-item.special {
+  border: 2px solid rgb(251 191 36);
+  background: rgb(45 55 72);
+}
+
+.info-item.ranking {
+  border: 2px solid rgb(34 197 94);
+  background: linear-gradient(135deg, rgb(45 55 72), rgb(34 197 94, 0.1));
+}
+
+.info-label {
+  font-weight: 500;
+  color: rgb(203 213 225);
+  font-size: 0.875rem;
+  flex: 1;
+  margin-right: 1rem;
+}
+
+.info-value {
+  font-weight: 600;
+  color: white;
+  text-align: right;
+  font-size: 0.875rem;
+}
+
+.info-value.highlight {
+  color: rgb(251 191 36);
+  font-weight: 700;
+}
+
+.info-value.tco-highlight {
+  color: rgb(251 191 36);
+  font-weight: 800;
+  font-size: 1.125rem;
+}
+
+.ranking-badge {
+  background: rgb(34 197 94);
+  color: rgb(30 41 59);
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-weight: 800;
+  font-size: 0.875rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .info-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .info-label {
+    margin-right: 0;
+  }
+  
+  .info-value {
+    text-align: left;
+  }
+  
+  .export-text {
+    display: none;
+  }
+  
+  .vehicle-details-content {
+    padding: 1rem;
+  }
 }
 </style>
