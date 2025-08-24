@@ -200,5 +200,14 @@ export const catalogueService = {
    */
   analyzeCatalogue(uuid, data = {}) {
     return apiService.post(`/api/tco/catalogue/${uuid}/analyse`, data);
+  },
+
+  /**
+   * Génère le PDF d'analyse d'un catalogue
+   * @param {string} uuid - L'identifiant unique du catalogue
+   * @returns {Promise<Object>} Les données de réponse de l'API
+   */
+  generateCataloguePdf(uuid) {
+    return apiService.post(`/api/tco/catalogue/${uuid}/pdf`);
   }
 };

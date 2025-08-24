@@ -13,6 +13,7 @@ import Panel from 'primevue/panel';
 import ToggleSwitch from 'primevue/toggleswitch';
 import Checkbox from 'primevue/checkbox';
 import Dialog from 'primevue/dialog';
+import OverlayPanel from 'primevue/overlaypanel';
 
 // Icons
 import { BarChart3, AreaChart, FileSpreadsheet, FileText, Table, Search } from 'lucide-vue-next';
@@ -70,6 +71,9 @@ const selectedCategories = ref([]);
 const showVehicleDetails = ref(false);
 const selectedVehicleDetails = ref(null);
 
+// OverlayPanel reference
+const pdfInfoOverlay = ref(null);
+
 // Chart references
 const categoryChartInstances = ref([]);
 const pieChartInstances = ref([]);
@@ -82,6 +86,7 @@ const scrollListeners = ref([]);
 const canDownloadFiles = computed(() => {
   return catalogue.value?.export_pdf || catalogue.value?.export_xls;
 });
+
 
 // Computed pour les catégories disponibles
 const availableCategories = computed(() => {
@@ -211,6 +216,21 @@ const mainColumns = computed(() => [
 ]);
 
 // Methods
+const refreshCatalogueData = async () => {
+  await loadCatalogueData();
+  // Hide overlay after refresh
+  if (pdfInfoOverlay.value) {
+    pdfInfoOverlay.value.hide();
+  }
+};
+
+// Show PDF info overlay
+const showPdfInfo = (event) => {
+  if (!catalogue.value?.export_pdf && pdfInfoOverlay.value) {
+    pdfInfoOverlay.value.toggle(event);
+  }
+};
+
 const loadCatalogueData = async () => {
   try {
     loading.value = true;
@@ -673,12 +693,42 @@ const downloadPDF = async () => {
   if (catalogue.value?.export_pdf?.url) {
     window.open(catalogue.value.export_pdf.url, '_blank');
   } else {
-    toast.add({
-      severity: 'error',
-      summary: 'Erreur',
-      detail: 'Le fichier PDF n\'est pas disponible',
-      life: 3000
-    });
+    // Générer le PDF si il n'existe pas
+    try {
+      toast.add({
+        severity: 'info',
+        summary: 'Génération en cours',
+        detail: 'Génération du PDF en cours...',
+        life: 3000
+      });
+
+      const response = await catalogueService.generateCataloguePdf(route.params.uuid);
+      
+      if (response.success && response.export_pdf?.url) {
+        // Mettre à jour les données du catalogue avec le nouveau PDF
+        catalogue.value.export_pdf = response.export_pdf;
+        
+        toast.add({
+          severity: 'success',
+          summary: 'Succès',
+          detail: 'PDF généré avec succès',
+          life: 3000
+        });
+        
+        // Ouvrir le PDF
+        window.open(response.export_pdf.url, '_blank');
+      } else {
+        throw new Error('Réponse invalide du serveur');
+      }
+    } catch (error) {
+      console.error('Erreur génération PDF:', error);
+      toast.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: 'Erreur lors de la génération du PDF',
+        life: 3000
+      });
+    }
   }
 };
 
@@ -1353,6 +1403,11 @@ onBeforeUnmount(() => {
   pieChartInstances.value.forEach(instance => {
     if (instance) instance.destroy();
   });
+  
+  // Cleanup window function
+  if (typeof window !== 'undefined' && window.refreshCatalogueData) {
+    delete window.refreshCatalogueData;
+  }
 });
 
 // Watchers pour re-attacher les scroll listeners
@@ -1448,15 +1503,46 @@ watch(displayMode, (newMode) => {
                       <span class="export-text">Excel</span>
                     </Button>
 
-                    <Button
-                      v-if="canDownloadFiles"
-                      class="export-btn export-pdf"
-                      @click="downloadPDF"
-                      :disabled="!catalogue.export_pdf"
-                    >
-                      <FileText class="w-4 h-4" />
-                      <span class="export-text">PDF</span>
-                    </Button>
+                    <div class="relative">
+                      <Button
+                        v-if="canDownloadFiles"
+                        class="export-btn export-pdf"
+                        @click="downloadPDF"
+                        @mouseenter="showPdfInfo"
+                        :disabled="!catalogue.export_pdf"
+                      >
+                        <FileText class="w-4 h-4" />
+                        <span class="export-text">PDF</span>
+                      </Button>
+                      
+                      <OverlayPanel 
+                        ref="pdfInfoOverlay"
+                        class="pdf-info-overlay"
+                      >
+                        <div class="p-4 bg-surface-800 rounded-lg border border-surface-600 shadow-xl">
+                          <div class="flex items-start gap-3">
+                            <div class="flex-shrink-0">
+                              <div class="w-8 h-8 bg-amber-500/20 rounded-full flex items-center justify-center">
+                                <FileText class="w-4 h-4 text-amber-400" />
+                              </div>
+                            </div>
+                            <div class="flex-1 space-y-2">
+                              <p class="text-sm text-gray-200 font-medium">Export PDF en cours de génération</p>
+                              <p class="text-xs text-gray-400">L'export PDF sera disponible dans quelques minutes.</p>
+                              <button 
+                                @click="refreshCatalogueData"
+                                class="inline-flex items-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 transition-colors font-medium cursor-pointer"
+                              >
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Vérifier maintenant
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </OverlayPanel>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2613,5 +2699,21 @@ watch(displayMode, (newMode) => {
   .vehicle-details-content {
     padding: 1rem;
   }
+}
+
+/* PDF Info Overlay Styles */
+:deep(.pdf-info-overlay .p-overlaypanel) {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+:deep(.pdf-info-overlay .p-overlaypanel::before) {
+  display: none;
+}
+
+:deep(.pdf-info-overlay .p-overlaypanel::after) {
+  display: none;
 }
 </style>
