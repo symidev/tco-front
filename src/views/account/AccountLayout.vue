@@ -49,7 +49,7 @@ const activeIndex = computed(() => {
                 </h1>
                 <a
                   href="/src/assets/doc/cgv.pdf"
-                  download="Conditions_Generales_Ventes.pdf"
+                  download="cgv.pdf"
                   class="text-sm text-white hover:text-gray-200 hover:bg-gray-700 hover:bg-opacity-30 px-2 py-1 rounded transition-all duration-200 flex items-center gap-1 w-fit mt-6"
                 >
                   <i class="pi pi-download text-xs mr-1"></i>
