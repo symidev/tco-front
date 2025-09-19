@@ -47,13 +47,13 @@ const activeIndex = computed(() => {
                   <User class="title-icon" />
                   Mon compte
                 </h1>
-                <a 
-                  href="/src/assets/doc/cgu.pdf" 
-                  download="Conditions_Generales_Utilisation.pdf"
+                <a
+                  href="/src/assets/doc/cgv.pdf"
+                  download="Conditions_Generales_Ventes.pdf"
                   class="text-sm text-white hover:text-gray-200 hover:bg-gray-700 hover:bg-opacity-30 px-2 py-1 rounded transition-all duration-200 flex items-center gap-1 w-fit mt-6"
                 >
                   <i class="pi pi-download text-xs mr-1"></i>
-                  Télécharger les CGU
+                  Télécharger les CGV
                 </a>
               </div>
               <div class="subscription-container">
@@ -118,17 +118,17 @@ const activeIndex = computed(() => {
   :deep(.p-tablist-tab-list) {
     margin-bottom: 1rem;
   }
-  
+
   :deep(.p-tab) {
     padding: 0.5rem 0.75rem;
     font-size: 0.875rem;
   }
-  
+
   :deep(.p-tab a) {
     gap: 0.375rem;
     font-size: 0.875rem;
   }
-  
+
   :deep(.p-tab i) {
     font-size: 0.875rem;
   }
@@ -140,12 +140,12 @@ const activeIndex = computed(() => {
     padding: 0.375rem 0.5rem;
     font-size: 0.8125rem;
   }
-  
+
   :deep(.p-tab a) {
     gap: 0.25rem;
     font-size: 0.8125rem;
   }
-  
+
   :deep(.p-tab i) {
     font-size: 0.8125rem;
   }
@@ -171,7 +171,7 @@ const activeIndex = computed(() => {
     align-items: flex-start;
     gap: 1rem;
   }
-  
+
   .subscription-container {
     width: 100%;
   }
