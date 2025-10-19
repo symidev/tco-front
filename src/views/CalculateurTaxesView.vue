@@ -373,6 +373,7 @@ const totalFiscalMensuel = computed(() => {
                     </div>
                     <div class="tax-amount">{{ taxeMasse !== null ? taxeMasse.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' }) : '0,00 €' }}</div>
                     <div class="tax-label">Une fois</div>
+                    <div class="tax-sublabel">sur facture après la livraison</div>
                   </div>
 
                   <!-- Malus -->
@@ -383,6 +384,7 @@ const totalFiscalMensuel = computed(() => {
                     </div>
                     <div class="tax-amount">{{ malus !== null ? malus.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' }) : '0,00 €' }}</div>
                     <div class="tax-label">Une fois</div>
+                    <div class="tax-sublabel">sur facture après la livraison</div>
                   </div>
                 </div>
               </div>
@@ -558,6 +560,15 @@ const totalFiscalMensuel = computed(() => {
   color: var(--text-color-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+.tax-sublabel {
+  font-size: 0.65rem;
+  font-weight: 400;
+  color: var(--text-color-secondary);
+  font-style: italic;
+  margin-top: 0.25rem;
+  opacity: 0.8;
 }
 
 /* Section des totaux */

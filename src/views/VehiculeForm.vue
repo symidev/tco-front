@@ -372,11 +372,11 @@ const validateForm = () => {
     return false;
   }
 
-  if (formData.value.cylindree && !/^[0-9]+(\.[0-9]+)?$/.test(formData.value.cylindree)) {
+  if (formData.value.cylindree === '') {
     toast.add({
       severity: 'error',
       summary: 'Erreur',
-      detail: 'La cylindrée doit être un nombre',
+      detail: 'Veuillez renseigner la cylindrée',
       life: 3000
     });
     return false;

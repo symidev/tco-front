@@ -277,7 +277,7 @@ const loadVehiculeData = async () => {
   try {
     const response = await catalogueService.getVehiculeByUuid(props.catalogueUuid, props.categorieUuid, props.vehiculeUuid);
     const vehicule = response.data;
-    
+
     // Charger les noms pour l'affichage
     catalogueName.value = vehicule.catalogueName || '';
     categorieName.value = vehicule.categorieName || '';
@@ -316,7 +316,7 @@ const loadVehiculeData = async () => {
       vignette_critair: vehicule.vignette_critair || '',
       autre_cout: vehicule.autre_cout || ''
     };
-    
+
     const selectedModele = modeles.value.find(m => m.id === vehicule.modele.id);
     formData.value.modele = selectedModele || null;
   } catch (error) {
@@ -380,11 +380,11 @@ const validateForm = () => {
     return false;
   }
 
-  if (formData.value.cylindree && !/^[0-9]+(\.[0-9]+)?$/.test(formData.value.cylindree)) {
+  if (formData.value.cylindree === '') {
     toast.add({
       severity: 'error',
       summary: 'Erreur',
-      detail: 'La cylindrée doit être un nombre',
+      detail: 'Veuillez renseigner la cylindrée',
       life: 3000
     });
     return false;
