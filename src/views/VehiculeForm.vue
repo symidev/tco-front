@@ -361,7 +361,7 @@ const validateForm = () => {
     return false;
   }
 
-  // Vérifier que les champs numériques contiennent des valeurs numériques valides
+  // Vérifier que les champs numériques contiennent des valeurs numériques valides (seulement si renseignés)
   if (formData.value.puissance && !/^[0-9]+$/.test(formData.value.puissance)) {
     toast.add({
       severity: 'error',
@@ -372,11 +372,11 @@ const validateForm = () => {
     return false;
   }
 
-  if (formData.value.cylindree === '') {
+  if (formData.value.cylindree && !/^[0-9]+$/.test(formData.value.cylindree)) {
     toast.add({
       severity: 'error',
       summary: 'Erreur',
-      detail: 'Veuillez renseigner la cylindrée',
+      detail: 'La cylindrée doit être un nombre',
       life: 3000
     });
     return false;
@@ -709,10 +709,9 @@ onMounted(() => {
                           id="cylindree"
                           v-model="formData.cylindree"
                           fluid
-                          required
                       />
                     </IconField>
-                    <label for="cylindree" class="form-label">Cylindrée *</label>
+                    <label for="cylindree" class="form-label">Cylindrée</label>
                   </FloatLabel>
                 </div>
 
@@ -726,11 +725,10 @@ onMounted(() => {
                       <InputText
                         id="puissance"
                         v-model="formData.puissance"
-                        required
                         fluid
                       />
                     </IconField>
-                    <label for="puissance" class="form-label">Puissance *</label>
+                    <label for="puissance" class="form-label">Puissance</label>
                   </FloatLabel>
                 </div>
               </div>
