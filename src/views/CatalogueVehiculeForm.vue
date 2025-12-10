@@ -216,6 +216,12 @@ watch(() => formData.value.energie, (newEnergie, oldEnergie) => {
   if (newEnergie) {
     if (newEnergie.key === 'bev') {
       formData.value.conso_carburant = '';
+      // Valeurs par défaut pour BEV
+      formData.value.co2 = '0';
+      const autoBoite = boites.value.find(b => b.key === 'automatique');
+      if (autoBoite) {
+        formData.value.boite = autoBoite;
+      }
     }
     if (['e85', 'diesel', 'essence'].includes(newEnergie.key)) {
       formData.value.conso_electrique = '';
@@ -359,7 +365,9 @@ const validateForm = () => {
     return false;
   }
 
-  if (!shouldHideConsoElectrique.value && formData.value.conso_electrique === '') {
+  // Pour HEV, la consommation électrique n'est pas obligatoire
+  const isHEV = formData.value.energie?.key === 'hev';
+  if (!shouldHideConsoElectrique.value && !isHEV && formData.value.conso_electrique === '') {
     toast.add({
       severity: 'error',
       summary: 'Erreur',
@@ -774,7 +782,7 @@ onMounted(() => {
                         fluid
                       />
                     </IconField>
-                    <label for="conso_electrique" class="form-label">Conso électrique (kWh)*</label>
+                    <label for="conso_electrique" class="form-label">Conso électrique (kWh){{ formData.energie?.key === 'hev' ? '' : '*' }}</label>
                   </FloatLabel>
                 </div>
                 </div>
