@@ -118,5 +118,15 @@ export const comparoService = {
    */
   deleteVehiculeByUuid(comparoUuid, vehiculeUuid) {
     return apiService.delete(`/api/tco/comparo/${comparoUuid}/vehicules/${vehiculeUuid}`);
+  },
+
+  /**
+   * Duplique un véhicule existant dans un comparo
+   * @param {string} comparoUuid  - L'identifiant unique du comparo
+   * @param {string} vehiculeUuid - L'identifiant unique du véhicule à dupliquer
+   * @returns {Promise<Object>} Les données du véhicule dupliqué
+   */
+  duplicateVehicule(comparoUuid, vehiculeUuid) {
+    return apiService.post(`/api/tco/comparo/${comparoUuid}/vehicules/${vehiculeUuid}/duplicate`);
   }
 };

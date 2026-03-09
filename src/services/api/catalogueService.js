@@ -209,5 +209,18 @@ export const catalogueService = {
    */
   generateCataloguePdf(uuid) {
     return apiService.post(`/api/tco/catalogue/${uuid}/pdf`);
+  },
+
+  /**
+   * Duplique un véhicule existant dans une catégorie de catalogue
+   * @param {string} catalogueUuid - L'identifiant unique du catalogue
+   * @param {string} categorieUuid - L'identifiant unique de la catégorie
+   * @param {string} vehiculeUuid  - L'identifiant unique du véhicule à dupliquer
+   * @returns {Promise<Object>} Les données du véhicule dupliqué
+   */
+  duplicateVehicule(catalogueUuid, categorieUuid, vehiculeUuid) {
+    return apiService.post(
+      `/api/tco/catalogue/${catalogueUuid}/categories/${categorieUuid}/vehicules/${vehiculeUuid}/duplicate`
+    );
   }
 };

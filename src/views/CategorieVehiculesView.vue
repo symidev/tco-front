@@ -10,7 +10,8 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Menu from 'primevue/menu';
 import ProgressSpinner from 'primevue/progressspinner';
-import {MoreVertical, Edit, Trash2, Plus, Car, FolderOpen} from 'lucide-vue-next';
+import {MoreVertical, Edit, Trash2, Plus, Car, FolderOpen, Copy} from 'lucide-vue-next';
+import DuplicateVehiculeDialog from '@/components/ui/DuplicateVehiculeDialog.vue';
 
 import {catalogueService} from '@/services/api/catalogueService';
 
@@ -26,6 +27,11 @@ const categorie = ref(null);
 const vehicules = ref([]);
 const menu = ref();
 const selectedVehicule = ref(null);
+
+// Variables pour le dialog de duplication de véhicule
+const showDuplicateDialog = ref(false);
+const vehiculeToDuplicate = ref(null);
+const isDuplicating = ref(false);
 
 const maxVehicule = computed(() => {
   if (store.state.auth?.tokenInfo?.drupal && store.state.auth?.tokenInfo?.drupal?.nbMaxVehicules) {
@@ -98,6 +104,13 @@ const menuItems = computed(() => {
       }
     },
     {
+      label: 'Dupliquer',
+      icon: Copy,
+      command: () => {
+        openDuplicateDialog(selectedVehicule.value);
+      }
+    },
+    {
       label: 'Supprimer',
       icon: Trash2,
       command: () => {
@@ -106,6 +119,53 @@ const menuItems = computed(() => {
     }
   ];
 });
+
+/** Ouvre le dialog de confirmation de duplication pour le véhicule ciblé */
+const openDuplicateDialog = (vehicule) => {
+  vehiculeToDuplicate.value = vehicule;
+  showDuplicateDialog.value = true;
+};
+
+/** Ferme le dialog de duplication et réinitialise l'état local */
+const closeDuplicateDialog = () => {
+  showDuplicateDialog.value = false;
+  vehiculeToDuplicate.value = null;
+};
+
+/**
+ * Effectue l'appel API de duplication puis recharge les données de la catégorie.
+ * Appelé à la confirmation dans DuplicateVehiculeDialog.
+ */
+const duplicateVehicule = async () => {
+  if (!vehiculeToDuplicate.value) return;
+
+  isDuplicating.value = true;
+  try {
+    await catalogueService.duplicateVehicule(
+      catalogue.value.uuid,
+      categorie.value.uuid,
+      vehiculeToDuplicate.value.uuid
+    );
+    toast.add({
+      severity: 'success',
+      summary: 'Véhicule dupliqué',
+      detail: 'Le véhicule a été dupliqué avec succès',
+      life: 3000
+    });
+    closeDuplicateDialog();
+    // Recharger les données pour afficher le nouveau véhicule
+    loadCategorieData();
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Impossible de dupliquer ce véhicule',
+      life: 3000
+    });
+  } finally {
+    isDuplicating.value = false;
+  }
+};
 
 const deleteVehicule = (vehicule) => {
   confirm.require({
@@ -313,6 +373,13 @@ onMounted(() => {
         </div>
       </div>
     </div>
+  <!-- Dialog de duplication d'un véhicule -->
+  <DuplicateVehiculeDialog
+    v-model:visible="showDuplicateDialog"
+    :vehicule-title="vehiculeToDuplicate?.title"
+    :is-loading="isDuplicating"
+    @confirm="duplicateVehicule"
+  />
   </div>
 </template>
 

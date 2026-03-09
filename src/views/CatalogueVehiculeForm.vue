@@ -11,7 +11,7 @@ import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
 import FloatLabel from 'primevue/floatlabel';
 import { catalogueService } from '@/services/api/catalogueService';
-import { Save, RefreshCw, Car, PlugZap, Droplets, Gauge, Weight, Fuel, Euro, Percent } from 'lucide-vue-next';
+import { Save, RefreshCw, Car, PlugZap, Droplets, Gauge, Weight, Fuel, Euro, Percent, Package } from 'lucide-vue-next';
 import { useStore } from 'vuex';
 
 const props = defineProps({
@@ -45,6 +45,7 @@ const formData = ref({
   modele: null,
   finition: '',
   puissance: '',
+  volume_coffre: '',
   energie: null,
   boite: null,
   conso_carburant: '',
@@ -55,6 +56,7 @@ const formData = ref({
   prix_options: '',
   remise: '',
   loueur: null,
+  ref_client: '',
   loyer: '',
   entretien: '',
   pneumatique: '',
@@ -295,6 +297,7 @@ const loadVehiculeData = async () => {
       marque: selectedMarque || null,
       finition: vehicule.finition || '',
       puissance: vehicule.puissance || '',
+      volume_coffre: vehicule.volume_coffre || '',
       energie: selectedEnergie || null,
       boite: selectedBoite || null,
       conso_carburant: vehicule.conso_carb || '',
@@ -305,6 +308,7 @@ const loadVehiculeData = async () => {
       prix_options: vehicule.prix_options || '',
       remise: vehicule.remise || '',
       loueur: selectedLoueur,
+      ref_client: vehicule.ref_client || '',
       loyer: vehicule.loyer_financier || '',
       entretien: vehicule.entretien || '',
       pneumatique: vehicule.pneumatique || '',
@@ -402,6 +406,17 @@ const validateForm = () => {
     return false;
   }
 
+  // Volume coffre : entier optionnel (ex: 450 litres)
+  if (formData.value.volume_coffre && !/^[0-9]+$/.test(formData.value.volume_coffre)) {
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Le volume du coffre doit être un nombre entier (en litres)',
+      life: 3000
+    });
+    return false;
+  }
+
   // Validation du prix
   if (!formData.value.prix || !/^[0-9]+(\.[0-9]+)?$/.test(formData.value.prix)) {
     toast.add({
@@ -475,6 +490,7 @@ const saveVehicule = async () => {
       modele: {target_id: formData.value.modele?.id},
       finition: formData.value.finition,
       puissance: formData.value.puissance,
+      volume_coffre: formData.value.volume_coffre || '',
       energie: formData.value.energie?.key,
       boite: formData.value.boite?.key,
       conso_carb: formData.value.conso_carburant,
@@ -485,6 +501,7 @@ const saveVehicule = async () => {
       prix_options: formData.value.prix_options || '0',
       remise: formData.value.remise || '0',
       loueur: {target_id: formData.value.loueur?.id},
+      ref_client: formData.value.ref_client || '',
       loyer: formData.value.loyer,
       entretien: formData.value.entretien || '0',
       pneumatique: formData.value.pneumatique || '0',
@@ -657,10 +674,10 @@ onMounted(() => {
                 </div>
               </div>
 
-              <!-- Champs moteur (masqués pour bev, phev, hev, hydrogen) -->
-              <div v-if="!shouldHideMotorFields" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <!-- Finition -->
-                  <div class="form-field">
+              <!-- Champs moteur (masqués pour bev, phev, hev, hydrogen) + volume coffre toujours visible -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <!-- Finition (masquée pour les véhicules électriques purs) -->
+                  <div v-if="!shouldHideMotorFields" class="form-field">
                     <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
@@ -676,8 +693,8 @@ onMounted(() => {
                   </FloatLabel>
                 </div>
 
-                  <!-- Puissance -->
-                  <div class="form-field">
+                  <!-- Puissance (masquée pour les véhicules électriques purs) -->
+                  <div v-if="!shouldHideMotorFields" class="form-field">
                     <FloatLabel variant="in">
                     <IconField>
                       <InputIcon>
@@ -689,7 +706,24 @@ onMounted(() => {
                         fluid
                       />
                     </IconField>
-                    <label for="puissance" class="form-label">Puissance</label>
+                    <label for="puissance" class="form-label">Puissance (ch)</label>
+                  </FloatLabel>
+                </div>
+
+                  <!-- Volume coffre (toujours visible, caractéristique physique indépendante du type moteur) -->
+                  <div class="form-field">
+                    <FloatLabel variant="in">
+                    <IconField>
+                      <InputIcon>
+                        <Package class="h-4 w-4"/>
+                      </InputIcon>
+                      <InputText
+                        id="volume_coffre"
+                        v-model="formData.volume_coffre"
+                        fluid
+                      />
+                    </IconField>
+                    <label for="volume_coffre" class="form-label">Volume coffre (L)</label>
                   </FloatLabel>
                 </div>
               </div>
@@ -860,7 +894,8 @@ onMounted(() => {
           <div class="section-content">
             <div class="p-6">
             <div class="grid gap-6 mb-4">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Loueur | Référence client | Loyer sur une même ligne en 3 colonnes -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <!-- Loueur -->
                   <div class="form-field">
                     <FloatLabel variant="in">
@@ -882,6 +917,23 @@ onMounted(() => {
                     <label for="loueur" class="form-label">Loueur *</label>
                   </FloatLabel>
                 </div>
+
+                  <!-- Référence client (texte libre, non obligatoire) -->
+                  <div class="form-field">
+                    <FloatLabel variant="in">
+                      <IconField>
+                        <InputIcon>
+                          <Car class="h-4 w-4"/>
+                        </InputIcon>
+                        <InputText
+                          id="ref_client"
+                          v-model="formData.ref_client"
+                          fluid
+                        />
+                      </IconField>
+                      <label for="ref_client" class="form-label">Référence client</label>
+                    </FloatLabel>
+                  </div>
 
                   <!-- Loyer -->
                   <div class="form-field">
