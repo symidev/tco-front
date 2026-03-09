@@ -11,7 +11,7 @@ import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
 import FloatLabel from 'primevue/floatlabel';
 import { catalogueService } from '@/services/api/catalogueService';
-import { Save, RefreshCw, Car, PlugZap, Droplets, Gauge, Weight, Factory, Fuel, Euro, Percent } from 'lucide-vue-next';
+import { Save, RefreshCw, Car, PlugZap, Droplets, Gauge, Weight, Fuel, Euro, Percent } from 'lucide-vue-next';
 import { useStore } from 'vuex';
 
 const props = defineProps({
@@ -45,7 +45,6 @@ const formData = ref({
   modele: null,
   finition: '',
   puissance: '',
-  cylindree: '',
   energie: null,
   boite: null,
   conso_carburant: '',
@@ -233,7 +232,6 @@ watch(() => formData.value.energie, (newEnergie, oldEnergie) => {
 watch(() => shouldHideMotorFields.value, (shouldHide) => {
   if (shouldHide) {
     formData.value.finition = '';
-    formData.value.cylindree = '';
     formData.value.puissance = '';
   }
 });
@@ -297,7 +295,6 @@ const loadVehiculeData = async () => {
       marque: selectedMarque || null,
       finition: vehicule.finition || '',
       puissance: vehicule.puissance || '',
-      cylindree: vehicule.cylindree || '',
       energie: selectedEnergie || null,
       boite: selectedBoite || null,
       conso_carburant: vehicule.conso_carb || '',
@@ -354,45 +351,12 @@ const validateForm = () => {
     return false;
   }
 
-  // Vérifier les champs de consommation en fonction de l'énergie
-  if (!shouldHideConsoCarburant.value && formData.value.conso_carburant === '') {
-    toast.add({
-      severity: 'error',
-      summary: 'Erreur',
-      detail: 'Veuillez renseigner la consommation de carburant',
-      life: 3000
-    });
-    return false;
-  }
-
-  // Pour HEV, la consommation électrique n'est pas obligatoire
-  const isHEV = formData.value.energie?.key === 'hev';
-  if (!shouldHideConsoElectrique.value && !isHEV && formData.value.conso_electrique === '') {
-    toast.add({
-      severity: 'error',
-      summary: 'Erreur',
-      detail: 'Veuillez renseigner la consommation électrique',
-      life: 3000
-    });
-    return false;
-  }
-
   // Vérifier que les champs numériques contiennent des valeurs numériques valides (seulement si renseignés)
   if (formData.value.puissance && !/^[0-9]+$/.test(formData.value.puissance)) {
     toast.add({
       severity: 'error',
       summary: 'Erreur',
       detail: 'La puissance doit être un nombre',
-      life: 3000
-    });
-    return false;
-  }
-
-  if (formData.value.cylindree && !/^[0-9]+$/.test(formData.value.cylindree)) {
-    toast.add({
-      severity: 'error',
-      summary: 'Erreur',
-      detail: 'La cylindrée doit être un nombre',
       life: 3000
     });
     return false;
@@ -511,7 +475,6 @@ const saveVehicule = async () => {
       modele: {target_id: formData.value.modele?.id},
       finition: formData.value.finition,
       puissance: formData.value.puissance,
-      cylindree: formData.value.cylindree,
       energie: formData.value.energie?.key,
       boite: formData.value.boite?.key,
       conso_carb: formData.value.conso_carburant,
@@ -695,7 +658,7 @@ onMounted(() => {
               </div>
 
               <!-- Champs moteur (masqués pour bev, phev, hev, hydrogen) -->
-              <div v-if="!shouldHideMotorFields" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div v-if="!shouldHideMotorFields" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <!-- Finition -->
                   <div class="form-field">
                     <FloatLabel variant="in">
@@ -710,23 +673,6 @@ onMounted(() => {
                       />
                     </IconField>
                     <label for="finition" class="form-label">Finition</label>
-                  </FloatLabel>
-                </div>
-
-                  <!-- Cylindrée -->
-                  <div class="form-field">
-                    <FloatLabel variant="in">
-                    <IconField>
-                      <InputIcon>
-                        <Factory class="h-4 w-4"/>
-                      </InputIcon>
-                      <InputText
-                          id="cylindree"
-                          v-model="formData.cylindree"
-                          fluid
-                      />
-                    </IconField>
-                    <label for="cylindree" class="form-label">Cylindrée</label>
                   </FloatLabel>
                 </div>
 
@@ -764,7 +710,7 @@ onMounted(() => {
                         fluid
                       />
                     </IconField>
-                    <label for="conso_carburant" class="form-label">Conso carburant (L/100km)*</label>
+                    <label for="conso_carburant" class="form-label">Conso carburant (L/100km)</label>
                   </FloatLabel>
                 </div>
 
@@ -782,7 +728,7 @@ onMounted(() => {
                         fluid
                       />
                     </IconField>
-                    <label for="conso_electrique" class="form-label">Conso électrique (kWh){{ formData.energie?.key === 'hev' ? '' : '*' }}</label>
+                    <label for="conso_electrique" class="form-label">Conso électrique (kWh)</label>
                   </FloatLabel>
                 </div>
                 </div>
