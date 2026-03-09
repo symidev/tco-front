@@ -335,7 +335,7 @@ const isFormValid = computed(() => {
                       <div class="result-value">{{ tauxAenPrix !== null ? tauxAenPrix : 0 }}%</div>
                       <div class="result-label">Taux AEN</div>
                       <div v-if="formData.isBEV && formData.isEcoScore" class="result-deduction">
-                        déduction 70% appliquée dans la limite de 4582 euros annuels
+                        déduction 70% appliquée dans la limite de 4641,6 euros annuels
                       </div>
                     </div>
                   </div>
@@ -357,7 +357,7 @@ const isFormValid = computed(() => {
                       <div class="result-value">{{ tauxAenLoyer !== null ? tauxAenLoyer : 0 }}%</div>
                       <div class="result-label">Taux AEN</div>
                       <div v-if="formData.isBEV && formData.isEcoScore" class="result-deduction">
-                        déduction 70% appliquée dans la limite de 381,33 euros maximum / mois
+                        déduction 70% appliquée dans la limite de 386,8 euros maximum / mois
                       </div>
                     </div>
                   </div>
