@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import { Calculator, Euro, Percent, Car, TrendingUp, FileText, CheckCircle } from 'lucide-vue-next';
 import Card from 'primevue/card';
@@ -129,6 +129,13 @@ const resetForm = () => {
 };
 
 
+// Si BEV passe à "Non", forcer Eco Scoré à "Non" et griser le champ
+watch(() => formData.value.isBEV, (newVal) => {
+  if (!newVal) {
+    formData.value.isEcoScore = false;
+  }
+});
+
 // Validation du formulaire
 const isFormValid = computed(() => {
   return formData.value.prixVehicule !== null &&
@@ -252,7 +259,7 @@ const isFormValid = computed(() => {
                     />
                   </div>
 
-                  <!-- Select Eco Scoré -->
+                  <!-- Select Eco Scoré (grisé si BEV = Non) -->
                   <div class="form-field">
                     <label class="form-label">Véhicule Eco Scoré</label>
                     <Select
@@ -262,6 +269,7 @@ const isFormValid = computed(() => {
                       optionValue="value"
                       placeholder="Sélectionnez"
                       class="w-full"
+                      :disabled="!formData.isBEV"
                     />
                   </div>
 
